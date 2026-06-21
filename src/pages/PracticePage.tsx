@@ -42,7 +42,11 @@ function upsertProgress(
   );
 }
 
-export function PracticePage() {
+type PracticePageProps = {
+  onDashboardClick?: () => void;
+};
+
+export function PracticePage({ onDashboardClick }: PracticePageProps) {
   const [mode, setMode] = useState<PracticeMode>("sequential");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answerState, setAnswerState] = useState<{
@@ -188,6 +192,15 @@ export function PracticePage() {
           </div>
 
           <div className="min-w-0 sm:w-72">
+            {onDashboardClick ? (
+              <button
+                type="button"
+                onClick={onDashboardClick}
+                className="mb-4 inline-flex min-h-10 items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+              >
+                Dashboard
+              </button>
+            ) : null}
             <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
               <span>Progress</span>
               <span>
