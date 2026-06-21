@@ -1,38 +1,75 @@
 import { useEffect, useState } from "react";
 import { BookOpenCheck } from "lucide-react";
 import { AnswerOptions } from "../components/AnswerOptions";
+import { EmptyModeState } from "../components/EmptyModeState";
 import { ExplanationPanel } from "../components/ExplanationPanel";
+import { PracticeModeTabs } from "../components/PracticeModeTabs";
 import { QuestionCard } from "../components/QuestionCard";
 import { QuestionNavigator } from "../components/QuestionNavigator";
-import { questions, totalQuestions } from "../data/questions";
+import { questions } from "../data/questions";
 import type { ChoiceKey } from "../domain/question";
 import { gradeAnswer, normalizeAnswer } from "../domain/question";
+import type { PracticeMode } from "../domain/practiceMode";
+import {
+  filterQuestionsByPracticeMode,
+  shuffleQuestions,
+} from "../domain/practiceMode";
+import type { QuestionProgress } from "../domain/progress";
 import { createEmptyProgress, updateProgressAfterAnswer } from "../domain/progress";
 import {
+  getAllProgress,
   getProgressByQuestionId,
   saveProgress,
 } from "../db/progressRepository";
 
 export function PracticePage() {
+  const [mode, setMode] = useState<PracticeMode>("sequential");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selected, setSelected] = useState<ChoiceKey[]>([]);
-  const [result, setResult] = useState<"correct" | "incorrect" | undefined>();
+  const [answerState, setAnswerState] = useState<{
+    questionId?: number;
+    selected: ChoiceKey[];
+    result?: "correct" | "incorrect";
+  }>({ selected: [] });
   const [isSaving, setIsSaving] = useState(false);
+  const [allProgress, setAllProgress] = useState<QuestionProgress[]>([]);
+  const [randomQuestions, setRandomQuestions] = useState(() =>
+    shuffleQuestions(questions),
+  );
 
-  const question = questions[currentIndex];
-  const isMultiAnswer = Array.isArray(question.answer);
-  const progressPercent = ((currentIndex + 1) / totalQuestions) * 100;
+  const filteredQuestions = filterQuestionsByPracticeMode(
+    mode,
+    questions,
+    allProgress,
+  );
+  const visibleQuestions = mode === "random" ? randomQuestions : filteredQuestions;
+  const visibleTotal = visibleQuestions.length;
+  const hasQuestions = visibleTotal > 0;
+  const safeCurrentIndex = hasQuestions
+    ? Math.min(currentIndex, visibleTotal - 1)
+    : 0;
+  const question = visibleQuestions[safeCurrentIndex];
+  const selected =
+    answerState.questionId === question?.id ? answerState.selected : [];
+  const result = answerState.questionId === question?.id ? answerState.result : undefined;
+  const isMultiAnswer = question ? Array.isArray(question.answer) : false;
+  const progressPercent = hasQuestions
+    ? ((safeCurrentIndex + 1) / visibleTotal) * 100
+    : 0;
 
   useEffect(() => {
-    setSelected([]);
-    setResult(undefined);
-  }, [question.id]);
+    void getAllProgress().then(setAllProgress);
+  }, []);
 
   async function submitAnswer(selectedAnswer: ChoiceKey[]) {
+    if (!question) return;
     if (selectedAnswer.length === 0 || result || isSaving) return;
 
     const nextResult = gradeAnswer(question.answer, selectedAnswer);
-    setResult(nextResult);
+    setAnswerState({
+      questionId: question.id,
+      selected: selectedAnswer,
+      result: nextResult,
+    });
     setIsSaving(true);
 
     try {
@@ -42,13 +79,21 @@ export function PracticePage() {
       await saveProgress(
         updateProgressAfterAnswer(existingProgress, selectedAnswer, nextResult),
       );
+
+      setAllProgress(await getAllProgress());
     } finally {
       setIsSaving(false);
     }
   }
 
   function handleAnswerChange(nextSelected: ChoiceKey[]) {
-    setSelected(nextSelected);
+    if (!question) return;
+
+    setAnswerState({
+      questionId: question.id,
+      selected: nextSelected,
+      result,
+    });
 
     const requiredSelections = normalizeAnswer(question.answer).length;
     if (nextSelected.length === requiredSelections) {
@@ -56,12 +101,28 @@ export function PracticePage() {
     }
   }
 
+  function resetAnswerState() {
+    setAnswerState({ selected: [] });
+  }
+
+  function handleModeChange(nextMode: PracticeMode) {
+    setMode(nextMode);
+    setCurrentIndex(0);
+    resetAnswerState();
+
+    if (nextMode === "random") {
+      setRandomQuestions(shuffleQuestions(questions));
+    }
+  }
+
   function goToPrevious() {
-    setCurrentIndex((index) => Math.max(0, index - 1));
+    resetAnswerState();
+    setCurrentIndex(() => Math.max(0, safeCurrentIndex - 1));
   }
 
   function goToNext() {
-    setCurrentIndex((index) => Math.min(totalQuestions - 1, index + 1));
+    resetAnswerState();
+    setCurrentIndex(() => Math.min(visibleTotal - 1, safeCurrentIndex + 1));
   }
 
   return (
@@ -84,7 +145,7 @@ export function PracticePage() {
             <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
               <span>Progress</span>
               <span>
-                {currentIndex + 1} / {totalQuestions}
+                {hasQuestions ? safeCurrentIndex + 1 : 0} / {visibleTotal}
               </span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-stone-300/80">
@@ -96,42 +157,50 @@ export function PracticePage() {
           </div>
         </header>
 
-        <QuestionNavigator
-          currentIndex={currentIndex}
-          totalQuestions={totalQuestions}
-          onPrevious={goToPrevious}
-          onNext={goToNext}
-        />
+        <PracticeModeTabs mode={mode} onModeChange={handleModeChange} />
 
-        <QuestionCard
-          question={question}
-          currentIndex={currentIndex}
-          totalQuestions={totalQuestions}
-        />
+        {question ? (
+          <>
+            <QuestionNavigator
+              currentIndex={safeCurrentIndex}
+              totalQuestions={visibleTotal}
+              onPrevious={goToPrevious}
+              onNext={goToNext}
+            />
 
-        <AnswerOptions
-          options={question.options}
-          selected={selected}
-          disabled={Boolean(result) || isSaving}
-          isMultiAnswer={isMultiAnswer}
-          result={result}
-          correctAnswer={question.answer}
-          onChange={handleAnswerChange}
-        />
+            <QuestionCard
+              question={question}
+              currentIndex={safeCurrentIndex}
+              totalQuestions={visibleTotal}
+            />
 
-        {isSaving ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-500">Saving...</span>
-          </div>
-        ) : null}
+            <AnswerOptions
+              options={question.options}
+              selected={selected}
+              disabled={Boolean(result) || isSaving}
+              isMultiAnswer={isMultiAnswer}
+              result={result}
+              correctAnswer={question.answer}
+              onChange={handleAnswerChange}
+            />
 
-        {result ? (
-          <ExplanationPanel
-            result={result}
-            correctAnswer={question.answer}
-            explanation={question.explanation}
-          />
-        ) : null}
+            {isSaving ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-slate-500">Saving...</span>
+              </div>
+            ) : null}
+
+            {result ? (
+              <ExplanationPanel
+                result={result}
+                correctAnswer={question.answer}
+                explanation={question.explanation}
+              />
+            ) : null}
+          </>
+        ) : (
+          <EmptyModeState mode={mode} />
+        )}
       </div>
     </main>
   );
