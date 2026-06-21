@@ -6,6 +6,7 @@ import { ExplanationPanel } from "../components/ExplanationPanel";
 import { PracticeModeTabs } from "../components/PracticeModeTabs";
 import { QuestionCard } from "../components/QuestionCard";
 import { QuestionNavigator } from "../components/QuestionNavigator";
+import { QuestionReviewPanel } from "../components/QuestionReviewPanel";
 import { questions } from "../data/questions";
 import type { ChoiceKey } from "../domain/question";
 import { gradeAnswer, normalizeAnswer } from "../domain/question";
@@ -15,12 +16,31 @@ import {
   shuffleQuestions,
 } from "../domain/practiceMode";
 import type { QuestionProgress } from "../domain/progress";
-import { createEmptyProgress, updateProgressAfterAnswer } from "../domain/progress";
+import {
+  createEmptyProgress,
+  updateProgressAfterAnswer,
+  updateProgressReviewMetadata,
+} from "../domain/progress";
 import {
   getAllProgress,
   getProgressByQuestionId,
   saveProgress,
 } from "../db/progressRepository";
+
+function upsertProgress(
+  progressList: QuestionProgress[],
+  progress: QuestionProgress,
+): QuestionProgress[] {
+  const exists = progressList.some((item) => item.questionId === progress.questionId);
+
+  if (!exists) {
+    return [...progressList, progress];
+  }
+
+  return progressList.map((item) =>
+    item.questionId === progress.questionId ? progress : item,
+  );
+}
 
 export function PracticePage() {
   const [mode, setMode] = useState<PracticeMode>("sequential");
@@ -48,6 +68,9 @@ export function PracticePage() {
     ? Math.min(currentIndex, visibleTotal - 1)
     : 0;
   const question = visibleQuestions[safeCurrentIndex];
+  const currentProgress = question
+    ? allProgress.find((progress) => progress.questionId === question.id)
+    : undefined;
   const selected =
     answerState.questionId === question?.id ? answerState.selected : [];
   const result = answerState.questionId === question?.id ? answerState.result : undefined;
@@ -84,6 +107,29 @@ export function PracticePage() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function saveReviewMetadata(
+    metadata: Partial<
+      Pick<QuestionProgress, "bookmarked" | "markedGuessed" | "note">
+    >,
+  ) {
+    if (!question) return;
+
+    const optimisticProgress = updateProgressReviewMetadata(
+      currentProgress ?? createEmptyProgress(question.id),
+      metadata,
+    );
+    setAllProgress((progressList) =>
+      upsertProgress(progressList, optimisticProgress),
+    );
+
+    const existingProgress =
+      (await getProgressByQuestionId(question.id)) ?? createEmptyProgress(question.id);
+    const updatedProgress = updateProgressReviewMetadata(existingProgress, metadata);
+
+    await saveProgress(updatedProgress);
+    setAllProgress((progressList) => upsertProgress(progressList, updatedProgress));
   }
 
   function handleAnswerChange(nextSelected: ChoiceKey[]) {
@@ -172,6 +218,19 @@ export function PracticePage() {
               question={question}
               currentIndex={safeCurrentIndex}
               totalQuestions={visibleTotal}
+            />
+
+            <QuestionReviewPanel
+              bookmarked={currentProgress?.bookmarked === true}
+              markedGuessed={currentProgress?.markedGuessed === true}
+              note={currentProgress?.note ?? ""}
+              onBookmarkedChange={(bookmarked) =>
+                void saveReviewMetadata({ bookmarked })
+              }
+              onMarkedGuessedChange={(markedGuessed) =>
+                void saveReviewMetadata({ markedGuessed })
+              }
+              onNoteChange={(note) => void saveReviewMetadata({ note })}
             />
 
             <AnswerOptions

@@ -42,3 +42,17 @@ export function updateProgressAfterAnswer(
     updatedAt: now.toISOString(),
   };
 }
+
+export function updateProgressReviewMetadata(
+  progress: QuestionProgress,
+  metadata: Partial<
+    Pick<QuestionProgress, "bookmarked" | "markedGuessed" | "note">
+  >,
+  now = new Date(),
+): QuestionProgress {
+  return {
+    ...progress,
+    ...metadata,
+    updatedAt: now.toISOString(),
+  };
+}

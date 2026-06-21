@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { gradeAnswer, normalizeAnswer } from "../domain/question";
 import {
   createEmptyProgress,
+  updateProgressReviewMetadata,
   updateProgressAfterAnswer,
 } from "../domain/progress";
 
@@ -88,5 +89,36 @@ describe("question progress", () => {
     expect(updated.markedGuessed).toBe(true);
     expect(updated.bookmarked).toBe(true);
     expect(updated.note).toBe("Review this later");
+  });
+
+  it("updates review metadata without changing answer attempts", () => {
+    const progress = updateProgressAfterAnswer(
+      createEmptyProgress(1),
+      ["A"],
+      "correct",
+      new Date("2026-01-01T00:00:00.000Z"),
+    );
+
+    const updated = updateProgressReviewMetadata(
+      progress,
+      {
+        bookmarked: true,
+        markedGuessed: true,
+        note: "Check Gateway Load Balancer again",
+      },
+      new Date("2026-01-02T00:00:00.000Z"),
+    );
+
+    expect(updated).toMatchObject({
+      questionId: 1,
+      attempts: 1,
+      correctAttempts: 1,
+      lastSelected: ["A"],
+      lastResult: "correct",
+      bookmarked: true,
+      markedGuessed: true,
+      note: "Check Gateway Load Balancer again",
+      updatedAt: "2026-01-02T00:00:00.000Z",
+    });
   });
 });
