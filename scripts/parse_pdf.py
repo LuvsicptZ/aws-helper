@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 import json
+import os
 import re
 
 import pdfplumber
@@ -25,7 +26,7 @@ MANUAL_OPTION_OVERRIDES = {
 QUESTION_START_RE = re.compile(r"(?m)^\s*(\d{1,4})\.(?=[A-Z])")
 PAGE_RE = re.compile(r"===== PAGE (\d+) =====")
 OPTION_RE = re.compile(
-    r"(?ms)^\s*([A-F])\s*[、銆]\s*(.*?)(?=^\s*[A-F]\s*[、銆]|\n\s*答案\s*[:：]|$)"
+    r"(?ms)^\s*([A-F])\s*[、銆]\s*(.*?)(?=^\s*[A-F]\s*[、銆]|\n\s*答案\s*[:：]|\Z)"
 )
 
 def extract_pages(pdf_path: Path) -> list[str]:
@@ -33,7 +34,7 @@ def extract_pages(pdf_path: Path) -> list[str]:
 
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
-            text = page.extract_text() or ""
+            text = page.extract_text(x_tolerance=1) or ""
             pages.append(text)
 
     return pages
@@ -67,15 +68,10 @@ def source_page_at(text: str, position: int) -> int | None:
 
 
 def has_question_shape(block: str, min_options: int = 3) -> bool:
-    options = set(re.findall(r"(?m)^\s*([A-F])\s*[、銆]", block))
+    option_matches = list(re.finditer(r"(?m)^\s*([A-F])\s*[、銆]", block))
+    options = {match.group(1) for match in option_matches}
     answer_pos = block.find("答案")
-    first_option_positions = [
-        pos
-        for key in "ABCDEF"
-        for pos in (block.find(f"{key}、"), block.find(f"{key}銆"))
-        if pos != -1
-    ]
-    first_option_pos = min(first_option_positions, default=-1)
+    first_option_pos = min((match.start() for match in option_matches), default=-1)
     return (
         len(options) >= min_options
         and answer_pos != -1
@@ -207,7 +203,7 @@ def build_report(questions: list[dict]) -> dict:
 
 
 def parse_questions() -> tuple[list[dict], dict]:
-    if not EXTRACTED_TEXT_PATH.exists():
+    if os.environ.get("FORCE_EXTRACT") == "1" or not EXTRACTED_TEXT_PATH.exists():
         write_extracted_text()
 
     text = EXTRACTED_TEXT_PATH.read_text(encoding="utf-8")
