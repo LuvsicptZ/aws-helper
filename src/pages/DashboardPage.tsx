@@ -8,6 +8,7 @@ import {
   Target,
   XCircle,
 } from "lucide-react";
+import { AuthPanel } from "../components/AuthPanel";
 import { totalQuestions } from "../data/questions";
 import { calculateDashboardStats } from "../domain/dashboard";
 import type { QuestionProgress } from "../domain/progress";
@@ -71,21 +72,24 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
             </h1>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={onPracticeClick}
-              className="inline-flex min-h-11 items-center justify-center rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-            >
-              Practice
-            </button>
-            <button
-              type="button"
-              onClick={onExamClick}
-              className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-            >
-              Mock exam
-            </button>
+          <div className="flex flex-col gap-3 sm:items-end">
+            <AuthPanel />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onPracticeClick}
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+              >
+                Practice
+              </button>
+              <button
+                type="button"
+                onClick={onExamClick}
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+              >
+                Mock exam
+              </button>
+            </div>
           </div>
         </header>
 
