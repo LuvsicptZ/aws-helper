@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, RefreshCw } from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
+import { syncProgressWithSupabase } from "../sync/supabaseProgressSync";
 
 export function AuthPanel() {
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (!supabaseClient) return;
@@ -65,21 +67,54 @@ export function AuthPanel() {
     }
   }
 
+  async function syncNow() {
+    if (!supabaseClient || !session) return;
+
+    setIsSyncing(true);
+    setStatus(undefined);
+
+    try {
+      const result = await syncProgressWithSupabase(
+        supabaseClient,
+        session.user.id,
+      );
+      setStatus(
+        `Synced ${result.merged} records. Uploaded ${result.uploaded}, downloaded ${result.downloaded}.`,
+      );
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Sync failed.");
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
   if (session) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm shadow-stone-300/30">
-          {session.user.email}
-        </span>
-        <button
-          type="button"
-          onClick={() => void signOut()}
-          disabled={isSubmitting}
-          className="inline-flex min-h-10 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70"
-        >
-          <LogOut size={16} />
-          Sign out
-        </button>
+      <div className="flex flex-col gap-2 sm:items-end">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm shadow-stone-300/30">
+            {session.user.email}
+          </span>
+          <button
+            type="button"
+            onClick={() => void syncNow()}
+            disabled={isSyncing}
+            className="inline-flex min-h-10 items-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70"
+          >
+            <RefreshCw size={16} />
+            Sync
+          </button>
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            disabled={isSubmitting}
+            className="inline-flex min-h-10 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70"
+          >
+            <LogOut size={16} />
+            Sign out
+          </button>
+        </div>
+        {status ? <p className="text-xs text-slate-500">{status}</p> : null}
       </div>
     );
   }
