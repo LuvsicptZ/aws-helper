@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { LogIn, LogOut, RefreshCw } from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
+import { syncExamSessionsWithSupabase } from "../sync/supabaseExamSync";
 import { syncProgressWithSupabase } from "../sync/supabaseProgressSync";
 
-export function AuthPanel() {
+type AuthPanelProps = {
+  onSyncComplete?: () => void;
+};
+
+export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string>();
@@ -74,13 +79,18 @@ export function AuthPanel() {
     setStatus(undefined);
 
     try {
-      const result = await syncProgressWithSupabase(
+      const progressResult = await syncProgressWithSupabase(
+        supabaseClient,
+        session.user.id,
+      );
+      const examResult = await syncExamSessionsWithSupabase(
         supabaseClient,
         session.user.id,
       );
       setStatus(
-        `Synced ${result.merged} records. Uploaded ${result.uploaded}, downloaded ${result.downloaded}.`,
+        `Synced ${progressResult.merged} progress and ${examResult.merged} exams.`,
       );
+      onSyncComplete?.();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sync failed.";
       setStatus(`${message} Local progress is still available.`);

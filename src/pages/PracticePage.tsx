@@ -76,8 +76,13 @@ export function PracticePage({ onDashboardClick }: PracticePageProps) {
     ? allProgress.find((progress) => progress.questionId === question.id)
     : undefined;
   const selected =
-    answerState.questionId === question?.id ? answerState.selected : [];
-  const result = answerState.questionId === question?.id ? answerState.result : undefined;
+    answerState.questionId === question?.id
+      ? answerState.selected
+      : currentProgress?.lastSelected ?? [];
+  const result =
+    answerState.questionId === question?.id
+      ? answerState.result
+      : currentProgress?.lastResult;
   const isMultiAnswer = question ? Array.isArray(question.answer) : false;
   const progressPercent = hasQuestions
     ? ((safeCurrentIndex + 1) / visibleTotal) * 100

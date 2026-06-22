@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   BarChart3,
   Bookmark,
@@ -50,9 +50,13 @@ function StatCard({ label, value, detail, icon }: StatCardProps) {
 export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPageProps) {
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
 
-  useEffect(() => {
+  const refreshProgress = useCallback(() => {
     void getAllProgress().then(setProgressList);
   }, []);
+
+  useEffect(() => {
+    refreshProgress();
+  }, [refreshProgress]);
 
   const stats = calculateDashboardStats(totalQuestions, progressList);
 
@@ -73,7 +77,7 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
           </div>
 
           <div className="flex flex-col gap-3 sm:items-end">
-            <AuthPanel />
+            <AuthPanel onSyncComplete={refreshProgress} />
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"

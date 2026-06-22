@@ -16,6 +16,9 @@ type RemoteProgressRow = {
   marked_guessed: boolean;
   bookmarked: boolean;
   note: string;
+  marked_guessed_updated_at: string | null;
+  bookmarked_updated_at: string | null;
+  note_updated_at: string | null;
   updated_at: string;
   synced_at: string | null;
 };
@@ -30,6 +33,9 @@ function fromRemoteRow(row: RemoteProgressRow): QuestionProgress {
     markedGuessed: row.marked_guessed,
     bookmarked: row.bookmarked,
     note: row.note,
+    markedGuessedUpdatedAt: row.marked_guessed_updated_at ?? undefined,
+    bookmarkedUpdatedAt: row.bookmarked_updated_at ?? undefined,
+    noteUpdatedAt: row.note_updated_at ?? undefined,
     updatedAt: row.updated_at,
     syncedAt: row.synced_at ?? undefined,
   };
@@ -46,6 +52,9 @@ function toRemoteRow(userId: string, progress: QuestionProgress): RemoteProgress
     marked_guessed: progress.markedGuessed,
     bookmarked: progress.bookmarked,
     note: progress.note,
+    marked_guessed_updated_at: progress.markedGuessedUpdatedAt ?? null,
+    bookmarked_updated_at: progress.bookmarkedUpdatedAt ?? null,
+    note_updated_at: progress.noteUpdatedAt ?? null,
     updated_at: progress.updatedAt,
     synced_at: progress.syncedAt ?? null,
   };

@@ -9,6 +9,9 @@ export type QuestionProgress = {
   markedGuessed: boolean;
   bookmarked: boolean;
   note: string;
+  markedGuessedUpdatedAt?: string;
+  bookmarkedUpdatedAt?: string;
+  noteUpdatedAt?: string;
   updatedAt: string;
   syncedAt?: string;
 };
@@ -50,9 +53,18 @@ export function updateProgressReviewMetadata(
   >,
   now = new Date(),
 ): QuestionProgress {
+  const updatedAt = now.toISOString();
+
   return {
     ...progress,
     ...metadata,
-    updatedAt: now.toISOString(),
+    bookmarkedUpdatedAt:
+      metadata.bookmarked === undefined ? progress.bookmarkedUpdatedAt : updatedAt,
+    markedGuessedUpdatedAt:
+      metadata.markedGuessed === undefined
+        ? progress.markedGuessedUpdatedAt
+        : updatedAt,
+    noteUpdatedAt: metadata.note === undefined ? progress.noteUpdatedAt : updatedAt,
+    updatedAt,
   };
 }

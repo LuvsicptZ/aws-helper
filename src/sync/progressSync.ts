@@ -19,10 +19,41 @@ function isRemoteNewer(local: QuestionProgress, remote: QuestionProgress): boole
 }
 
 function pickNote(local: QuestionProgress, remote: QuestionProgress): string {
+  if (local.noteUpdatedAt || remote.noteUpdatedAt) {
+    return pickByTimestamp(
+      local.note,
+      local.noteUpdatedAt,
+      remote.note,
+      remote.noteUpdatedAt,
+    );
+  }
+
   if (!local.note) return remote.note;
   if (!remote.note) return local.note;
-
   return isRemoteNewer(local, remote) ? remote.note : local.note;
+}
+
+function pickByTimestamp<T>(
+  localValue: T,
+  localUpdatedAt: string | undefined,
+  remoteValue: T,
+  remoteUpdatedAt: string | undefined,
+): T {
+  if (!localUpdatedAt && !remoteUpdatedAt) {
+    return localValue;
+  }
+
+  if (!localUpdatedAt) {
+    return remoteValue;
+  }
+
+  if (!remoteUpdatedAt) {
+    return localValue;
+  }
+
+  return new Date(remoteUpdatedAt).getTime() > new Date(localUpdatedAt).getTime()
+    ? remoteValue
+    : localValue;
 }
 
 export function mergeProgressRecords(
@@ -36,9 +67,43 @@ export function mergeProgressRecords(
     questionId: local.questionId,
     attempts: Math.max(local.attempts, remote.attempts),
     correctAttempts: Math.max(local.correctAttempts, remote.correctAttempts),
-    bookmarked: local.bookmarked === true || remote.bookmarked === true,
-    markedGuessed: local.markedGuessed === true || remote.markedGuessed === true,
+    bookmarked:
+      local.bookmarkedUpdatedAt || remote.bookmarkedUpdatedAt
+        ? pickByTimestamp(
+            local.bookmarked,
+            local.bookmarkedUpdatedAt,
+            remote.bookmarked,
+            remote.bookmarkedUpdatedAt,
+          )
+        : local.bookmarked === true || remote.bookmarked === true,
+    markedGuessed:
+      local.markedGuessedUpdatedAt || remote.markedGuessedUpdatedAt
+        ? pickByTimestamp(
+            local.markedGuessed,
+            local.markedGuessedUpdatedAt,
+            remote.markedGuessed,
+            remote.markedGuessedUpdatedAt,
+          )
+        : local.markedGuessed === true || remote.markedGuessed === true,
     note: pickNote(local, remote),
+    bookmarkedUpdatedAt: pickByTimestamp(
+      local.bookmarkedUpdatedAt,
+      local.bookmarkedUpdatedAt,
+      remote.bookmarkedUpdatedAt,
+      remote.bookmarkedUpdatedAt,
+    ),
+    markedGuessedUpdatedAt: pickByTimestamp(
+      local.markedGuessedUpdatedAt,
+      local.markedGuessedUpdatedAt,
+      remote.markedGuessedUpdatedAt,
+      remote.markedGuessedUpdatedAt,
+    ),
+    noteUpdatedAt: pickByTimestamp(
+      local.noteUpdatedAt,
+      local.noteUpdatedAt,
+      remote.noteUpdatedAt,
+      remote.noteUpdatedAt,
+    ),
     updatedAt:
       new Date(local.updatedAt).getTime() > new Date(remote.updatedAt).getTime()
         ? local.updatedAt
