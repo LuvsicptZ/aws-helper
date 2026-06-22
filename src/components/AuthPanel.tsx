@@ -82,7 +82,8 @@ export function AuthPanel() {
         `Synced ${result.merged} records. Uploaded ${result.uploaded}, downloaded ${result.downloaded}.`,
       );
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Sync failed.");
+      const message = error instanceof Error ? error.message : "Sync failed.";
+      setStatus(`${message} Local progress is still available.`);
     } finally {
       setIsSyncing(false);
     }

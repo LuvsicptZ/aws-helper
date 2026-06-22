@@ -142,9 +142,6 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex min-h-10 items-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800">
-              {formatTime(remainingSeconds)}
-            </span>
             <button
               type="button"
               onClick={onDashboardClick}
@@ -155,6 +152,26 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
             </button>
           </div>
         </header>
+
+        <section className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 rounded-md border border-stone-300/80 bg-[#f4f1ea]/95 p-2 shadow-sm shadow-stone-300/40 backdrop-blur">
+          <span className="inline-flex min-h-11 items-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900">
+            {formatTime(remainingSeconds)}
+          </span>
+          <span className="text-sm font-medium text-slate-600">
+            {Object.keys(answers).length} / {examQuestions.length} answered
+          </span>
+          {!score ? (
+            <button
+              type="button"
+              onClick={() => void submitExam(EXAM_DURATION_SECONDS - remainingSeconds)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70"
+              disabled={isSaving}
+            >
+              <Send size={17} />
+              Submit
+            </button>
+          ) : null}
+        </section>
 
         {score ? (
           <section className="rounded-md border border-emerald-200 bg-emerald-50/80 p-5 shadow-sm shadow-emerald-100/70 sm:p-6">
@@ -173,17 +190,7 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
               </div>
             </div>
           </section>
-        ) : (
-          <button
-            type="button"
-            onClick={() => void submitExam(EXAM_DURATION_SECONDS - remainingSeconds)}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70 sm:self-start"
-            disabled={isSaving}
-          >
-            <Send size={17} />
-            Submit exam
-          </button>
-        )}
+        ) : null}
 
         {question ? (
           <>

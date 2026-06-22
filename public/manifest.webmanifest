@@ -1,0 +1,18 @@
+{
+  "name": "SAA Sprint",
+  "short_name": "SAA Sprint",
+  "description": "AWS SAA-C03 practice, review, and mock exam trainer.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#f4f1ea",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
