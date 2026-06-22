@@ -65,6 +65,7 @@ export function AnswerOptions({
               type="button"
               disabled={disabled}
               onClick={() => toggleChoice(choice)}
+              aria-label={`Choice ${choice}`}
               className={[
                 "group flex w-full min-w-0 gap-3 rounded-md border p-4 text-left transition-[background-color,border-color,box-shadow,transform] duration-150",
                 optionClass,

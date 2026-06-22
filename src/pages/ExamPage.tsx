@@ -174,7 +174,10 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
         </section>
 
         {score ? (
-          <section className="rounded-md border border-emerald-200 bg-emerald-50/80 p-5 shadow-sm shadow-emerald-100/70 sm:p-6">
+          <section
+            aria-label="Exam score summary"
+            className="rounded-md border border-emerald-200 bg-emerald-50/80 p-5 shadow-sm shadow-emerald-100/70 sm:p-6"
+          >
             <div className="flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white">
                 <CheckCircle2 size={20} />
