@@ -32,7 +32,7 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
 
   if (!supabaseClient) {
     return (
-      <div className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm shadow-stone-300/30">
+      <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 shadow-sm">
         Local mode
       </div>
     );
@@ -103,14 +103,14 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
     return (
       <div className="flex flex-col gap-2 sm:items-end">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm shadow-stone-300/30">
+          <span className="max-w-44 truncate rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
             {session.user.email}
           </span>
           <button
             type="button"
             onClick={() => void syncNow()}
             disabled={isSyncing}
-            className="inline-flex min-h-10 items-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#0B1120] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
           >
             <RefreshCw size={16} />
             Sync
@@ -119,7 +119,7 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
             type="button"
             onClick={() => void signOut()}
             disabled={isSubmitting}
-            className="inline-flex min-h-10 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
           >
             <LogOut size={16} />
             Sign out
@@ -133,18 +133,22 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
   return (
     <div className="flex flex-col gap-2 sm:items-end">
       <div className="flex flex-wrap gap-2">
+        <label htmlFor="auth-email" className="sr-only">
+          Email address
+        </label>
         <input
+          id="auth-email"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.com"
-          className="min-h-10 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm shadow-stone-300/30 outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+          className="min-h-10 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
         />
         <button
           type="button"
           onClick={() => void sendMagicLink()}
           disabled={isSubmitting || email.trim().length === 0}
-          className="inline-flex min-h-10 items-center gap-2 rounded-md bg-slate-950 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#0B1120] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <LogIn size={16} />
           Sign in

@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
-  BarChart3,
   Bookmark,
+  CalendarCheck,
   CheckCircle2,
   CircleHelp,
-  ListChecks,
-  PlayCircle,
+  Clock,
+  Flame,
+  Layers,
+  Network,
+  Server,
   Target,
+  Users,
   XCircle,
 } from "lucide-react";
+import { AppShell } from "../components/AppShell";
 import { AuthPanel } from "../components/AuthPanel";
 import { totalQuestions } from "../data/questions";
 import { calculateDashboardStats } from "../domain/dashboard";
@@ -27,61 +32,63 @@ type StatCardProps = {
   value: string | number;
   detail: string;
   icon: React.ReactNode;
+  accent: string;
 };
 
-function StatCard({ label, value, detail, icon }: StatCardProps) {
+function StatCard({ label, value, detail, icon, accent }: StatCardProps) {
   return (
-    <article className="rounded-md border border-stone-300/80 bg-[#fffdf8] p-5 shadow-sm shadow-stone-300/30">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-            {label}
-          </p>
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            {value}
-          </p>
-        </div>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-stone-100 text-slate-700">
-          {icon}
-        </span>
+    <article className="relative flex min-h-40 flex-col justify-between overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mb-3 flex items-center text-sm font-medium text-gray-600">
+        <span className={`mr-2 ${accent}`}>{icon}</span>
+        {label}
       </div>
-      <p className="mt-4 text-sm leading-6 text-slate-600">{detail}</p>
+      <div>
+        <div className="mb-1 text-3xl font-bold text-gray-900">{value}</div>
+        <p className="w-2/3 text-xs leading-tight text-gray-500">{detail}</p>
+      </div>
+      <svg
+        className="absolute bottom-4 right-4 h-8 w-20"
+        preserveAspectRatio="none"
+        viewBox="0 0 100 30"
+        aria-hidden="true"
+      >
+        <path
+          d="M0,25 C20,25 30,10 50,20 C70,30 80,5 100,15"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className={accent}
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
     </article>
   );
 }
 
-type PrimaryActionProps = {
+type WeakAreaProps = {
   label: string;
-  detail: string;
-  primary?: boolean;
-  onClick: () => void;
+  percent: number;
+  icon: React.ReactNode;
+  iconClass: string;
 };
 
-function PrimaryAction({ label, detail, primary = false, onClick }: PrimaryActionProps) {
+function WeakArea({ label, percent, icon, iconClass }: WeakAreaProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "flex min-h-16 items-center justify-between gap-3 rounded-md border px-4 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950",
-        primary
-          ? "border-slate-950 bg-slate-950 text-white shadow-sm shadow-stone-400/40 hover:bg-slate-800"
-          : "border-stone-300 bg-white text-slate-800 shadow-sm shadow-stone-300/30 hover:bg-stone-50",
-      ].join(" ")}
-    >
-      <span className="min-w-0">
-        <span className="block text-sm font-semibold">{label}</span>
-        <span
-          className={[
-            "mt-1 block text-xs leading-5",
-            primary ? "text-slate-200" : "text-slate-500",
-          ].join(" ")}
-        >
-          {detail}
-        </span>
-      </span>
-      <ArrowRight size={18} className="shrink-0" />
-    </button>
+    <div className="flex items-center">
+      <div
+        className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${iconClass}`}
+      >
+        {icon}
+      </div>
+      <div className="w-16 text-sm font-medium text-gray-700">{label}</div>
+      <div className="mx-4 h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+        <div
+          className="h-full rounded-full bg-[#0B1120]"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <div className="w-8 text-right text-sm text-gray-500">{percent}%</div>
+    </div>
   );
 }
 
@@ -103,108 +110,251 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
       : Math.round((stats.answeredQuestions / stats.totalQuestions) * 100);
 
   return (
-    <main className="min-h-screen bg-[#f4f1ea] px-4 py-5 text-slate-950 sm:px-6 sm:py-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-5">
-        <header className="border-b border-stone-300/70 pb-5">
+    <AppShell
+      active="dashboard"
+      onDashboardClick={() => undefined}
+      onPracticeClick={onPracticeClick}
+      onExamClick={onExamClick}
+      headerActions={<AuthPanel onSyncComplete={refreshProgress} />}
+    >
+      <div className="space-y-6">
+        <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-950 text-white">
-                <BarChart3 size={17} strokeWidth={2.2} />
-              </span>
-              <span>AWS SAA-C03</span>
-            </div>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Dashboard
-            </h1>
-          </div>
-        </header>
-
-        <section className="grid gap-4 rounded-md border border-stone-300/80 bg-[#fffdf8] p-5 shadow-sm shadow-stone-300/30 lg:grid-cols-[1fr_1.2fr]">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <PlayCircle size={18} />
-              Study next
-            </div>
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-              {stats.answeredQuestions} / {stats.totalQuestions}
+            <h2 className="mb-1 text-3xl font-bold text-gray-900">
+              Welcome back, Ryan!
+            </h2>
+            <p className="text-sm text-gray-500">
+              Keep going one small session at a time. You've got this.
             </p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {progressPercent}% complete. {stats.remainingQuestions} questions remaining.
-            </p>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-stone-200">
-              <div
-                className="h-full rounded-full bg-slate-950 transition-[width] duration-300 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-            <PrimaryAction
-              primary
-              label="Continue practice"
-              detail="Resume regular question flow"
-              onClick={() => onPracticeClick("sequential")}
-            />
-            <PrimaryAction
-              label="Review incorrect"
-              detail={`${stats.incorrectQuestions} questions waiting`}
-              onClick={() => onPracticeClick("incorrect")}
-            />
-            <PrimaryAction
-              label="Start mock exam"
-              detail="65 questions, 130 minutes"
-              onClick={onExamClick}
-            />
+          <div className="flex w-fit items-center rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+            <Flame size={28} className="mr-3 text-orange-500" />
+            <div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-gray-900">2</span>
+                <span className="text-xs font-medium text-gray-500">Day streak</span>
+              </div>
+              <p className="text-[10px] text-gray-400">Keep it up!</p>
+            </div>
           </div>
         </section>
 
-        <section className="rounded-md border border-stone-300/80 bg-stone-100/70 p-3">
-          <AuthPanel onSyncComplete={refreshProgress} />
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <article className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
+            <div>
+              <div className="mb-4 flex items-center font-medium text-gray-900">
+                <Target size={18} className="mr-2 text-gray-400" />
+                Continue Practice
+              </div>
+              <div className="mb-6">
+                <div className="mb-2 text-4xl font-bold text-gray-900">
+                  {stats.answeredQuestions} / {stats.totalQuestions}
+                </div>
+                <div className="mb-3 text-sm text-gray-500">
+                  {progressPercent}% completed · {stats.remainingQuestions} questions remaining
+                </div>
+                <div className="h-2 w-full rounded-full bg-gray-100">
+                  <div
+                    className="relative h-2 rounded-full bg-[#0B1120]"
+                    style={{ width: `${progressPercent}%` }}
+                  >
+                    <div className="absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-white bg-[#0B1120] shadow-sm" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => onPracticeClick("sequential")}
+                className="inline-flex min-h-11 items-center rounded-xl bg-[#0B1120] px-5 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]"
+              >
+                Continue Practice
+                <ArrowRight size={14} className="ml-2" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onPracticeClick("incorrect")}
+                className="min-h-11 rounded-xl border border-gray-200 bg-white px-5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Review {stats.incorrectQuestions} Incorrect
+              </button>
+              <button
+                type="button"
+                onClick={onExamClick}
+                className="min-h-11 rounded-xl border border-gray-200 bg-white px-5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Start Mock Exam
+              </button>
+            </div>
+          </article>
+
+          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-1 flex items-center font-medium text-gray-900">
+              <CalendarCheck size={18} className="mr-2 text-gray-400" />
+              Today's Plan
+            </div>
+            <p className="mb-6 ml-6 text-xs text-gray-500">Suggested for today</p>
+
+            <div className="mb-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center text-sm text-gray-700">
+                  <div className="mr-3 h-4 w-4 shrink-0 rounded-full border-2 border-blue-500" />
+                  Regular questions
+                </div>
+                <span className="text-sm text-gray-500">20 questions</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center text-sm text-gray-700">
+                  <div className="mr-3 h-4 w-4 shrink-0 rounded-full border-2 border-yellow-500" />
+                  Review incorrect
+                </div>
+                <span className="text-sm text-gray-500">
+                  {stats.incorrectQuestions} questions
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center text-sm text-gray-700">
+                  <div className="mr-3 h-4 w-4 shrink-0 rounded-full border-2 border-emerald-500" />
+                  Review bookmarked
+                </div>
+                <span className="text-sm text-gray-500">
+                  {stats.bookmarkedQuestions} questions
+                </span>
+              </div>
+            </div>
+
+            <button className="flex items-center text-sm font-medium text-gray-600 transition-colors hover:text-gray-900">
+              Customize your plan
+              <ArrowRight size={14} className="ml-2" />
+            </button>
+          </article>
         </section>
 
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Total"
-            value={stats.totalQuestions}
-            detail="Questions in the local bank"
-            icon={<ListChecks size={19} />}
-          />
-          <StatCard
-            label="Answered"
-            value={stats.answeredQuestions}
-            detail={`${stats.remainingQuestions} remaining`}
-            icon={<CheckCircle2 size={19} />}
-          />
+        <section className="grid grid-cols-2 gap-6 lg:grid-cols-4">
           <StatCard
             label="Accuracy"
             value={`${stats.accuracyPercent}%`}
             detail="Based on all answer attempts"
-            icon={<Target size={19} />}
+            icon={<Target size={16} />}
+            accent="text-purple-500"
           />
           <StatCard
             label="Incorrect"
             value={stats.incorrectQuestions}
-            detail="Questions with latest incorrect result"
-            icon={<XCircle size={19} />}
-          />
-        </section>
-
-        <section className="grid gap-3 sm:grid-cols-2">
-          <StatCard
-            label="Guessed"
-            value={stats.guessedQuestions}
-            detail="Questions marked as guessed"
-            icon={<CircleHelp size={19} />}
+            detail="Questions to review"
+            icon={<XCircle size={16} />}
+            accent="text-red-500"
           />
           <StatCard
             label="Bookmarked"
             value={stats.bookmarkedQuestions}
-            detail="Questions saved for review"
-            icon={<Bookmark size={19} />}
+            detail="Questions saved for later"
+            icon={<Bookmark size={16} />}
+            accent="text-yellow-500"
+          />
+          <StatCard
+            label="Guessed"
+            value={stats.guessedQuestions}
+            detail="Questions marked as guessed"
+            icon={<CircleHelp size={16} />}
+            accent="text-blue-500"
           />
         </section>
+
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <article className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-6">
+              <div className="mb-1 flex items-center font-medium text-gray-900">
+                <Layers size={18} className="mr-2 text-gray-400" />
+                Weak Areas
+              </div>
+              <p className="ml-6 text-xs text-gray-500">
+                Topics that need more attention
+              </p>
+            </div>
+
+            <div className="flex-1 space-y-5">
+              <WeakArea
+                label="EC2"
+                percent={35}
+                icon={<Server size={12} />}
+                iconClass="bg-orange-100 text-orange-500"
+              />
+              <WeakArea
+                label="VPC"
+                percent={20}
+                icon={<Network size={12} />}
+                iconClass="bg-purple-100 text-purple-500"
+              />
+              <WeakArea
+                label="IAM"
+                percent={18}
+                icon={<Users size={12} />}
+                iconClass="bg-emerald-100 text-emerald-500"
+              />
+            </div>
+          </article>
+
+          <article className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-6">
+              <div className="mb-1 flex items-center font-medium text-gray-900">
+                <Clock size={18} className="mr-2 text-gray-400" />
+                Recent Activity
+              </div>
+              <p className="ml-6 text-xs text-gray-500">
+                Your latest question attempts
+              </p>
+            </div>
+
+            <div className="flex-1 space-y-4">
+              {progressList.slice(-5).reverse().map((progress) => {
+                const isCorrect = progress.lastResult === "correct";
+
+                return (
+                  <div
+                    key={progress.questionId}
+                    className="flex items-center justify-between border-b border-gray-50 pb-3 text-sm last:border-b-0"
+                  >
+                    <div className="flex w-1/3 items-center">
+                      {isCorrect ? (
+                        <CheckCircle2 size={16} className="mr-2 text-emerald-500" />
+                      ) : (
+                        <XCircle size={16} className="mr-2 text-red-500" />
+                      )}
+                      <span className="font-medium text-gray-700">
+                        Question #{progress.questionId}
+                      </span>
+                    </div>
+                    <div className="w-1/4">
+                      <span
+                        className={[
+                          "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium",
+                          isCorrect
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-red-50 text-red-500",
+                        ].join(" ")}
+                      >
+                        {isCorrect ? "Correct" : "Incorrect"}
+                      </span>
+                    </div>
+                    <div className="w-1/4 text-gray-500">Practice</div>
+                    <div className="w-1/6 text-right text-xs text-gray-400">Local</div>
+                  </div>
+                );
+              })}
+
+              {progressList.length === 0 ? (
+                <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
+                  No recent activity yet. Start a practice session to populate history.
+                </p>
+              ) : null}
+            </div>
+          </article>
+        </section>
       </div>
-    </main>
+    </AppShell>
   );
 }

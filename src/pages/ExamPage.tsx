@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlarmClock, ArrowLeft, CheckCircle2, Send } from "lucide-react";
+import { AppShell } from "../components/AppShell";
 import { AnswerOptions } from "../components/AnswerOptions";
 import { ExplanationPanel } from "../components/ExplanationPanel";
 import { QuestionCard } from "../components/QuestionCard";
@@ -13,9 +14,12 @@ import {
 import type { ChoiceKey } from "../domain/question";
 import { normalizeAnswer } from "../domain/question";
 import { saveExamSession } from "../db/examRepository";
+import type { PracticeMode } from "../domain/practiceMode";
 
 type ExamPageProps = {
   onDashboardClick: () => void;
+  onPracticeClick?: (mode?: PracticeMode) => void;
+  onExamClick?: () => void;
 };
 
 function formatTime(seconds: number): string {
@@ -32,7 +36,11 @@ function createExamId(): string {
   return `exam-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function ExamPage({ onDashboardClick }: ExamPageProps) {
+export function ExamPage({
+  onDashboardClick,
+  onPracticeClick,
+  onExamClick,
+}: ExamPageProps) {
   const [examId] = useState(createExamId);
   const [startedAt] = useState(() => new Date().toISOString());
   const [remainingSeconds, setRemainingSeconds] = useState(EXAM_DURATION_SECONDS);
@@ -141,45 +149,47 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f4f1ea] px-4 py-5 text-slate-950 sm:px-6 sm:py-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:gap-5">
-        <header className="flex flex-col gap-4 border-b border-stone-300/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <AppShell
+      active="exam"
+      onDashboardClick={onDashboardClick}
+      onPracticeClick={onPracticeClick}
+      onExamClick={onExamClick}
+    >
+      <div className="space-y-5">
+        <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-950 text-white">
-                <AlarmClock size={17} strokeWidth={2.2} />
-              </span>
-              <span>AWS SAA-C03</span>
+            <div className="mb-2 flex items-center text-sm font-medium text-gray-500">
+              <AlarmClock size={17} className="mr-2" />
+              AWS SAA-C03
             </div>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Mock exam
-            </h1>
+            <h2 className="text-3xl font-bold text-gray-900">Mock exam</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              65 questions. 130 minutes. Unanswered questions count as incorrect.
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={onDashboardClick}
-              className="inline-flex min-h-10 items-center gap-2 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-            >
-              <ArrowLeft size={17} />
-              Dashboard
-            </button>
-          </div>
-        </header>
+          <button
+            type="button"
+            onClick={onDashboardClick}
+            className="inline-flex min-h-10 w-fit items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+          >
+            <ArrowLeft size={17} />
+            Dashboard
+          </button>
+        </section>
 
-        <section className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 rounded-md border border-stone-300/80 bg-[#f4f1ea]/95 p-2 shadow-sm shadow-stone-300/40 backdrop-blur">
-          <span className="inline-flex min-h-11 items-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900">
+        <section className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+          <span className="inline-flex min-h-11 items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900">
             {formatTime(remainingSeconds)}
           </span>
-          <span className="text-sm font-medium text-slate-600">
+          <span className="text-sm font-medium text-gray-600">
             {Object.keys(answers).length} / {examQuestions.length} answered
           </span>
           {!score ? (
             <button
               type="button"
               onClick={submitExamWithConfirmation}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#0B1120] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
               disabled={isSaving}
             >
               <Send size={17} />
@@ -191,17 +201,17 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
         {score ? (
           <section
             aria-label="Exam score summary"
-            className="rounded-md border border-emerald-200 bg-emerald-50/80 p-5 shadow-sm shadow-emerald-100/70 sm:p-6"
+            className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 shadow-sm sm:p-6"
           >
             <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white">
                 <CheckCircle2 size={20} />
               </span>
               <div>
                 <p className="text-base font-semibold text-emerald-950">
                   Score {score.scorePercent}%
                 </p>
-                <p className="mt-1 text-sm text-slate-700">
+                <p className="mt-1 text-sm text-gray-700">
                   {score.correctQuestions} correct / {score.totalQuestions} total.
                   {isSaving ? " Saving..." : " Saved locally."}
                 </p>
@@ -242,7 +252,7 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
 
         {score && incorrectQuestions.length > 0 ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-slate-950">Incorrect review</h2>
+            <h2 className="text-lg font-semibold text-gray-950">Incorrect review</h2>
             {incorrectQuestions.map((incorrectQuestion) => (
               <div key={incorrectQuestion.id} className="space-y-3">
                 <QuestionCard
@@ -260,6 +270,6 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
           </section>
         ) : null}
       </div>
-    </main>
+    </AppShell>
   );
 }

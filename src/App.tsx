@@ -13,12 +13,26 @@ export default function App() {
       <PracticePage
         initialMode={practiceMode}
         onDashboardClick={() => setPage("dashboard")}
+        onExamClick={() => setPage("exam")}
+        onPracticeClick={(mode) => {
+          setPracticeMode(mode ?? "sequential");
+          setPage("practice");
+        }}
       />
     );
   }
 
   if (page === "exam") {
-    return <ExamPage onDashboardClick={() => setPage("dashboard")} />;
+    return (
+      <ExamPage
+        onDashboardClick={() => setPage("dashboard")}
+        onPracticeClick={(mode) => {
+          setPracticeMode(mode ?? "sequential");
+          setPage("practice");
+        }}
+        onExamClick={() => setPage("exam")}
+      />
+    );
   }
 
   return (

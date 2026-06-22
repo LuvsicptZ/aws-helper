@@ -29,7 +29,10 @@ async function expectVisible(locator, label) {
 async function runDesktopFlow(page) {
   console.log("E2E desktop: dashboard");
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  await expectVisible(page.getByRole("heading", { name: "Dashboard" }), "Dashboard");
+  await expectVisible(
+    page.getByRole("heading", { name: /Welcome back/ }),
+    "Dashboard",
+  );
 
   console.log("E2E desktop: practice");
   await page.getByRole("button", { name: "Practice" }).click();
@@ -42,7 +45,10 @@ async function runDesktopFlow(page) {
 
   console.log("E2E desktop: back to dashboard");
   await page.getByRole("button", { name: "Dashboard" }).click();
-  await expectVisible(page.getByRole("heading", { name: "Dashboard" }), "Dashboard");
+  await expectVisible(
+    page.getByRole("heading", { name: /Welcome back/ }),
+    "Dashboard",
+  );
 }
 
 async function runMobileExamFlow(page) {

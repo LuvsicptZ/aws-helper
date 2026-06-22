@@ -51,13 +51,13 @@ export function AnswerOptions({
 
           const optionClass = showResult
             ? isCorrect
-              ? "border-emerald-500 bg-emerald-50 text-emerald-950"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-950"
               : isWrongSelection
-                ? "border-rose-400 bg-rose-50 text-rose-950"
-                : "border-stone-200 bg-white text-slate-500"
+                ? "border-red-200 bg-red-50 text-red-950"
+                : "border-gray-200 bg-white text-gray-400"
             : isSelected
-              ? "border-slate-950 bg-slate-50 ring-2 ring-slate-300"
-              : "border-stone-200 bg-white hover:border-slate-400 hover:bg-stone-50";
+              ? "border-[#0B1120] bg-gray-50 ring-2 ring-gray-200"
+              : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50";
 
           return (
             <button
@@ -67,19 +67,19 @@ export function AnswerOptions({
               onClick={() => toggleChoice(choice)}
               aria-label={`Choice ${choice}`}
               className={[
-                "group flex w-full min-w-0 gap-3 rounded-md border p-4 text-left transition-[background-color,border-color,box-shadow,transform] duration-150",
+                "group flex w-full min-w-0 gap-3 rounded-xl border p-4 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]",
                 optionClass,
                 disabled ? "cursor-default" : "hover:-translate-y-0.5",
               ].join(" ")}
             >
               <span
                 className={[
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold",
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold",
                   showResult && isCorrect
-                    ? "bg-emerald-600 text-white"
+                    ? "bg-emerald-500 text-white"
                     : showResult && isWrongSelection
-                      ? "bg-rose-500 text-white"
-                      : "bg-stone-100 text-slate-950",
+                      ? "bg-red-500 text-white"
+                      : "bg-gray-100 text-gray-900",
                 ].join(" ")}
               >
                 {choice}
@@ -90,10 +90,10 @@ export function AnswerOptions({
                   showResult && isCorrect
                     ? "text-emerald-950"
                     : showResult && isWrongSelection
-                      ? "text-rose-950"
+                      ? "text-red-950"
                       : showResult
-                        ? "text-slate-500"
-                        : "text-slate-800",
+                        ? "text-gray-400"
+                        : "text-gray-800",
                 ].join(" ")}
               >
                 {options[choice]}

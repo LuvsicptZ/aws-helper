@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { BookOpenCheck } from "lucide-react";
+import { BookOpenCheck, Gauge } from "lucide-react";
+import { AppShell } from "../components/AppShell";
 import { AnswerOptions } from "../components/AnswerOptions";
 import { EmptyModeState } from "../components/EmptyModeState";
 import { ExplanationPanel } from "../components/ExplanationPanel";
@@ -45,11 +46,15 @@ function upsertProgress(
 type PracticePageProps = {
   initialMode?: PracticeMode;
   onDashboardClick?: () => void;
+  onPracticeClick?: (mode?: PracticeMode) => void;
+  onExamClick?: () => void;
 };
 
 export function PracticePage({
   initialMode = "sequential",
   onDashboardClick,
+  onPracticeClick,
+  onExamClick,
 }: PracticePageProps) {
   const [mode, setMode] = useState<PracticeMode>(initialMode);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -185,91 +190,116 @@ export function PracticePage({
   }
 
   return (
-    <main className="min-h-screen bg-[#f4f1ea] px-4 py-5 text-slate-950 sm:px-6 sm:py-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:gap-5">
-        <header className="flex flex-col gap-4 border-b border-stone-300/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <AppShell
+      active="practice"
+      onDashboardClick={onDashboardClick}
+      onPracticeClick={onPracticeClick}
+      onExamClick={onExamClick}
+    >
+      <div className="space-y-6">
+        <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-950 text-white">
-                <BookOpenCheck size={17} strokeWidth={2.2} />
-              </span>
-              <span>AWS SAA-C03</span>
+            <div className="mb-2 flex items-center text-sm font-medium text-gray-500">
+              <BookOpenCheck size={17} className="mr-2" />
+              AWS SAA-C03
             </div>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Practice session
-            </h1>
+            <h2 className="text-3xl font-bold text-gray-900">Practice session</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Answer directly from the options. Feedback appears after selection.
+            </p>
           </div>
 
-          <div className="min-w-0 sm:w-72">
-            {onDashboardClick ? (
-              <button
-                type="button"
-                onClick={onDashboardClick}
-                className="mb-4 inline-flex min-h-10 items-center justify-center rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-              >
-                Dashboard
-              </button>
-            ) : null}
-            <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+          <div className="w-full rounded-2xl border border-gray-200 bg-white p-4 shadow-sm lg:w-80">
+            <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-gray-500">
               <span>Progress</span>
               <span>
                 {hasQuestions ? safeCurrentIndex + 1 : 0} / {visibleTotal}
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-stone-300/80">
+            <div className="h-2 overflow-hidden rounded-full bg-gray-100">
               <div
-                className="h-full rounded-full bg-slate-950 transition-[width] duration-300 ease-out"
+                className="h-full rounded-full bg-[#0B1120] transition-[width] duration-300 ease-out"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
-        </header>
+        </section>
 
         <PracticeModeTabs mode={mode} onModeChange={handleModeChange} />
 
-        {question ? (
-          <>
-            <QuestionNavigator
-              currentIndex={safeCurrentIndex}
-              totalQuestions={visibleTotal}
-              onPrevious={goToPrevious}
-              onNext={goToNext}
-            />
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <section className="space-y-4">
+            {question ? (
+              <>
+                <QuestionNavigator
+                  currentIndex={safeCurrentIndex}
+                  totalQuestions={visibleTotal}
+                  onPrevious={goToPrevious}
+                  onNext={goToNext}
+                />
 
-            <QuestionCard
-              question={question}
-              currentIndex={safeCurrentIndex}
-              totalQuestions={visibleTotal}
-            />
+                <QuestionCard
+                  question={question}
+                  currentIndex={safeCurrentIndex}
+                  totalQuestions={visibleTotal}
+                />
 
-            <AnswerOptions
-              options={question.options}
-              selected={selected}
-              disabled={Boolean(result) || isSaving}
-              isMultiAnswer={isMultiAnswer}
-              result={result}
-              correctAnswer={question.answer}
-              onChange={handleAnswerChange}
-            />
+                <AnswerOptions
+                  options={question.options}
+                  selected={selected}
+                  disabled={Boolean(result) || isSaving}
+                  isMultiAnswer={isMultiAnswer}
+                  result={result}
+                  correctAnswer={question.answer}
+                  onChange={handleAnswerChange}
+                />
 
-            {isSaving ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-500">Saving...</span>
+                {isSaving ? (
+                  <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500 shadow-sm">
+                    Saving...
+                  </div>
+                ) : null}
+
+                {result ? (
+                  <ExplanationPanel
+                    result={result}
+                    correctAnswer={question.answer}
+                    explanation={question.explanation}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <EmptyModeState mode={mode} />
+            )}
+          </section>
+
+          <aside className="space-y-4">
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center font-medium text-gray-900">
+                <Gauge size={18} className="mr-2 text-gray-400" />
+                Session Context
               </div>
-            ) : null}
-
-            {result ? (
-              <ExplanationPanel
-                result={result}
-                correctAnswer={question.answer}
-                explanation={question.explanation}
-              />
-            ) : null}
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between border-b border-gray-100 pb-3">
+                  <span className="text-gray-500">Mode</span>
+                  <span className="font-medium text-gray-900">{mode}</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-100 pb-3">
+                  <span className="text-gray-500">Status</span>
+                  <span className="font-medium text-gray-900">{result ?? "open"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Selected</span>
+                  <span className="font-medium text-gray-900">{selected.length}</span>
+                </div>
+              </div>
+            </section>
 
             <QuestionReviewPanel
               bookmarked={currentProgress?.bookmarked === true}
               markedGuessed={currentProgress?.markedGuessed === true}
               note={currentProgress?.note ?? ""}
+              disabled={!question}
               onBookmarkedChange={(bookmarked) =>
                 void saveReviewMetadata({ bookmarked })
               }
@@ -278,11 +308,9 @@ export function PracticePage({
               }
               onNoteChange={(note) => void saveReviewMetadata({ note })}
             />
-          </>
-        ) : (
-          <EmptyModeState mode={mode} />
-        )}
+          </aside>
+        </div>
       </div>
-    </main>
+    </AppShell>
   );
 }
