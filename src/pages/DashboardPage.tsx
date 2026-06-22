@@ -1,21 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  ArrowRight,
   BarChart3,
   Bookmark,
   CheckCircle2,
   CircleHelp,
   ListChecks,
+  PlayCircle,
   Target,
   XCircle,
 } from "lucide-react";
 import { AuthPanel } from "../components/AuthPanel";
 import { totalQuestions } from "../data/questions";
 import { calculateDashboardStats } from "../domain/dashboard";
+import type { PracticeMode } from "../domain/practiceMode";
 import type { QuestionProgress } from "../domain/progress";
 import { getAllProgress } from "../db/progressRepository";
 
 type DashboardPageProps = {
-  onPracticeClick: () => void;
+  onPracticeClick: (mode?: PracticeMode) => void;
   onExamClick: () => void;
 };
 
@@ -47,6 +50,41 @@ function StatCard({ label, value, detail, icon }: StatCardProps) {
   );
 }
 
+type PrimaryActionProps = {
+  label: string;
+  detail: string;
+  primary?: boolean;
+  onClick: () => void;
+};
+
+function PrimaryAction({ label, detail, primary = false, onClick }: PrimaryActionProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "flex min-h-16 items-center justify-between gap-3 rounded-md border px-4 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950",
+        primary
+          ? "border-slate-950 bg-slate-950 text-white shadow-sm shadow-stone-400/40 hover:bg-slate-800"
+          : "border-stone-300 bg-white text-slate-800 shadow-sm shadow-stone-300/30 hover:bg-stone-50",
+      ].join(" ")}
+    >
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold">{label}</span>
+        <span
+          className={[
+            "mt-1 block text-xs leading-5",
+            primary ? "text-slate-200" : "text-slate-500",
+          ].join(" ")}
+        >
+          {detail}
+        </span>
+      </span>
+      <ArrowRight size={18} className="shrink-0" />
+    </button>
+  );
+}
+
 export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPageProps) {
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
 
@@ -59,11 +97,15 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
   }, [refreshProgress]);
 
   const stats = calculateDashboardStats(totalQuestions, progressList);
+  const progressPercent =
+    stats.totalQuestions === 0
+      ? 0
+      : Math.round((stats.answeredQuestions / stats.totalQuestions) * 100);
 
   return (
     <main className="min-h-screen bg-[#f4f1ea] px-4 py-5 text-slate-950 sm:px-6 sm:py-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-5">
-        <header className="flex flex-col gap-4 border-b border-stone-300/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <header className="border-b border-stone-300/70 pb-5">
           <div>
             <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
               <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-950 text-white">
@@ -75,27 +117,51 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
               Dashboard
             </h1>
           </div>
+        </header>
 
-          <div className="flex flex-col gap-3 sm:items-end">
-            <AuthPanel onSyncComplete={refreshProgress} />
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={onPracticeClick}
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-stone-300/30 transition hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-              >
-                Practice
-              </button>
-              <button
-                type="button"
-                onClick={onExamClick}
-                className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-              >
-                Mock exam
-              </button>
+        <section className="grid gap-4 rounded-md border border-stone-300/80 bg-[#fffdf8] p-5 shadow-sm shadow-stone-300/30 lg:grid-cols-[1fr_1.2fr]">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <PlayCircle size={18} />
+              Study next
+            </div>
+            <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+              {stats.answeredQuestions} / {stats.totalQuestions}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {progressPercent}% complete. {stats.remainingQuestions} questions remaining.
+            </p>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-stone-200">
+              <div
+                className="h-full rounded-full bg-slate-950 transition-[width] duration-300 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
           </div>
-        </header>
+
+          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+            <PrimaryAction
+              primary
+              label="Continue practice"
+              detail="Resume regular question flow"
+              onClick={() => onPracticeClick("sequential")}
+            />
+            <PrimaryAction
+              label="Review incorrect"
+              detail={`${stats.incorrectQuestions} questions waiting`}
+              onClick={() => onPracticeClick("incorrect")}
+            />
+            <PrimaryAction
+              label="Start mock exam"
+              detail="65 questions, 130 minutes"
+              onClick={onExamClick}
+            />
+          </div>
+        </section>
+
+        <section className="rounded-md border border-stone-300/80 bg-stone-100/70 p-3">
+          <AuthPanel onSyncComplete={refreshProgress} />
+        </section>
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard

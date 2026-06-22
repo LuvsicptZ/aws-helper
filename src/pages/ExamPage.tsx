@@ -125,6 +125,21 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
     setCurrentIndex((index) => Math.min(examQuestions.length - 1, index + 1));
   }
 
+  function submitExamWithConfirmation() {
+    const answeredCount = Object.keys(answers).length;
+
+    if (
+      answeredCount < examQuestions.length &&
+      !window.confirm(
+        `You answered ${answeredCount} / ${examQuestions.length} questions. Submit anyway?`,
+      )
+    ) {
+      return;
+    }
+
+    void submitExam(EXAM_DURATION_SECONDS - remainingSeconds);
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f1ea] px-4 py-5 text-slate-950 sm:px-6 sm:py-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:gap-5">
@@ -163,7 +178,7 @@ export function ExamPage({ onDashboardClick }: ExamPageProps) {
           {!score ? (
             <button
               type="button"
-              onClick={() => void submitExam(EXAM_DURATION_SECONDS - remainingSeconds)}
+              onClick={submitExamWithConfirmation}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-stone-400/40 transition hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-wait disabled:opacity-70"
               disabled={isSaving}
             >

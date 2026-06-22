@@ -1,0 +1,22 @@
+[
+  {
+    "name": "desktop-dashboard",
+    "title": "SAA Sprint",
+    "text": "AWS SAA-C03\nDashboard\nSign in\nPractice\nMock exam\n\nTOTAL\n\n1019\n\nQuestions in the local bank\n\nANSWERED\n\n0\n\n1019 remaining\n\nACCURACY\n\n0%\n\nBased on all answer attempts\n\nINCORRECT\n\n0\n\nQuestions with latest incorrect result\n\nGUESSED\n\n0\n\nQuestions marked as guessed\n\nBOOKMARKED\n\n0\n\nQuestions saved for review"
+  },
+  {
+    "name": "mobile-dashboard",
+    "title": "SAA Sprint",
+    "text": "AWS SAA-C03\nDashboard\nSign in\nPractice\nMock exam\n\nTOTAL\n\n1019\n\nQuestions in the local bank\n\nANSWERED\n\n0\n\n1019 remaining\n\nACCURACY\n\n0%\n\nBased on all answer attempts\n\nINCORRECT\n\n0\n\nQuestions with latest incorrect result\n\nGUESSED\n\n0\n\nQuestions marked as guessed\n\nBOOKMARKED\n\n0\n\nQuestions saved for review"
+  },
+  {
+    "name": "desktop-practice",
+    "title": "SAA Sprint",
+    "text": "AWS SAA-C03\nPractice session\nDashboard\nPROGRESS\n1 / 1019\n顺序\n随机\n错题\n蒙对\n收藏\nPrevious\nQuestion 1\nNext\n\nQUESTION 1 OF 1019\n\nA company collects data for temperature, humidity, and atmospheric pressure in cities across multiple continents. The average volume of data that the company collects from each site daily is 500 GB. Each site has a high-speed Internet connection. The company wants to aggregate the data from all these global sites as quickly as possible in a single Amazon S3 bucket. The solution must minimize operational complexity. Which solution meets these requirements?\n收藏\n蒙对\nNOTE\nA\nTurn on S3 Transfer Acceleration on the destination S3 bucket. Use multipart uploads to directly upload site data to the destination S3 bucket.\nB\nUpload the data from each site to an S3 bucket in the closest Region. Use S3 Cross-Region Replication to copy objects to the destination S3 bucket. Then remove the data from the origin S3 bucket.\nC\nSchedule AWS Snowball Edge Storage Optimized device jobs daily to transfer data from each site to the closest Region. Use S3 Cross-Region Replication to copy objects to the destination S3 bucket.\nD\nUpload the data from each site to an Amazon EC2 instance in the closest Region. Store the data in an Amazon Elastic Block Store (Amazon EBS) volume. At regular intervals, take an EBS snapshot and copy it to the Region that contains the destination S3 bucket. Restore the EBS volume in that Region."
+  },
+  {
+    "name": "mobile-exam",
+    "title": "SAA Sprint",
+    "text": "AWS SAA-C03\nMock exam\nDashboard\n130:00\n0 / 65 answered\nSubmit\nPrevious\nQuestion 1\nNext\n\nQUESTION 1 OF 65\n\nA company runs a microservice-based serverless web application. The application must be able to retrieve data from multiple Amazon DynamoDB tables A solutions architect needs to give the application the ability to retrieve the data with no impact on the baseline performance of the application. Which solution will meet these requirements in the MOST operationally efficient way?\nA\nAWS AppSync pipeline resolvers\nB\nAmazon CloudFront with Lambda@Edge functions\nC\nEdge-optimized Amazon API Gateway with AWS Lambda functions\nD\nAmazon Athena Federated Query with a DynamoDB connector"
+  }
+]

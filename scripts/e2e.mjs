@@ -59,6 +59,7 @@ async function runMobileExamFlow(page) {
   await page.getByRole("button", { name: "Choice A" }).first().click();
   await expectVisible(page.getByText(/1 \/ 65 answered/), "updated answered count");
 
+  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Submit" }).click();
   await expectVisible(page.getByText(/Score \d+%/), "score summary");
   await expectVisible(page.getByLabel("Exam score summary"), "local save status");

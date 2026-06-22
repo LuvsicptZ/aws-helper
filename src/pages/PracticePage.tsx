@@ -43,11 +43,15 @@ function upsertProgress(
 }
 
 type PracticePageProps = {
+  initialMode?: PracticeMode;
   onDashboardClick?: () => void;
 };
 
-export function PracticePage({ onDashboardClick }: PracticePageProps) {
-  const [mode, setMode] = useState<PracticeMode>("sequential");
+export function PracticePage({
+  initialMode = "sequential",
+  onDashboardClick,
+}: PracticePageProps) {
+  const [mode, setMode] = useState<PracticeMode>(initialMode);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answerState, setAnswerState] = useState<{
     questionId?: number;
@@ -238,19 +242,6 @@ export function PracticePage({ onDashboardClick }: PracticePageProps) {
               totalQuestions={visibleTotal}
             />
 
-            <QuestionReviewPanel
-              bookmarked={currentProgress?.bookmarked === true}
-              markedGuessed={currentProgress?.markedGuessed === true}
-              note={currentProgress?.note ?? ""}
-              onBookmarkedChange={(bookmarked) =>
-                void saveReviewMetadata({ bookmarked })
-              }
-              onMarkedGuessedChange={(markedGuessed) =>
-                void saveReviewMetadata({ markedGuessed })
-              }
-              onNoteChange={(note) => void saveReviewMetadata({ note })}
-            />
-
             <AnswerOptions
               options={question.options}
               selected={selected}
@@ -274,6 +265,19 @@ export function PracticePage({ onDashboardClick }: PracticePageProps) {
                 explanation={question.explanation}
               />
             ) : null}
+
+            <QuestionReviewPanel
+              bookmarked={currentProgress?.bookmarked === true}
+              markedGuessed={currentProgress?.markedGuessed === true}
+              note={currentProgress?.note ?? ""}
+              onBookmarkedChange={(bookmarked) =>
+                void saveReviewMetadata({ bookmarked })
+              }
+              onMarkedGuessedChange={(markedGuessed) =>
+                void saveReviewMetadata({ markedGuessed })
+              }
+              onNoteChange={(note) => void saveReviewMetadata({ note })}
+            />
           </>
         ) : (
           <EmptyModeState mode={mode} />
