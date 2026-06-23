@@ -1,6 +1,6 @@
 {
-  "name": "SAA Sprint",
-  "short_name": "SAA Sprint",
+  "name": "AWS Mastery",
+  "short_name": "AWS Mastery",
   "description": "AWS SAA-C03 practice, review, and mock exam trainer.",
   "start_url": "/",
   "scope": "/",
