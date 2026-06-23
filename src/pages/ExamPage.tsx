@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlarmClock, ArrowLeft, CheckCircle2, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Send } from "lucide-react";
 import { AppShell } from "../components/AppShell";
+import type { ShellRoute } from "../components/AppShell";
 import { AnswerOptions } from "../components/AnswerOptions";
 import { ExplanationPanel } from "../components/ExplanationPanel";
 import { QuestionCard } from "../components/QuestionCard";
@@ -9,6 +10,7 @@ import { questions } from "../data/questions";
 import {
   createExamQuestionIds,
   EXAM_DURATION_SECONDS,
+  EXAM_QUESTION_COUNT,
   scoreExam,
 } from "../domain/exam";
 import type { ChoiceKey } from "../domain/question";
@@ -20,6 +22,7 @@ type ExamPageProps = {
   onDashboardClick: () => void;
   onPracticeClick?: (mode?: PracticeMode) => void;
   onExamClick?: () => void;
+  onNavigate?: (route: ShellRoute) => void;
 };
 
 function formatTime(seconds: number): string {
@@ -36,10 +39,15 @@ function createExamId(): string {
   return `exam-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function getExamDurationMinutes(): number {
+  return Math.round(EXAM_DURATION_SECONDS / 60);
+}
+
 export function ExamPage({
   onDashboardClick,
   onPracticeClick,
   onExamClick,
+  onNavigate,
 }: ExamPageProps) {
   const [examId] = useState(createExamId);
   const [startedAt] = useState(() => new Date().toISOString());
@@ -151,6 +159,7 @@ export function ExamPage({
   return (
     <AppShell
       active="exam"
+      onNavigate={onNavigate}
       onDashboardClick={onDashboardClick}
       onPracticeClick={onPracticeClick}
       onExamClick={onExamClick}
@@ -158,13 +167,10 @@ export function ExamPage({
       <div className="space-y-5">
         <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="mb-2 flex items-center text-sm font-medium text-gray-500">
-              <AlarmClock size={17} className="mr-2" />
-              AWS SAA-C03
-            </div>
             <h2 className="text-3xl font-bold text-gray-900">Mock exam</h2>
             <p className="mt-1 text-sm text-gray-500">
-              65 questions. 130 minutes. Unanswered questions count as incorrect.
+              {EXAM_QUESTION_COUNT} questions. {getExamDurationMinutes()} minutes.
+              Unanswered questions count as incorrect.
             </p>
           </div>
 
@@ -231,8 +237,6 @@ export function ExamPage({
 
             <QuestionCard
               question={question}
-              currentIndex={currentIndex}
-              totalQuestions={examQuestions.length}
             />
 
             <AnswerOptions
@@ -257,8 +261,6 @@ export function ExamPage({
               <div key={incorrectQuestion.id} className="space-y-3">
                 <QuestionCard
                   question={incorrectQuestion}
-                  currentIndex={examQuestionIds.indexOf(incorrectQuestion.id)}
-                  totalQuestions={examQuestions.length}
                 />
                 <ExplanationPanel
                   result="incorrect"

@@ -20,10 +20,22 @@ import {
 } from "lucide-react";
 import type { PracticeMode } from "../domain/practiceMode";
 
+export type ShellRoute =
+  | "dashboard"
+  | "practice"
+  | "exam"
+  | "topics"
+  | "notes"
+  | "flashcards"
+  | "analytics"
+  | "history"
+  | "focus";
+
 type AppShellProps = {
-  active: "dashboard" | "practice" | "exam";
+  active: ShellRoute;
   children: React.ReactNode;
   headerActions?: React.ReactNode;
+  onNavigate?: (route: ShellRoute) => void;
   onDashboardClick?: () => void;
   onPracticeClick?: (mode?: PracticeMode) => void;
   onExamClick?: () => void;
@@ -66,6 +78,7 @@ export function AppShell({
   active,
   children,
   headerActions,
+  onNavigate,
   onDashboardClick,
   onPracticeClick,
   onExamClick,
@@ -79,9 +92,8 @@ export function AppShell({
           </div>
           <div>
             <h1 className="text-sm font-semibold leading-tight text-gray-900">
-              AWS SAA-C03
+              AWS Mastery
             </h1>
-            <p className="text-xs text-gray-500">Practice</p>
           </div>
         </div>
 
@@ -91,7 +103,7 @@ export function AppShell({
               <NavButton
                 active={active === "dashboard"}
                 icon={<Home size={16} />}
-                onClick={onDashboardClick}
+                onClick={onDashboardClick ?? (() => onNavigate?.("dashboard"))}
               >
                 Dashboard
               </NavButton>
@@ -138,17 +150,47 @@ export function AppShell({
             <div>
               <SectionLabel>Study</SectionLabel>
               <nav className="space-y-1">
-                <NavButton icon={<Layers size={16} />}>Topics</NavButton>
-                <NavButton icon={<PenLine size={16} />}>My Notes</NavButton>
-                <NavButton icon={<FileQuestion size={16} />}>Flashcards</NavButton>
+                <NavButton
+                  active={active === "topics"}
+                  icon={<Layers size={16} />}
+                  onClick={() => onNavigate?.("topics")}
+                >
+                  Topics
+                </NavButton>
+                <NavButton
+                  active={active === "notes"}
+                  icon={<PenLine size={16} />}
+                  onClick={() => onNavigate?.("notes")}
+                >
+                  My Notes
+                </NavButton>
+                <NavButton
+                  active={active === "flashcards"}
+                  icon={<FileQuestion size={16} />}
+                  onClick={() => onNavigate?.("flashcards")}
+                >
+                  Flashcards
+                </NavButton>
               </nav>
             </div>
 
             <div>
               <SectionLabel>Progress</SectionLabel>
               <nav className="space-y-1">
-                <NavButton icon={<ChartLine size={16} />}>Analytics</NavButton>
-                <NavButton icon={<Clock size={16} />}>Study History</NavButton>
+                <NavButton
+                  active={active === "analytics"}
+                  icon={<ChartLine size={16} />}
+                  onClick={() => onNavigate?.("analytics")}
+                >
+                  Analytics
+                </NavButton>
+                <NavButton
+                  active={active === "history"}
+                  icon={<Clock size={16} />}
+                  onClick={() => onNavigate?.("history")}
+                >
+                  Study History
+                </NavButton>
               </nav>
             </div>
           </div>
@@ -160,11 +202,14 @@ export function AppShell({
               <Crosshair size={16} className="mr-2 text-orange-500" />
               <span className="text-sm font-semibold text-gray-900">Focus Mode</span>
             </div>
-            <p className="mb-2 text-xs text-gray-500">25-min session</p>
             <p className="mb-3 text-xs text-gray-600">
-              Eliminate distractions and focus.
+              Jump into a focused practice flow.
             </p>
-            <button className="w-full rounded-lg bg-[#0B1120] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800">
+            <button
+              type="button"
+              onClick={() => onNavigate?.("focus")}
+              className="w-full rounded-lg bg-[#0B1120] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+            >
               Start Focus Session
             </button>
           </div>
@@ -190,8 +235,7 @@ export function AppShell({
               <BarChart3 size={14} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">AWS SAA-C03</p>
-              <p className="text-xs text-gray-500">Practice</p>
+              <p className="text-sm font-semibold text-gray-900">AWS Mastery</p>
             </div>
           </div>
 

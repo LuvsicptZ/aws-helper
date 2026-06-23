@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { BookOpenCheck, Gauge } from "lucide-react";
+import { Gauge } from "lucide-react";
 import { AppShell } from "../components/AppShell";
+import type { ShellRoute } from "../components/AppShell";
 import { AnswerOptions } from "../components/AnswerOptions";
 import { EmptyModeState } from "../components/EmptyModeState";
 import { ExplanationPanel } from "../components/ExplanationPanel";
@@ -48,6 +49,7 @@ type PracticePageProps = {
   onDashboardClick?: () => void;
   onPracticeClick?: (mode?: PracticeMode) => void;
   onExamClick?: () => void;
+  onNavigate?: (route: ShellRoute) => void;
 };
 
 export function PracticePage({
@@ -55,6 +57,7 @@ export function PracticePage({
   onDashboardClick,
   onPracticeClick,
   onExamClick,
+  onNavigate,
 }: PracticePageProps) {
   const [mode, setMode] = useState<PracticeMode>(initialMode);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -192,6 +195,7 @@ export function PracticePage({
   return (
     <AppShell
       active="practice"
+      onNavigate={onNavigate}
       onDashboardClick={onDashboardClick}
       onPracticeClick={onPracticeClick}
       onExamClick={onExamClick}
@@ -199,10 +203,6 @@ export function PracticePage({
       <div className="space-y-6">
         <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="mb-2 flex items-center text-sm font-medium text-gray-500">
-              <BookOpenCheck size={17} className="mr-2" />
-              AWS SAA-C03
-            </div>
             <h2 className="text-3xl font-bold text-gray-900">Practice session</h2>
             <p className="mt-1 text-sm text-gray-500">
               Answer directly from the options. Feedback appears after selection.
@@ -240,8 +240,6 @@ export function PracticePage({
 
                 <QuestionCard
                   question={question}
-                  currentIndex={safeCurrentIndex}
-                  totalQuestions={visibleTotal}
                 />
 
                 <AnswerOptions

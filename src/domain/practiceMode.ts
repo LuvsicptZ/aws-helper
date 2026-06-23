@@ -9,11 +9,11 @@ export type PracticeMode =
   | "favorite";
 
 export const practiceModeLabels: Record<PracticeMode, string> = {
-  sequential: "顺序",
-  random: "随机",
-  incorrect: "错题",
-  guessed: "蒙对",
-  favorite: "收藏",
+  sequential: "Sequential",
+  random: "Random",
+  incorrect: "Incorrect",
+  guessed: "Guessed",
+  favorite: "Bookmarked",
 };
 
 export function filterQuestionsByPracticeMode(

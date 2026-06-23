@@ -26,6 +26,10 @@ async function expectVisible(locator, label) {
   expect(await locator.isVisible(), `Expected ${label} to be visible`);
 }
 
+function sidebar(page) {
+  return page.getByRole("complementary");
+}
+
 async function runDesktopFlow(page) {
   console.log("E2E desktop: dashboard");
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
@@ -34,8 +38,62 @@ async function runDesktopFlow(page) {
     "Dashboard",
   );
 
+  console.log("E2E desktop: secondary navigation");
+  const secondaryPages = [
+    ["Topics", "Topics"],
+    ["My Notes", "My Notes"],
+    ["Flashcards", "Flashcards"],
+    ["Analytics", "Analytics"],
+    ["Study History", "Study History"],
+  ];
+
+  for (const [buttonName, headingName] of secondaryPages) {
+    await page.getByRole("button", { name: buttonName }).click();
+    await expectVisible(
+      page.getByRole("heading", { name: headingName }),
+      headingName,
+    );
+  }
+
+  await page.getByRole("button", { name: "Start Focus Session" }).click();
+  await expectVisible(page.getByRole("heading", { name: "Focus Mode" }), "Focus Mode");
+
+  await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
+  await expectVisible(
+    page.getByRole("heading", { name: /Welcome back/ }),
+    "Dashboard",
+  );
+
+  console.log("E2E desktop: review mode switching");
+  await sidebar(page).getByRole("button", { name: "Review Incorrect" }).click();
+  await expectVisible(
+    page.getByRole("heading", { name: "Practice session" }),
+    "Practice session",
+  );
+  await expectVisible(page.getByText("Current mode: Incorrect"), "incorrect mode");
+  await sidebar(page).getByRole("button", { name: "Review Guessed" }).click();
+  await expectVisible(page.getByText("Current mode: Guessed"), "guessed mode");
+  await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
+  await expectVisible(
+    page.getByRole("heading", { name: /Welcome back/ }),
+    "Dashboard",
+  );
+
+  console.log("E2E desktop: mock exam restart");
+  await sidebar(page).getByRole("button", { name: "Mock Exams" }).click();
+  await expectVisible(page.getByRole("heading", { name: "Mock exam" }), "Mock exam");
+  await page.getByRole("button", { name: "Choice A" }).first().click();
+  await expectVisible(page.getByText(/1 \/ 65 answered/), "answered exam count");
+  await sidebar(page).getByRole("button", { name: "Mock Exams" }).click();
+  await expectVisible(page.getByText(/0 \/ 65 answered/), "reset exam count");
+  await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
+  await expectVisible(
+    page.getByRole("heading", { name: /Welcome back/ }),
+    "Dashboard",
+  );
+
   console.log("E2E desktop: practice");
-  await page.getByRole("button", { name: "Practice" }).click();
+  await page.getByRole("button", { name: "Continue Practice" }).click();
   await expectVisible(
     page.getByRole("heading", { name: "Practice session" }),
     "Practice session",
@@ -44,7 +102,7 @@ async function runDesktopFlow(page) {
   await expectVisible(page.getByText("Correct answer:"), "answer explanation");
 
   console.log("E2E desktop: back to dashboard");
-  await page.getByRole("button", { name: "Dashboard" }).click();
+  await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
   await expectVisible(
     page.getByRole("heading", { name: /Welcome back/ }),
     "Dashboard",
