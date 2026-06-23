@@ -7,6 +7,7 @@ export type Question = {
   options: Partial<Record<ChoiceKey, string>>;
   answer: ChoiceKey | ChoiceKey[];
   explanation: string;
+  topics?: string[];
   sourcePage?: number;
 };
 

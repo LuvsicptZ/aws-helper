@@ -6,23 +6,25 @@ import {
   CheckCircle2,
   CircleHelp,
   Clock,
-  Flame,
   Layers,
-  Network,
-  Server,
   Target,
-  Users,
   XCircle,
 } from "lucide-react";
 import { AppShell } from "../components/AppShell";
+import type { ShellRoute } from "../components/AppShell";
 import { AuthPanel } from "../components/AuthPanel";
-import { totalQuestions } from "../data/questions";
-import { calculateDashboardStats } from "../domain/dashboard";
+import { questions, totalQuestions } from "../data/questions";
+import {
+  calculateDashboardStats,
+  calculateRecentActivity,
+  calculateWeakAreas,
+} from "../domain/dashboard";
 import type { PracticeMode } from "../domain/practiceMode";
 import type { QuestionProgress } from "../domain/progress";
 import { getAllProgress } from "../db/progressRepository";
 
 type DashboardPageProps = {
+  onNavigate: (route: ShellRoute) => void;
   onPracticeClick: (mode?: PracticeMode) => void;
   onExamClick: () => void;
 };
@@ -92,7 +94,15 @@ function WeakArea({ label, percent, icon, iconClass }: WeakAreaProps) {
   );
 }
 
-export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPageProps) {
+function getProgressSource(progress: QuestionProgress): string {
+  return progress.syncedAt ? "Synced" : "Local";
+}
+
+export function DashboardPage({
+  onNavigate,
+  onPracticeClick,
+  onExamClick,
+}: DashboardPageProps) {
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
 
   const refreshProgress = useCallback(() => {
@@ -104,6 +114,8 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
   }, [refreshProgress]);
 
   const stats = calculateDashboardStats(totalQuestions, progressList);
+  const weakAreas = calculateWeakAreas(questions, progressList);
+  const recentActivity = calculateRecentActivity(progressList);
   const progressPercent =
     stats.totalQuestions === 0
       ? 0
@@ -112,7 +124,8 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
   return (
     <AppShell
       active="dashboard"
-      onDashboardClick={() => undefined}
+      onNavigate={onNavigate}
+      onDashboardClick={() => onNavigate("dashboard")}
       onPracticeClick={onPracticeClick}
       onExamClick={onExamClick}
       headerActions={<AuthPanel onSyncComplete={refreshProgress} />}
@@ -121,22 +134,11 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
         <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="mb-1 text-3xl font-bold text-gray-900">
-              Welcome back, Ryan!
+              Welcome back
             </h2>
             <p className="text-sm text-gray-500">
-              Keep going one small session at a time. You've got this.
+              Keep going one small session at a time.
             </p>
-          </div>
-
-          <div className="flex w-fit items-center rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
-            <Flame size={28} className="mr-3 text-orange-500" />
-            <div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-bold text-gray-900">2</span>
-                <span className="text-xs font-medium text-gray-500">Day streak</span>
-              </div>
-              <p className="text-[10px] text-gray-400">Keep it up!</p>
-            </div>
           </div>
         </section>
 
@@ -277,24 +279,24 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
             </div>
 
             <div className="flex-1 space-y-5">
-              <WeakArea
-                label="EC2"
-                percent={35}
-                icon={<Server size={12} />}
-                iconClass="bg-orange-100 text-orange-500"
-              />
-              <WeakArea
-                label="VPC"
-                percent={20}
-                icon={<Network size={12} />}
-                iconClass="bg-purple-100 text-purple-500"
-              />
-              <WeakArea
-                label="IAM"
-                percent={18}
-                icon={<Users size={12} />}
-                iconClass="bg-emerald-100 text-emerald-500"
-              />
+              {weakAreas.map((area) => {
+                return (
+                  <WeakArea
+                    key={area.label}
+                    label={area.label}
+                    percent={area.errorRatePercent}
+                    icon={<Layers size={12} />}
+                    iconClass="bg-gray-100 text-gray-500"
+                  />
+                );
+              })}
+
+              {weakAreas.length === 0 ? (
+                <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
+                  No weak areas yet. Answer more questions and incorrect topic
+                  patterns will appear here.
+                </p>
+              ) : null}
             </div>
           </article>
 
@@ -310,7 +312,7 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
             </div>
 
             <div className="flex-1 space-y-4">
-              {progressList.slice(-5).reverse().map((progress) => {
+              {recentActivity.map((progress) => {
                 const isCorrect = progress.lastResult === "correct";
 
                 return (
@@ -341,12 +343,14 @@ export function DashboardPage({ onPracticeClick, onExamClick }: DashboardPagePro
                       </span>
                     </div>
                     <div className="w-1/4 text-gray-500">Practice</div>
-                    <div className="w-1/6 text-right text-xs text-gray-400">Local</div>
+                    <div className="w-1/6 text-right text-xs text-gray-400">
+                      {getProgressSource(progress)}
+                    </div>
                   </div>
                 );
               })}
 
-              {progressList.length === 0 ? (
+              {recentActivity.length === 0 ? (
                 <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
                   No recent activity yet. Start a practice session to populate history.
                 </p>
