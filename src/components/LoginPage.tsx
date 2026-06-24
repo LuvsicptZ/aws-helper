@@ -3,17 +3,11 @@ import {
   ArrowRight,
   BarChart3,
   Cloud,
-  Info,
   LockKeyhole,
   Mail,
-  Monitor,
   Zap,
 } from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
-
-type LoginPageProps = {
-  onLocalMode: () => void;
-};
 
 function GoogleIcon() {
   return (
@@ -62,7 +56,7 @@ function Feature({
   );
 }
 
-export function LoginPage({ onLocalMode }: LoginPageProps) {
+export function LoginPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,7 +148,7 @@ export function LoginPage({ onLocalMode }: LoginPageProps) {
         </aside>
 
         <div className="relative flex min-w-0 flex-col px-6 py-7 sm:px-12 sm:py-10 lg:px-16 lg:py-12">
-          <div className="flex items-center justify-between lg:justify-end">
+          <div className="flex items-center">
             <div className="flex items-center gap-3 lg:hidden">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#08122f] text-white">
                 <BarChart3 size={18} />
@@ -164,16 +158,6 @@ export function LoginPage({ onLocalMode }: LoginPageProps) {
                 <span className="block text-xs text-[#7b8495]">Practice</span>
               </span>
             </div>
-
-            <button
-              type="button"
-              onClick={onLocalMode}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium text-[#657083] transition-colors hover:bg-[#f6f4f7] hover:text-[#11182b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#08122f]"
-            >
-              <Monitor size={17} />
-              Local mode
-              <Info size={14} />
-            </button>
           </div>
 
           <div className="mx-auto flex w-full max-w-[410px] flex-1 flex-col justify-center py-10 sm:py-12">
@@ -275,16 +259,6 @@ export function LoginPage({ onLocalMode }: LoginPageProps) {
               />
             </div>
 
-            <p className="mt-11 text-center text-xs text-[#7f8796]">
-              No account yet?{" "}
-              <button
-                type="button"
-                onClick={onLocalMode}
-                className="font-semibold text-[#d68b35] hover:text-[#a9631f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d68b35]"
-              >
-                Create local profile →
-              </button>
-            </p>
           </div>
         </div>
       </section>
