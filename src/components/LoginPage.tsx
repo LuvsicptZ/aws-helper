@@ -2,10 +2,8 @@ import { useState } from "react";
 import {
   ArrowRight,
   BarChart3,
-  Cloud,
-  LockKeyhole,
   Mail,
-  Zap,
+  ShieldCheck,
 } from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
 
@@ -29,30 +27,6 @@ function GoogleIcon() {
         d="M12 5.94c1.47 0 2.78.5 3.82 1.5l2.88-2.88A9.66 9.66 0 0 0 12 2a10 10 0 0 0-8.96 5.45l3.35 2.62C7.18 7.7 9.39 5.94 12 5.94Z"
       />
     </svg>
-  );
-}
-
-function Feature({
-  icon,
-  title,
-  detail,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  detail: string;
-}) {
-  return (
-    <div className="flex min-w-0 items-start gap-2.5">
-      <span className="mt-0.5 shrink-0 text-[#647084]">{icon}</span>
-      <span className="min-w-0">
-        <strong className="block text-xs font-semibold leading-4 text-[#11182b]">
-          {title}
-        </strong>
-        <span className="block text-[10px] leading-4 text-[#8790a0]">
-          {detail}
-        </span>
-      </span>
-    </div>
   );
 }
 
@@ -97,7 +71,10 @@ export function LoginPage() {
 
   return (
     <main className="min-h-screen bg-[#f1eef3] p-3 text-[#11182b] sm:p-6 lg:flex lg:items-center lg:justify-center lg:p-10">
-      <section className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1200px] overflow-hidden rounded-[24px] bg-white shadow-[0_24px_70px_rgba(25,20,35,0.14)] sm:min-h-[calc(100vh-3rem)] lg:min-h-[720px] lg:grid-cols-[46%_54%]">
+      <section
+        data-login-shell
+        className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1120px] overflow-hidden rounded-[24px] bg-white shadow-[0_24px_70px_rgba(25,20,35,0.14)] sm:min-h-[calc(100vh-3rem)] lg:h-[660px] lg:min-h-0 lg:grid-cols-[45%_55%]"
+      >
         <aside className="relative hidden overflow-hidden bg-[#fff7f3] p-12 lg:flex lg:flex-col">
           <div className="relative z-10 flex items-center gap-4">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#08122f] text-white shadow-sm">
@@ -111,7 +88,10 @@ export function LoginPage() {
             </span>
           </div>
 
-          <div className="relative z-10 mt-[270px] max-w-[360px]">
+          <div
+            data-login-promise
+            className="relative z-10 my-auto max-w-[360px] -translate-y-2"
+          >
             <h1 className="text-[46px] font-bold leading-[1.02] tracking-[-0.045em]">
               Stay focused.
               <br />
@@ -160,7 +140,10 @@ export function LoginPage() {
             </div>
           </div>
 
-          <div className="mx-auto flex w-full max-w-[410px] flex-1 flex-col justify-center py-10 sm:py-12">
+          <div
+            data-login-form
+            className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-center py-10 sm:py-12"
+          >
             <header>
               <h2 className="text-[34px] font-bold leading-tight tracking-[-0.035em] sm:text-[38px]">
                 Welcome back <span aria-hidden="true">👋</span>
@@ -241,24 +224,10 @@ export function LoginPage() {
               </p>
             ) : null}
 
-            <div className="mt-12 grid grid-cols-3 gap-4 border-t border-[#ececf0] pt-7">
-              <Feature
-                icon={<Cloud size={17} />}
-                title="Sync progress"
-                detail="Across devices"
-              />
-              <Feature
-                icon={<LockKeyhole size={17} />}
-                title="Private & secure"
-                detail="Your data is safe"
-              />
-              <Feature
-                icon={<Zap size={17} />}
-                title="Fast & simple"
-                detail="One-click sign in"
-              />
+            <div className="mt-10 flex items-center justify-center gap-2 border-t border-[#ececf0] pt-6 text-sm text-[#727c8e]">
+              <ShieldCheck size={17} />
+              <span>Secure cloud sync across devices</span>
             </div>
-
           </div>
         </div>
       </section>

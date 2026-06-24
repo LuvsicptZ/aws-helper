@@ -55,6 +55,38 @@ async function verifyLoginPage(page, viewport) {
     pageOverflow <= 1,
     `Expected no horizontal overflow at ${viewport.width}px, received ${pageOverflow}px`,
   );
+
+  if (viewport.width >= 1024) {
+    const layout = await page.locator("[data-login-shell]").evaluate((shell) => {
+      const rect = shell.getBoundingClientRect();
+      const leftTitle = shell
+        .querySelector("[data-login-promise]")
+        ?.getBoundingClientRect();
+      const form = shell
+        .querySelector("[data-login-form]")
+        ?.getBoundingClientRect();
+
+      return {
+        width: rect.width,
+        height: rect.height,
+        centerDelta:
+          leftTitle && form
+            ? Math.abs(
+                leftTitle.top +
+                  leftTitle.height / 2 -
+                  (form.top + form.height / 2),
+              )
+            : Number.POSITIVE_INFINITY,
+      };
+    });
+
+    expect(layout.width <= 1125, `Expected a tighter login width, got ${layout.width}`);
+    expect(layout.height <= 680, `Expected a tighter login height, got ${layout.height}`);
+    expect(
+      layout.centerDelta <= 70,
+      `Expected the two columns to share a visual axis, delta was ${layout.centerDelta}px`,
+    );
+  }
 }
 
 const server = await createServer({
