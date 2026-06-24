@@ -27,6 +27,13 @@ async function expectVisible(locator, label) {
   expect(await locator.isVisible(), `Expected ${label} to be visible`);
 }
 
+async function enterLocalModeIfNeeded(page) {
+  const loginHeading = page.getByRole("heading", { name: "Welcome back" });
+  if (await loginHeading.isVisible()) {
+    await page.getByRole("button", { name: "Local mode" }).click();
+  }
+}
+
 function sidebar(page) {
   return page.getByRole("complementary");
 }
@@ -41,8 +48,19 @@ function captureBrowserErrors(page) {
 }
 
 async function runDesktopFlow(page) {
-  console.log("E2E desktop: dashboard");
+  console.log("E2E desktop: login");
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  await expectVisible(
+    page.getByRole("heading", { name: "Welcome back" }),
+    "Login page",
+  );
+  await expectVisible(
+    page.getByRole("button", { name: "Continue with Google" }),
+    "Google sign in",
+  );
+  await page.getByRole("button", { name: "Local mode" }).click();
+
+  console.log("E2E desktop: dashboard");
   await expectVisible(
     page.getByRole("heading", { name: "Start your AWS practice" }),
     "Dashboard",
@@ -149,6 +167,7 @@ async function runMobileExamFlow(page) {
   console.log("E2E mobile: mock exam");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  await enterLocalModeIfNeeded(page);
   await page.getByRole("button", { name: "Mock exam" }).click();
 
   await expectVisible(page.getByRole("heading", { name: "Mock exam" }), "Mock exam");
@@ -169,6 +188,7 @@ async function runMobilePracticeOverflowFlow(page) {
   console.log("E2E mobile: practice explanation stays within viewport");
   await page.setViewportSize({ width: 437, height: 900 });
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  await enterLocalModeIfNeeded(page);
   await page.getByRole("button", { name: "Continue Practice" }).click();
 
   for (let index = 1; index < 16; index += 1) {

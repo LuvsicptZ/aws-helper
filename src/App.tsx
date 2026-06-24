@@ -36,6 +36,9 @@ import {
   hasExamSessions,
 } from "./db/examRepository";
 import { syncExamSessionsWithSupabase } from "./sync/supabaseExamSync";
+import { LoginPage } from "./components/LoginPage";
+
+const LOCAL_MODE_KEY = "aws-mastery-local-mode";
 
 export default function App() {
   const { session, isLoading: isAuthLoading } = useAuth();
@@ -49,6 +52,9 @@ export default function App() {
   const [showAnonymousProgressPrompt, setShowAnonymousProgressPrompt] =
     useState(false);
   const [progressRefreshToken, setProgressRefreshToken] = useState(0);
+  const [isLocalMode, setIsLocalMode] = useState(
+    () => localStorage.getItem(LOCAL_MODE_KEY) === "true",
+  );
   const ownerId = session?.user.id ?? ANONYMOUS_OWNER_ID;
 
   useEffect(() => {
@@ -189,6 +195,25 @@ export default function App() {
   function openExam() {
     setExamRunId((currentRunId) => currentRunId + 1);
     setPage("exam");
+  }
+
+  if (isAuthLoading && !isLocalMode) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f1eef3] text-sm text-[#687287]">
+        Loading…
+      </div>
+    );
+  }
+
+  if (!session && !isLocalMode) {
+    return (
+      <LoginPage
+        onLocalMode={() => {
+          localStorage.setItem(LOCAL_MODE_KEY, "true");
+          setIsLocalMode(true);
+        }}
+      />
+    );
   }
 
   if (page === "practice") {
