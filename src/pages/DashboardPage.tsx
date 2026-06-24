@@ -25,6 +25,8 @@ import { practiceModeLabels } from "../domain/practiceMode";
 import type { PracticeResume } from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
 import { getAllProgress } from "../db/progressRepository";
+import { useAuth } from "../auth/authContext";
+import { getDashboardGreeting } from "../domain/dashboardGreeting";
 
 type DashboardPageProps = {
   onNavigate: (route: ShellRoute) => void;
@@ -122,6 +124,7 @@ export function DashboardPage({
   onKeepAnonymousProgressSeparate,
   onSyncComplete,
 }: DashboardPageProps) {
+  const { session } = useAuth();
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
 
   const refreshProgress = useCallback(() => {
@@ -144,6 +147,7 @@ export function DashboardPage({
   const resumeLabel = resumePosition.questionId
     ? `Continue ${practiceModeLabels[resumeMode]} · Question ${resumePosition.questionId}`
     : "Continue Practice";
+  const greeting = getDashboardGreeting(Boolean(session));
 
   return (
     <AppShell
@@ -180,10 +184,10 @@ export function DashboardPage({
         <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="mb-1 text-3xl font-bold text-gray-900">
-              Welcome back
+              {greeting.title}
             </h2>
             <p className="text-sm text-gray-500">
-              Keep going one small session at a time.
+              {greeting.subtitle}
             </p>
           </div>
         </section>

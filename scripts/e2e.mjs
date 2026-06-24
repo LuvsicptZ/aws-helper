@@ -44,7 +44,7 @@ async function runDesktopFlow(page) {
   console.log("E2E desktop: dashboard");
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   await expectVisible(
-    page.getByRole("heading", { name: /Welcome back/ }),
+    page.getByRole("heading", { name: "Start your AWS practice" }),
     "Dashboard",
   );
 
@@ -70,7 +70,7 @@ async function runDesktopFlow(page) {
 
   await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
   await expectVisible(
-    page.getByRole("heading", { name: /Welcome back/ }),
+    page.getByRole("heading", { name: "Start your AWS practice" }),
     "Dashboard",
   );
 
@@ -85,7 +85,7 @@ async function runDesktopFlow(page) {
   await expectVisible(page.getByText("Current mode: Guessed"), "guessed mode");
   await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
   await expectVisible(
-    page.getByRole("heading", { name: /Welcome back/ }),
+    page.getByRole("heading", { name: "Start your AWS practice" }),
     "Dashboard",
   );
 
@@ -98,7 +98,7 @@ async function runDesktopFlow(page) {
   await expectVisible(page.getByText(/0 \/ 65 answered/), "reset exam count");
   await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
   await expectVisible(
-    page.getByRole("heading", { name: /Welcome back/ }),
+    page.getByRole("heading", { name: "Start your AWS practice" }),
     "Dashboard",
   );
 
@@ -127,7 +127,7 @@ async function runDesktopFlow(page) {
   console.log("E2E desktop: back to dashboard");
   await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
   await expectVisible(
-    page.getByRole("heading", { name: /Welcome back/ }),
+    page.getByRole("heading", { name: "Start your AWS practice" }),
     "Dashboard",
   );
   await expectVisible(
