@@ -228,7 +228,7 @@ export function PracticePage({
         <PracticeModeTabs mode={mode} onModeChange={handleModeChange} />
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="space-y-4">
+          <section className="min-w-0 space-y-4">
             {question ? (
               <>
                 <QuestionNavigator

@@ -129,6 +129,32 @@ async function runMobileExamFlow(page) {
   await expectVisible(page.getByLabel("Exam score summary"), "local save status");
 }
 
+async function runMobilePracticeOverflowFlow(page) {
+  console.log("E2E mobile: practice explanation stays within viewport");
+  await page.setViewportSize({ width: 437, height: 900 });
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Continue Practice" }).click();
+
+  for (let index = 1; index < 16; index += 1) {
+    await page.getByRole("button", { name: "Next" }).click();
+  }
+
+  await expectVisible(page.getByText("Question 16", { exact: true }), "question 16");
+  await page.getByRole("button", { name: "Choice A" }).click();
+  await expectVisible(page.getByText("Correct answer:"), "answer explanation");
+
+  for (const width of [437, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const mainOverflow = await page.locator("main").evaluate(
+      (main) => main.scrollWidth - main.clientWidth,
+    );
+    expect(
+      mainOverflow <= 1,
+      `Expected mobile practice content not to overflow at ${width}px, but it exceeded main by ${mainOverflow}px`,
+    );
+  }
+}
+
 const server = await createServer({
   server: {
     host: "127.0.0.1",
@@ -152,7 +178,18 @@ try {
   const mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await withTimeout(runMobileExamFlow(mobilePage), 30000, "mobile exam flow");
 
-  console.log("E2E passed: desktop practice and mobile mock exam flows");
+  const mobilePracticePage = await browser.newPage({
+    viewport: { width: 437, height: 900 },
+  });
+  await withTimeout(
+    runMobilePracticeOverflowFlow(mobilePracticePage),
+    30000,
+    "mobile practice overflow flow",
+  );
+
+  console.log(
+    "E2E passed: desktop practice, mobile mock exam, and mobile practice flows",
+  );
 } catch (error) {
   console.error(error);
   process.exitCode = 1;

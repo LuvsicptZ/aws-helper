@@ -54,7 +54,7 @@ export function ExplanationPanel({
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
           Explanation
         </p>
-        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-gray-800 [overflow-wrap:anywhere]">
+        <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-gray-800 [overflow-wrap:anywhere]">
           {explanation}
         </p>
       </div>
