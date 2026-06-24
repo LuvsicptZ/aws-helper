@@ -19,6 +19,7 @@ import { saveExamSession } from "../db/examRepository";
 import type { PracticeMode } from "../domain/practiceMode";
 
 type ExamPageProps = {
+  ownerId?: string;
   onDashboardClick: () => void;
   onPracticeClick?: (mode?: PracticeMode) => void;
   onExamClick?: () => void;
@@ -44,6 +45,7 @@ function getExamDurationMinutes(): number {
 }
 
 export function ExamPage({
+  ownerId = "anonymous",
   onDashboardClick,
   onPracticeClick,
   onExamClick,
@@ -92,7 +94,7 @@ export function ExamPage({
         durationSeconds,
         answers,
         score: nextScore.scorePercent,
-      });
+      }, ownerId);
     } finally {
       setIsSaving(false);
     }
@@ -102,6 +104,7 @@ export function ExamPage({
     examQuestionIds,
     examQuestions,
     isSaving,
+    ownerId,
     startedAt,
     submittedAt,
   ]);

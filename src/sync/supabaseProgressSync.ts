@@ -64,7 +64,7 @@ export async function syncProgressWithSupabase(
   supabaseClient: SupabaseClient,
   userId: string,
 ): Promise<ProgressSyncResult> {
-  const localProgress = await getAllProgress();
+  const localProgress = await getAllProgress(userId);
   const { data, error } = await supabaseClient
     .from(PROGRESS_TABLE)
     .select("*")
@@ -83,7 +83,7 @@ export async function syncProgressWithSupabase(
     remoteProgress,
     saveLocalProgress: async (progressList) => {
       for (const progress of progressList) {
-        await saveProgress(progress);
+        await saveProgress(progress, userId);
       }
     },
     saveRemoteProgress: async (progressList) => {

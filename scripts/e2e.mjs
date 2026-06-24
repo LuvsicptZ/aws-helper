@@ -3,6 +3,7 @@ import { createServer } from "vite";
 
 const PREFERRED_PORT = 4173;
 let baseUrl = "";
+const browserErrors = [];
 
 function expect(condition, message) {
   if (!condition) {
@@ -28,6 +29,15 @@ async function expectVisible(locator, label) {
 
 function sidebar(page) {
   return page.getByRole("complementary");
+}
+
+function captureBrowserErrors(page) {
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      browserErrors.push(message.text());
+    }
+  });
 }
 
 async function runDesktopFlow(page) {
@@ -98,14 +108,40 @@ async function runDesktopFlow(page) {
     page.getByRole("heading", { name: "Practice session" }),
     "Practice session",
   );
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await expectVisible(page.getByText("Question 4", { exact: true }), "question 4");
+  await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
+  await sidebar(page).getByRole("button", { name: "Question Bank" }).click();
+  await expectVisible(
+    page.getByText("Question 4", { exact: true }),
+    "restored question 4",
+  );
   await page.getByRole("button", { name: "Choice A" }).first().click();
-  await expectVisible(page.getByText("Correct answer:"), "answer explanation");
+  await expectVisible(
+    page.locator("p.mt-1.text-sm.text-gray-700"),
+    "answer explanation",
+  );
 
   console.log("E2E desktop: back to dashboard");
   await sidebar(page).getByRole("button", { name: "Dashboard" }).click();
   await expectVisible(
     page.getByRole("heading", { name: /Welcome back/ }),
     "Dashboard",
+  );
+  await expectVisible(
+    page.getByRole("button", {
+      name: "Continue Sequential · Question 4",
+    }),
+    "saved practice destination",
+  );
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expectVisible(
+    page.getByRole("button", {
+      name: "Continue Sequential · Question 4",
+    }),
+    "persisted practice destination",
   );
 }
 
@@ -141,7 +177,10 @@ async function runMobilePracticeOverflowFlow(page) {
 
   await expectVisible(page.getByText("Question 16", { exact: true }), "question 16");
   await page.getByRole("button", { name: "Choice A" }).click();
-  await expectVisible(page.getByText("Correct answer:"), "answer explanation");
+  await expectVisible(
+    page.locator("p.mt-1.text-sm.text-gray-700"),
+    "answer explanation",
+  );
 
   for (const width of [437, 320]) {
     await page.setViewportSize({ width, height: 900 });
@@ -173,18 +212,25 @@ try {
 
   browser = await chromium.launch({ timeout: 30000 });
   const desktopPage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  captureBrowserErrors(desktopPage);
   await withTimeout(runDesktopFlow(desktopPage), 30000, "desktop flow");
 
   const mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  captureBrowserErrors(mobilePage);
   await withTimeout(runMobileExamFlow(mobilePage), 30000, "mobile exam flow");
 
   const mobilePracticePage = await browser.newPage({
     viewport: { width: 437, height: 900 },
   });
+  captureBrowserErrors(mobilePracticePage);
   await withTimeout(
     runMobilePracticeOverflowFlow(mobilePracticePage),
     30000,
     "mobile practice overflow flow",
+  );
+  expect(
+    browserErrors.length === 0,
+    `Expected no browser errors, received: ${browserErrors.join(" | ")}`,
   );
 
   console.log(

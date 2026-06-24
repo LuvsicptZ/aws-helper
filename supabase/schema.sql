@@ -68,3 +68,28 @@ create policy "Users can update their own exam sessions"
   for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+create table if not exists public.practice_resume (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  last_mode text not null default 'sequential',
+  positions jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.practice_resume enable row level security;
+
+create policy "Users can read their own practice resume"
+  on public.practice_resume
+  for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert their own practice resume"
+  on public.practice_resume
+  for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own practice resume"
+  on public.practice_resume
+  for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

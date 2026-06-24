@@ -4,6 +4,7 @@ import { createEmptyProgress } from "../domain/progress";
 import { db } from "../db/localDb";
 import {
   clearAllProgress,
+  copyProgress,
   getAllProgress,
   getProgressByQuestionId,
   saveProgress,
@@ -18,7 +19,9 @@ import type { ExamSession } from "../domain/exam";
 
 beforeEach(async () => {
   await db.progress.clear();
+  await db.ownerProgress.clear();
   await db.examSessions.clear();
+  await db.ownerExamSessions.clear();
 });
 
 describe("progressRepository", () => {
@@ -45,6 +48,44 @@ describe("progressRepository", () => {
     await saveProgress(createEmptyProgress(2));
 
     await expect(getAllProgress()).resolves.toHaveLength(2);
+  });
+
+  it("isolates question progress by owner", async () => {
+    await saveProgress(createEmptyProgress(1), "user-1");
+    await saveProgress(createEmptyProgress(2), "user-2");
+
+    await expect(getAllProgress("user-1")).resolves.toMatchObject([
+      { questionId: 1 },
+    ]);
+    await expect(getAllProgress("user-2")).resolves.toMatchObject([
+      { questionId: 2 },
+    ]);
+  });
+
+  it("merges anonymous progress into an account without losing newer data", async () => {
+    await saveProgress(
+      {
+        ...createEmptyProgress(1),
+        attempts: 2,
+        updatedAt: "2026-06-24T01:00:00.000Z",
+      },
+      "anonymous",
+    );
+    await saveProgress(
+      {
+        ...createEmptyProgress(1),
+        attempts: 3,
+        updatedAt: "2026-06-24T02:00:00.000Z",
+      },
+      "user-1",
+    );
+
+    await copyProgress("anonymous", "user-1");
+
+    await expect(getProgressByQuestionId(1, "user-1")).resolves.toMatchObject({
+      attempts: 3,
+      updatedAt: "2026-06-24T02:00:00.000Z",
+    });
   });
 
   it("clears progress records", async () => {
@@ -113,5 +154,21 @@ describe("examRepository", () => {
     await clearAllExamSessions();
 
     await expect(getAllExamSessions()).resolves.toEqual([]);
+  });
+
+  it("isolates exam sessions by owner", async () => {
+    await saveExamSession(
+      {
+        id: "exam-1",
+        questionIds: [1],
+        startedAt: "2026-01-01T00:00:00.000Z",
+        durationSeconds: 60,
+        answers: {},
+      },
+      "user-1",
+    );
+
+    await expect(getAllExamSessions("user-2")).resolves.toEqual([]);
+    await expect(getAllExamSessions("user-1")).resolves.toHaveLength(1);
   });
 });

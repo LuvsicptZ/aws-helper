@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Gauge } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
@@ -17,6 +17,11 @@ import {
   filterQuestionsByPracticeMode,
   shuffleQuestions,
 } from "../domain/practiceMode";
+import type { PracticePosition } from "../domain/practiceResume";
+import {
+  repairRandomQuestionIds,
+  resolvePracticePosition,
+} from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
 import {
   createEmptyProgress,
@@ -45,7 +50,13 @@ function upsertProgress(
 }
 
 type PracticePageProps = {
+  ownerId?: string;
   initialMode?: PracticeMode;
+  resumePositions?: Record<PracticeMode, PracticePosition>;
+  onPositionChange?: (
+    mode: PracticeMode,
+    position: Omit<PracticePosition, "updatedAt">,
+  ) => void;
   onDashboardClick?: () => void;
   onPracticeClick?: (mode?: PracticeMode) => void;
   onExamClick?: () => void;
@@ -53,14 +64,18 @@ type PracticePageProps = {
 };
 
 export function PracticePage({
+  ownerId = "anonymous",
   initialMode = "sequential",
+  resumePositions,
+  onPositionChange,
   onDashboardClick,
   onPracticeClick,
   onExamClick,
   onNavigate,
 }: PracticePageProps) {
+  const initialPosition = resumePositions?.[initialMode];
   const [mode, setMode] = useState<PracticeMode>(initialMode);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(initialPosition?.index ?? 0);
   const [answerState, setAnswerState] = useState<{
     questionId?: number;
     selected: ChoiceKey[];
@@ -68,14 +83,23 @@ export function PracticePage({
   }>({ selected: [] });
   const [isSaving, setIsSaving] = useState(false);
   const [allProgress, setAllProgress] = useState<QuestionProgress[]>([]);
-  const [randomQuestions, setRandomQuestions] = useState(() =>
-    shuffleQuestions(questions),
-  );
+  const [randomQuestions, setRandomQuestions] = useState(() => {
+    if (!initialPosition?.randomQuestionIds) {
+      return shuffleQuestions(questions);
+    }
 
-  const filteredQuestions = filterQuestionsByPracticeMode(
-    mode,
-    questions,
-    allProgress,
+    const questionById = new Map(questions.map((item) => [item.id, item]));
+    return repairRandomQuestionIds(
+      initialPosition.randomQuestionIds,
+      questions.map((item) => item.id),
+    )
+      .map((questionId) => questionById.get(questionId))
+      .filter((item): item is (typeof questions)[number] => item !== undefined);
+  });
+
+  const filteredQuestions = useMemo(
+    () => filterQuestionsByPracticeMode(mode, questions, allProgress),
+    [allProgress, mode],
   );
   const visibleQuestions = mode === "random" ? randomQuestions : filteredQuestions;
   const visibleTotal = visibleQuestions.length;
@@ -99,10 +123,41 @@ export function PracticePage({
   const progressPercent = hasQuestions
     ? ((safeCurrentIndex + 1) / visibleTotal) * 100
     : 0;
+  const restoredMode = useRef<PracticeMode | undefined>(undefined);
 
   useEffect(() => {
-    void getAllProgress().then(setAllProgress);
-  }, []);
+    void getAllProgress(ownerId).then(setAllProgress);
+  }, [ownerId]);
+
+  useEffect(() => {
+    if (!question) return;
+
+    onPositionChange?.(mode, {
+      questionId: question.id,
+      index: safeCurrentIndex,
+      randomQuestionIds:
+        mode === "random" ? randomQuestions.map((item) => item.id) : undefined,
+    });
+  }, [mode, onPositionChange, question, randomQuestions, safeCurrentIndex]);
+
+  useEffect(() => {
+    const savedPosition = resumePositions?.[mode];
+    if (
+      !savedPosition ||
+      visibleQuestions.length === 0 ||
+      restoredMode.current === mode
+    ) {
+      return;
+    }
+
+    setCurrentIndex(
+      resolvePracticePosition(
+        savedPosition,
+        visibleQuestions.map((item) => item.id),
+      ),
+    );
+    restoredMode.current = mode;
+  }, [mode, resumePositions, visibleQuestions]);
 
   async function submitAnswer(selectedAnswer: ChoiceKey[]) {
     if (!question) return;
@@ -118,13 +173,15 @@ export function PracticePage({
 
     try {
       const existingProgress =
-        (await getProgressByQuestionId(question.id)) ?? createEmptyProgress(question.id);
+        (await getProgressByQuestionId(question.id, ownerId)) ??
+        createEmptyProgress(question.id);
 
       await saveProgress(
         updateProgressAfterAnswer(existingProgress, selectedAnswer, nextResult),
+        ownerId,
       );
 
-      setAllProgress(await getAllProgress());
+      setAllProgress(await getAllProgress(ownerId));
     } finally {
       setIsSaving(false);
     }
@@ -146,10 +203,11 @@ export function PracticePage({
     );
 
     const existingProgress =
-      (await getProgressByQuestionId(question.id)) ?? createEmptyProgress(question.id);
+      (await getProgressByQuestionId(question.id, ownerId)) ??
+      createEmptyProgress(question.id);
     const updatedProgress = updateProgressReviewMetadata(existingProgress, metadata);
 
-    await saveProgress(updatedProgress);
+    await saveProgress(updatedProgress, ownerId);
     setAllProgress((progressList) => upsertProgress(progressList, updatedProgress));
   }
 
@@ -174,11 +232,26 @@ export function PracticePage({
 
   function handleModeChange(nextMode: PracticeMode) {
     setMode(nextMode);
-    setCurrentIndex(0);
+    setCurrentIndex(resumePositions?.[nextMode]?.index ?? 0);
     resetAnswerState();
 
     if (nextMode === "random") {
-      setRandomQuestions(shuffleQuestions(questions));
+      const savedQuestionIds = resumePositions?.random?.randomQuestionIds;
+      if (savedQuestionIds) {
+        const questionById = new Map(questions.map((item) => [item.id, item]));
+        setRandomQuestions(
+          repairRandomQuestionIds(
+            savedQuestionIds,
+            questions.map((item) => item.id),
+          )
+            .map((questionId) => questionById.get(questionId))
+            .filter(
+              (item): item is (typeof questions)[number] => item !== undefined,
+            ),
+        );
+      } else {
+        setRandomQuestions(shuffleQuestions(questions));
+      }
     }
   }
 

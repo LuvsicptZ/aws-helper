@@ -23,6 +23,7 @@ import { getAllExamSessions } from "../db/examRepository";
 import { getAllProgress } from "../db/progressRepository";
 
 type SecondaryPageProps = {
+  ownerId?: string;
   route: Exclude<ShellRoute, "dashboard" | "practice" | "exam">;
   onNavigate: (route: ShellRoute) => void;
   onPracticeClick: (mode?: PracticeMode) => void;
@@ -76,6 +77,7 @@ function formatDate(value?: string): string {
 }
 
 export function SecondaryPage({
+  ownerId = "anonymous",
   route,
   onNavigate,
   onPracticeClick,
@@ -85,9 +87,9 @@ export function SecondaryPage({
   const [examSessions, setExamSessions] = useState<ExamSession[]>([]);
 
   const refresh = useCallback(() => {
-    void getAllProgress().then(setProgressList);
-    void getAllExamSessions().then(setExamSessions);
-  }, []);
+    void getAllProgress(ownerId).then(setProgressList);
+    void getAllExamSessions(ownerId).then(setExamSessions);
+  }, [ownerId]);
 
   useEffect(() => {
     refresh();

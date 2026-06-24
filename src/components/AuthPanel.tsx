@@ -1,34 +1,21 @@
-import { useEffect, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
+import { useState } from "react";
 import { LogIn, LogOut, RefreshCw } from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
 import { syncExamSessionsWithSupabase } from "../sync/supabaseExamSync";
 import { syncProgressWithSupabase } from "../sync/supabaseProgressSync";
+import { syncPracticeResumeWithSupabase } from "../sync/supabasePracticeResumeSync";
+import { useAuth } from "../auth/authContext";
 
 type AuthPanelProps = {
   onSyncComplete?: () => void;
 };
 
 export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
-  const [session, setSession] = useState<Session | null>(null);
+  const { session } = useAuth();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-
-  useEffect(() => {
-    if (!supabaseClient) return;
-
-    void supabaseClient.auth
-      .getSession()
-      .then(({ data }) => setSession(data.session));
-
-    const { data } = supabaseClient.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-    });
-
-    return () => data.subscription.unsubscribe();
-  }, []);
 
   if (!supabaseClient) {
     return (
@@ -87,6 +74,7 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
         supabaseClient,
         session.user.id,
       );
+      await syncPracticeResumeWithSupabase(supabaseClient, session.user.id);
       setStatus(
         `Synced ${progressResult.merged} progress and ${examResult.merged} exams.`,
       );

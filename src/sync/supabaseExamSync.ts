@@ -46,7 +46,7 @@ export async function syncExamSessionsWithSupabase(
   supabaseClient: SupabaseClient,
   userId: string,
 ): Promise<ExamSyncResult> {
-  const localSessions = await getAllExamSessions();
+  const localSessions = await getAllExamSessions(userId);
   const { data, error } = await supabaseClient
     .from(EXAM_TABLE)
     .select("*")
@@ -65,7 +65,7 @@ export async function syncExamSessionsWithSupabase(
     remoteSessions,
     saveLocalSessions: async (sessions) => {
       for (const session of sessions) {
-        await saveExamSession(session);
+        await saveExamSession(session, userId);
       }
     },
     saveRemoteSessions: async (sessions) => {

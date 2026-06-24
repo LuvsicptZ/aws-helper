@@ -13,6 +13,7 @@ import {
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
 import { AuthPanel } from "../components/AuthPanel";
+import { AnonymousProgressPrompt } from "../components/AnonymousProgressPrompt";
 import { questions, totalQuestions } from "../data/questions";
 import {
   calculateDashboardStats,
@@ -20,13 +21,23 @@ import {
   calculateWeakAreas,
 } from "../domain/dashboard";
 import type { PracticeMode } from "../domain/practiceMode";
+import { practiceModeLabels } from "../domain/practiceMode";
+import type { PracticeResume } from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
 import { getAllProgress } from "../db/progressRepository";
 
 type DashboardPageProps = {
   onNavigate: (route: ShellRoute) => void;
+  ownerId?: string;
+  progressRefreshToken?: number;
   onPracticeClick: (mode?: PracticeMode) => void;
   onExamClick: () => void;
+  practiceResume: PracticeResume;
+  syncStatus?: string;
+  showAnonymousProgressPrompt?: boolean;
+  onMergeAnonymousProgress?: () => void;
+  onKeepAnonymousProgressSeparate?: () => void;
+  onSyncComplete?: () => void;
 };
 
 type StatCardProps = {
@@ -99,19 +110,27 @@ function getProgressSource(progress: QuestionProgress): string {
 }
 
 export function DashboardPage({
+  ownerId = "anonymous",
+  progressRefreshToken = 0,
   onNavigate,
   onPracticeClick,
   onExamClick,
+  practiceResume,
+  syncStatus,
+  showAnonymousProgressPrompt = false,
+  onMergeAnonymousProgress,
+  onKeepAnonymousProgressSeparate,
+  onSyncComplete,
 }: DashboardPageProps) {
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
 
   const refreshProgress = useCallback(() => {
-    void getAllProgress().then(setProgressList);
-  }, []);
+    void getAllProgress(ownerId).then(setProgressList);
+  }, [ownerId]);
 
   useEffect(() => {
     refreshProgress();
-  }, [refreshProgress]);
+  }, [progressRefreshToken, refreshProgress]);
 
   const stats = calculateDashboardStats(totalQuestions, progressList);
   const weakAreas = calculateWeakAreas(questions, progressList);
@@ -120,6 +139,11 @@ export function DashboardPage({
     stats.totalQuestions === 0
       ? 0
       : Math.round((stats.answeredQuestions / stats.totalQuestions) * 100);
+  const resumeMode = practiceResume.lastMode;
+  const resumePosition = practiceResume.positions[resumeMode];
+  const resumeLabel = resumePosition.questionId
+    ? `Continue ${practiceModeLabels[resumeMode]} · Question ${resumePosition.questionId}`
+    : "Continue Practice";
 
   return (
     <AppShell
@@ -128,9 +152,31 @@ export function DashboardPage({
       onDashboardClick={() => onNavigate("dashboard")}
       onPracticeClick={onPracticeClick}
       onExamClick={onExamClick}
-      headerActions={<AuthPanel onSyncComplete={refreshProgress} />}
+      headerActions={
+        <AuthPanel
+          onSyncComplete={() => {
+            refreshProgress();
+            onSyncComplete?.();
+          }}
+        />
+      }
     >
       <div className="space-y-6">
+        {syncStatus ? (
+          <p aria-live="polite" className="text-sm text-gray-500">
+            {syncStatus}
+          </p>
+        ) : null}
+
+        {showAnonymousProgressPrompt &&
+        onMergeAnonymousProgress &&
+        onKeepAnonymousProgressSeparate ? (
+          <AnonymousProgressPrompt
+            onMerge={onMergeAnonymousProgress}
+            onKeepSeparate={onKeepAnonymousProgressSeparate}
+          />
+        ) : null}
+
         <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="mb-1 text-3xl font-bold text-gray-900">
@@ -170,10 +216,10 @@ export function DashboardPage({
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={() => onPracticeClick("sequential")}
+                onClick={() => onPracticeClick(resumeMode)}
                 className="inline-flex min-h-11 items-center rounded-xl bg-[#0B1120] px-5 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]"
               >
-                Continue Practice
+                {resumeLabel}
                 <ArrowRight size={14} className="ml-2" />
               </button>
               <button
