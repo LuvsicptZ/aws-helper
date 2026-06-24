@@ -1,11 +1,11 @@
 import { useState } from "react";
 import {
   ArrowRight,
-  BarChart3,
   Mail,
   ShieldCheck,
 } from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
+import { BrandLogo } from "./BrandLogo";
 
 function GoogleIcon() {
   return (
@@ -76,17 +76,7 @@ export function LoginPage() {
         className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1120px] overflow-hidden rounded-[24px] bg-white shadow-[0_24px_70px_rgba(25,20,35,0.14)] sm:min-h-[calc(100vh-3rem)] lg:h-[660px] lg:min-h-0 lg:grid-cols-[45%_55%]"
       >
         <aside className="relative hidden overflow-hidden bg-[#fff7f3] p-12 lg:flex lg:flex-col">
-          <div className="relative z-10 flex items-center gap-4">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#08122f] text-white shadow-sm">
-              <BarChart3 size={20} />
-            </span>
-            <span>
-              <strong className="block text-xl font-bold tracking-[-0.02em]">
-                AWS Mastery
-              </strong>
-              <span className="text-sm text-[#687287]">Practice</span>
-            </span>
-          </div>
+          <BrandLogo className="relative z-10 h-14 w-auto" />
 
           <div
             data-login-promise
@@ -129,15 +119,7 @@ export function LoginPage() {
 
         <div className="relative flex min-w-0 flex-col px-6 py-7 sm:px-12 sm:py-10 lg:px-16 lg:py-12">
           <div className="flex items-center">
-            <div className="flex items-center gap-3 lg:hidden">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#08122f] text-white">
-                <BarChart3 size={18} />
-              </span>
-              <span>
-                <strong className="block text-base font-bold">AWS Mastery</strong>
-                <span className="block text-xs text-[#7b8495]">Practice</span>
-              </span>
-            </div>
+            <BrandLogo className="h-11 w-auto lg:hidden" />
           </div>
 
           <div

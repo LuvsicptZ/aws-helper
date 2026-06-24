@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   Bookmark,
   CalendarX,
   ChartLine,
@@ -19,6 +18,7 @@ import {
   Sun,
 } from "lucide-react";
 import type { PracticeMode } from "../domain/practiceMode";
+import { BrandLogo } from "./BrandLogo";
 
 export type ShellRoute =
   | "dashboard"
@@ -87,14 +87,7 @@ export function AppShell({
     <div className="flex h-screen overflow-hidden bg-gray-50 font-sans text-gray-900 antialiased">
       <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-gray-200 bg-gray-50 md:flex">
         <div className="flex h-16 items-center px-6">
-          <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-md bg-[#0B1120] text-white">
-            <BarChart3 size={14} />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold leading-tight text-gray-900">
-              AWS Mastery
-            </h1>
-          </div>
+          <BrandLogo className="h-11 w-auto" />
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
@@ -229,20 +222,20 @@ export function AppShell({
       </aside>
 
       <div className="flex h-full flex-1 flex-col overflow-hidden rounded-tl-none border-l border-gray-200 bg-white shadow-[-4px_0_24px_-4px_rgba(0,0,0,0.05)] md:rounded-tl-3xl">
-        <header className="z-10 flex min-h-16 items-center justify-between border-b border-transparent bg-white/80 px-4 backdrop-blur-sm sm:px-8">
+        <header className="z-10 flex min-h-16 items-start justify-between border-b border-gray-100 bg-white/90 px-4 py-2 backdrop-blur-sm sm:px-8">
           <div className="flex items-center gap-3 md:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#0B1120] text-white">
-              <BarChart3 size={14} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">AWS Mastery</p>
-            </div>
+            <BrandLogo className="h-9 w-auto" />
           </div>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex min-w-0 items-start gap-2">
             {headerActions}
-            <button className="text-gray-400 hover:text-gray-600" type="button">
-              <Sun size={16} />
+            <button
+              aria-label="Toggle theme"
+              className="mt-1 inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-400 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]"
+              title="Toggle theme"
+              type="button"
+            >
+              <Sun aria-hidden="true" size={17} />
             </button>
             {!headerActions ? (
               <button className="inline-flex min-h-10 items-center rounded-lg bg-[#0B1120] px-4 text-sm font-medium text-white transition-colors hover:bg-gray-800">

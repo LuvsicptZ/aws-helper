@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { LogIn, LogOut, RefreshCw } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleAlert,
+  CircleUserRound,
+  LogIn,
+  LogOut,
+  RefreshCw,
+} from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
 import { syncExamSessionsWithSupabase } from "../sync/supabaseExamSync";
 import { syncProgressWithSupabase } from "../sync/supabaseProgressSync";
@@ -10,10 +17,120 @@ type AuthPanelProps = {
   onSyncComplete?: () => void;
 };
 
+type AuthStatus = {
+  message: string;
+  tone: "success" | "error";
+};
+
+type SignedInAuthPanelProps = {
+  email?: string;
+  isSubmitting: boolean;
+  isSyncing: boolean;
+  onSignOut: () => void;
+  onSync: () => void;
+  status?: AuthStatus;
+};
+
+export function SignedInAuthPanel({
+  email,
+  isSubmitting,
+  isSyncing,
+  onSignOut,
+  onSync,
+  status,
+}: SignedInAuthPanelProps) {
+  return (
+    <div className="flex min-w-0 flex-col items-end gap-1.5">
+      <div
+        aria-label="Account actions"
+        className="flex min-w-0 items-center gap-1 rounded-xl border border-gray-200/90 bg-white p-1 shadow-sm"
+      >
+        <div className="hidden min-w-0 items-center gap-2 px-2 sm:flex">
+          <CircleUserRound
+            aria-hidden="true"
+            className="shrink-0 text-gray-400"
+            size={17}
+          />
+          <span
+            className="max-w-40 truncate text-sm font-medium text-gray-700 lg:max-w-52"
+            title={email}
+          >
+            {email}
+          </span>
+        </div>
+
+        <span
+          aria-hidden="true"
+          className="hidden h-6 w-px shrink-0 bg-gray-200 sm:block"
+        />
+
+        <button
+          type="button"
+          aria-label="Sync progress"
+          title="Sync progress"
+          onClick={onSync}
+          disabled={isSyncing}
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#0B1120] px-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
+        >
+          <RefreshCw
+            aria-hidden="true"
+            className={isSyncing ? "animate-spin motion-reduce:animate-none" : ""}
+            size={16}
+          />
+          <span className="hidden md:inline">
+            {isSyncing ? "Syncing" : "Sync"}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          aria-label="Sign out"
+          title="Sign out"
+          onClick={onSignOut}
+          disabled={isSubmitting}
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-60"
+        >
+          <LogOut aria-hidden="true" size={16} />
+          <span className="hidden md:inline">Sign out</span>
+        </button>
+      </div>
+
+      {status ? (
+        <p
+          aria-live="polite"
+          className={[
+            "flex max-w-[min(28rem,calc(100vw-2rem))] items-start justify-end gap-1.5 pr-1 text-right text-sm leading-5",
+            status.tone === "error"
+              ? "text-amber-700"
+              : "text-emerald-700",
+          ].join(" ")}
+          role="status"
+          title={status.message}
+        >
+          {status.tone === "error" ? (
+            <CircleAlert
+              aria-hidden="true"
+              className="mt-0.5 shrink-0"
+              size={14}
+            />
+          ) : (
+            <CheckCircle2
+              aria-hidden="true"
+              className="mt-0.5 shrink-0"
+              size={14}
+            />
+          )}
+          <span className="line-clamp-2 max-w-72">{status.message}</span>
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
   const { session } = useAuth();
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<string>();
+  const [status, setStatus] = useState<AuthStatus>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -39,7 +156,10 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
         },
       });
 
-      setStatus(error ? error.message : "Check your email for the login link.");
+      setStatus({
+        tone: error ? "error" : "success",
+        message: error?.message ?? "Check your email for the login link.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -53,7 +173,14 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
 
     try {
       const { error } = await supabaseClient.auth.signOut();
-      setStatus(error ? error.message : undefined);
+      setStatus(
+        error
+          ? {
+              tone: "error",
+              message: error.message,
+            }
+          : undefined,
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -75,13 +202,17 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
         session.user.id,
       );
       await syncPracticeResumeWithSupabase(supabaseClient, session.user.id);
-      setStatus(
-        `Synced ${progressResult.merged} progress and ${examResult.merged} exams.`,
-      );
+      setStatus({
+        tone: "success",
+        message: `Synced ${progressResult.merged} progress and ${examResult.merged} exams.`,
+      });
       onSyncComplete?.();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sync failed.";
-      setStatus(`${message} Local progress is still available.`);
+      setStatus({
+        tone: "error",
+        message: `${message} Your local progress is safe.`,
+      });
     } finally {
       setIsSyncing(false);
     }
@@ -89,32 +220,14 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
 
   if (session) {
     return (
-      <div className="flex flex-col gap-2 sm:items-end">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="max-w-44 truncate rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm">
-            {session.user.email}
-          </span>
-          <button
-            type="button"
-            onClick={() => void syncNow()}
-            disabled={isSyncing}
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#0B1120] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
-          >
-            <RefreshCw size={16} />
-            Sync
-          </button>
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            disabled={isSubmitting}
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
-          >
-            <LogOut size={16} />
-            Sign out
-          </button>
-        </div>
-        {status ? <p className="text-xs text-slate-500">{status}</p> : null}
-      </div>
+      <SignedInAuthPanel
+        email={session.user.email}
+        isSubmitting={isSubmitting}
+        isSyncing={isSyncing}
+        onSignOut={() => void signOut()}
+        onSync={() => void syncNow()}
+        status={status}
+      />
     );
   }
 
@@ -142,7 +255,18 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
           Sign in
         </button>
       </div>
-      {status ? <p className="text-xs text-slate-500">{status}</p> : null}
+      {status ? (
+        <p
+          aria-live="polite"
+          className={
+            status.tone === "error"
+              ? "text-sm text-amber-700"
+              : "text-sm text-emerald-700"
+          }
+        >
+          {status.message}
+        </p>
+      ) : null}
     </div>
   );
 }
