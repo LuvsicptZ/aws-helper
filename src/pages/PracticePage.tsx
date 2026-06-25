@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Gauge } from "lucide-react";
+import {
+  Bookmark,
+  ChevronLeft,
+  CircleUserRound,
+  Sun,
+} from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
 import { AnswerOptions } from "../components/AnswerOptions";
 import { EmptyModeState } from "../components/EmptyModeState";
 import { ExplanationPanel } from "../components/ExplanationPanel";
-import { PracticeModeTabs } from "../components/PracticeModeTabs";
 import { QuestionCard } from "../components/QuestionCard";
 import { QuestionNavigator } from "../components/QuestionNavigator";
 import { QuestionReviewPanel } from "../components/QuestionReviewPanel";
@@ -74,7 +78,7 @@ export function PracticePage({
   onNavigate,
 }: PracticePageProps) {
   const initialPosition = resumePositions?.[initialMode];
-  const [mode, setMode] = useState<PracticeMode>(initialMode);
+  const mode = initialMode;
   const [currentIndex, setCurrentIndex] = useState(initialPosition?.index ?? 0);
   const [answerState, setAnswerState] = useState<{
     questionId?: number;
@@ -83,7 +87,7 @@ export function PracticePage({
   }>({ selected: [] });
   const [isSaving, setIsSaving] = useState(false);
   const [allProgress, setAllProgress] = useState<QuestionProgress[]>([]);
-  const [randomQuestions, setRandomQuestions] = useState(() => {
+  const [randomQuestions] = useState(() => {
     if (!initialPosition?.randomQuestionIds) {
       return shuffleQuestions(questions);
     }
@@ -120,9 +124,6 @@ export function PracticePage({
       ? answerState.result
       : currentProgress?.lastResult;
   const isMultiAnswer = question ? Array.isArray(question.answer) : false;
-  const progressPercent = hasQuestions
-    ? ((safeCurrentIndex + 1) / visibleTotal) * 100
-    : 0;
   const restoredMode = useRef<PracticeMode | undefined>(undefined);
 
   useEffect(() => {
@@ -230,31 +231,6 @@ export function PracticePage({
     setAnswerState({ selected: [] });
   }
 
-  function handleModeChange(nextMode: PracticeMode) {
-    setMode(nextMode);
-    setCurrentIndex(resumePositions?.[nextMode]?.index ?? 0);
-    resetAnswerState();
-
-    if (nextMode === "random") {
-      const savedQuestionIds = resumePositions?.random?.randomQuestionIds;
-      if (savedQuestionIds) {
-        const questionById = new Map(questions.map((item) => [item.id, item]));
-        setRandomQuestions(
-          repairRandomQuestionIds(
-            savedQuestionIds,
-            questions.map((item) => item.id),
-          )
-            .map((questionId) => questionById.get(questionId))
-            .filter(
-              (item): item is (typeof questions)[number] => item !== undefined,
-            ),
-        );
-      } else {
-        setRandomQuestions(shuffleQuestions(questions));
-      }
-    }
-  }
-
   function goToPrevious() {
     resetAnswerState();
     setCurrentIndex(() => Math.max(0, safeCurrentIndex - 1));
@@ -268,39 +244,69 @@ export function PracticePage({
   return (
     <AppShell
       active="practice"
+      mobileHeader={
+        <div
+          className="flex min-h-14 items-center justify-between"
+          data-mobile-practice-header
+        >
+          <div className="flex min-w-0 items-center">
+            <button
+              aria-label="Back to dashboard"
+              className="-ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-800 transition-colors hover:bg-gray-100"
+              onClick={onDashboardClick}
+              type="button"
+            >
+              <ChevronLeft size={23} />
+            </button>
+
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                <img
+                  alt=""
+                  aria-hidden="true"
+                  className="h-10 w-10"
+                  height={40}
+                  src="/aws-mastery-mark.svg"
+                  width={40}
+                />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-bold leading-5 text-gray-950">
+                  AWS Mastery
+                </span>
+                <span className="block text-xs leading-4 text-gray-500">
+                  Practice
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              aria-label="Toggle theme"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-800 transition-colors hover:bg-gray-100"
+              type="button"
+            >
+              <Sun size={20} />
+            </button>
+            <button
+              aria-label="Account"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm"
+              type="button"
+            >
+              <CircleUserRound size={22} />
+            </button>
+          </div>
+        </div>
+      }
+      practiceMode={mode}
       onNavigate={onNavigate}
       onDashboardClick={onDashboardClick}
       onPracticeClick={onPracticeClick}
       onExamClick={onExamClick}
     >
-      <div className="space-y-6">
-        <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Practice session</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Answer directly from the options. Feedback appears after selection.
-            </p>
-          </div>
-
-          <div className="w-full rounded-2xl border border-gray-200 bg-white p-4 shadow-sm lg:w-80">
-            <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-gray-500">
-              <span>Progress</span>
-              <span>
-                {hasQuestions ? safeCurrentIndex + 1 : 0} / {visibleTotal}
-              </span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-              <div
-                className="h-full rounded-full bg-[#0B1120] transition-[width] duration-300 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-        </section>
-
-        <PracticeModeTabs mode={mode} onModeChange={handleModeChange} />
-
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div>
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
           <section className="min-w-0 space-y-4">
             {question ? (
               <>
@@ -311,19 +317,70 @@ export function PracticePage({
                   onNext={goToNext}
                 />
 
-                <QuestionCard
-                  question={question}
-                />
+                <section
+                  className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:hidden"
+                  data-mobile-question-card
+                >
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <h2 className="text-base font-semibold text-gray-950">
+                      Question
+                    </h2>
+                    <button
+                      aria-label="Bookmark question"
+                      aria-pressed={currentProgress?.bookmarked === true}
+                      className={[
+                        "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors",
+                        currentProgress?.bookmarked
+                          ? "bg-amber-50 text-amber-600"
+                          : "text-gray-400 hover:bg-gray-100 hover:text-gray-700",
+                      ].join(" ")}
+                      disabled={!question}
+                      onClick={() =>
+                        void saveReviewMetadata({
+                          bookmarked: currentProgress?.bookmarked !== true,
+                        })
+                      }
+                      type="button"
+                    >
+                      <Bookmark
+                        fill={
+                          currentProgress?.bookmarked ? "currentColor" : "none"
+                        }
+                        size={21}
+                      />
+                    </button>
+                  </div>
 
-                <AnswerOptions
-                  options={question.options}
-                  selected={selected}
-                  disabled={Boolean(result) || isSaving}
-                  isMultiAnswer={isMultiAnswer}
-                  result={result}
-                  correctAnswer={question.answer}
-                  onChange={handleAnswerChange}
-                />
+                  <p className="break-words text-base leading-6 text-gray-900 [overflow-wrap:anywhere]">
+                    {question.stem}
+                  </p>
+
+                  <div className="mt-6">
+                    <AnswerOptions
+                      options={question.options}
+                      selected={selected}
+                      disabled={Boolean(result) || isSaving}
+                      isMultiAnswer={isMultiAnswer}
+                      result={result}
+                      correctAnswer={question.answer}
+                      onChange={handleAnswerChange}
+                    />
+                  </div>
+                </section>
+
+                <div className="hidden space-y-4 md:block">
+                  <QuestionCard question={question} />
+
+                  <AnswerOptions
+                    options={question.options}
+                    selected={selected}
+                    disabled={Boolean(result) || isSaving}
+                    isMultiAnswer={isMultiAnswer}
+                    result={result}
+                    correctAnswer={question.answer}
+                    onChange={handleAnswerChange}
+                  />
+                </div>
 
                 {isSaving ? (
                   <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500 shadow-sm">
@@ -344,28 +401,7 @@ export function PracticePage({
             )}
           </section>
 
-          <aside className="space-y-4">
-            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center font-medium text-gray-900">
-                <Gauge size={18} className="mr-2 text-gray-400" />
-                Session Context
-              </div>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between border-b border-gray-100 pb-3">
-                  <span className="text-gray-500">Mode</span>
-                  <span className="font-medium text-gray-900">{mode}</span>
-                </div>
-                <div className="flex justify-between border-b border-gray-100 pb-3">
-                  <span className="text-gray-500">Status</span>
-                  <span className="font-medium text-gray-900">{result ?? "open"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Selected</span>
-                  <span className="font-medium text-gray-900">{selected.length}</span>
-                </div>
-              </div>
-            </section>
-
+          <aside className="hidden md:block xl:sticky xl:top-4 xl:self-start">
             <QuestionReviewPanel
               bookmarked={currentProgress?.bookmarked === true}
               markedGuessed={currentProgress?.markedGuessed === true}
