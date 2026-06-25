@@ -25,14 +25,17 @@ export function QuestionReviewPanel({
 
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
+      <h2 className="mb-4 text-sm font-semibold text-gray-900">
+        Question tools
+      </h2>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 xl:grid-cols-1">
           <button
             type="button"
             disabled={disabled}
             onClick={() => onBookmarkedChange(!bookmarked)}
             className={[
-              "inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70",
+              "inline-flex min-h-11 cursor-pointer items-center justify-start gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70",
               bookmarked
                 ? "border-yellow-300 bg-yellow-50 text-yellow-900"
                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
@@ -48,7 +51,7 @@ export function QuestionReviewPanel({
             disabled={disabled}
             onClick={() => onMarkedGuessedChange(!markedGuessed)}
             className={[
-              "inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70",
+              "inline-flex min-h-11 cursor-pointer items-center justify-start gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70",
               markedGuessed
                 ? "border-blue-300 bg-blue-50 text-blue-900"
                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
@@ -63,13 +66,12 @@ export function QuestionReviewPanel({
             type="button"
             disabled={disabled}
             onClick={() => setIsNoteOpen((isOpen) => !isOpen)}
-            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition-colors duration-200 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
             aria-expanded={shouldShowNote}
           >
             <StickyNote size={17} />
             {note.trim().length > 0 ? "Edit note" : "Add note"}
           </button>
-        </div>
       </div>
 
       {shouldShowNote ? (

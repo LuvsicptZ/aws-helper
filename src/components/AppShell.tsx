@@ -5,19 +5,15 @@ import {
   CircleHelp,
   ClipboardList,
   Clock,
-  Crosshair,
   FileQuestion,
-  HelpCircle,
   Home,
   Layers,
   ListChecks,
-  LogIn,
-  Moon,
   PenLine,
-  Settings,
   Sun,
 } from "lucide-react";
 import type { PracticeMode } from "../domain/practiceMode";
+import { AuthPanel } from "./AuthPanel";
 import { BrandLogo } from "./BrandLogo";
 
 export type ShellRoute =
@@ -35,6 +31,8 @@ type AppShellProps = {
   active: ShellRoute;
   children: React.ReactNode;
   headerActions?: React.ReactNode;
+  mobileHeader?: React.ReactNode;
+  practiceMode?: PracticeMode;
   onNavigate?: (route: ShellRoute) => void;
   onDashboardClick?: () => void;
   onPracticeClick?: (mode?: PracticeMode) => void;
@@ -51,6 +49,7 @@ type NavButtonProps = {
 function NavButton({ active = false, children, icon, onClick }: NavButtonProps) {
   return (
     <button
+      aria-current={active ? "page" : undefined}
       type="button"
       onClick={onClick}
       className={[
@@ -78,11 +77,17 @@ export function AppShell({
   active,
   children,
   headerActions,
+  mobileHeader,
+  practiceMode = "sequential",
   onNavigate,
   onDashboardClick,
   onPracticeClick,
   onExamClick,
 }: AppShellProps) {
+  const isQuestionBankActive =
+    active === "practice" &&
+    (practiceMode === "sequential" || practiceMode === "random");
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 font-sans text-gray-900 antialiased">
       <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-gray-200 bg-gray-50 md:flex">
@@ -106,7 +111,7 @@ export function AppShell({
               <SectionLabel>Practice</SectionLabel>
               <nav className="space-y-1">
                 <NavButton
-                  active={active === "practice"}
+                  active={isQuestionBankActive}
                   icon={<ListChecks size={16} />}
                   onClick={() => onPracticeClick?.("sequential")}
                 >
@@ -120,18 +125,21 @@ export function AppShell({
                   Mock Exams
                 </NavButton>
                 <NavButton
+                  active={active === "practice" && practiceMode === "incorrect"}
                   icon={<CalendarX size={16} />}
                   onClick={() => onPracticeClick?.("incorrect")}
                 >
                   Review Incorrect
                 </NavButton>
                 <NavButton
+                  active={active === "practice" && practiceMode === "guessed"}
                   icon={<CircleHelp size={16} />}
                   onClick={() => onPracticeClick?.("guessed")}
                 >
                   Review Guessed
                 </NavButton>
                 <NavButton
+                  active={active === "practice" && practiceMode === "favorite"}
                   icon={<Bookmark size={16} />}
                   onClick={() => onPracticeClick?.("favorite")}
                 >
@@ -189,60 +197,34 @@ export function AppShell({
           </div>
         </div>
 
-        <div className="space-y-4 p-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="mb-2 flex items-center">
-              <Crosshair size={16} className="mr-2 text-orange-500" />
-              <span className="text-sm font-semibold text-gray-900">Focus Mode</span>
-            </div>
-            <p className="mb-3 text-xs text-gray-600">
-              Jump into a focused practice flow.
-            </p>
-            <button
-              type="button"
-              onClick={() => onNavigate?.("focus")}
-              className="w-full rounded-lg bg-[#0B1120] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800"
-            >
-              Start Focus Session
-            </button>
-          </div>
-
-          <div className="flex justify-around pb-2 text-gray-400">
-            <button className="hover:text-gray-600" type="button">
-              <Moon size={16} />
-            </button>
-            <button className="hover:text-gray-600" type="button">
-              <Settings size={16} />
-            </button>
-            <button className="hover:text-gray-600" type="button">
-              <HelpCircle size={16} />
-            </button>
-          </div>
-        </div>
       </aside>
 
-      <div className="flex h-full flex-1 flex-col overflow-hidden rounded-tl-none border-l border-gray-200 bg-white shadow-[-4px_0_24px_-4px_rgba(0,0,0,0.05)] md:rounded-tl-3xl">
-        <header className="z-10 flex min-h-16 items-start justify-between border-b border-gray-100 bg-white/90 px-4 py-2 backdrop-blur-sm sm:px-8">
-          <div className="flex items-center gap-3 md:hidden">
-            <BrandLogo className="h-9 w-auto" />
-          </div>
+      <div className="flex h-full flex-1 flex-col overflow-hidden bg-white">
+        <header className="z-10 flex min-h-16 items-center justify-between border-b border-gray-200 bg-white/90 px-4 py-2 backdrop-blur-sm sm:px-8">
+          {mobileHeader ? (
+            <div className="w-full md:hidden">{mobileHeader}</div>
+          ) : (
+            <div className="flex items-center gap-3 md:hidden">
+              <BrandLogo className="h-9 w-auto" />
+            </div>
+          )}
 
-          <div className="ml-auto flex min-w-0 items-start gap-2">
+          <div
+            className={[
+              "ml-auto min-w-0 items-center gap-2",
+              mobileHeader ? "hidden md:flex" : "flex",
+            ].join(" ")}
+          >
             {headerActions}
             <button
               aria-label="Toggle theme"
-              className="mt-1 inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-400 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]"
+              className="inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-400 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]"
               title="Toggle theme"
               type="button"
             >
               <Sun aria-hidden="true" size={17} />
             </button>
-            {!headerActions ? (
-              <button className="inline-flex min-h-10 items-center rounded-lg bg-[#0B1120] px-4 text-sm font-medium text-white transition-colors hover:bg-gray-800">
-                <LogIn size={15} className="mr-2" />
-                Sign in
-              </button>
-            ) : null}
+            {!headerActions ? <AuthPanel /> : null}
           </div>
         </header>
 
