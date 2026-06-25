@@ -1,0 +1,26 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="barGradient" x1="30" y1="66" x2="62" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF7A00"/>
+      <stop offset="0.55" stop-color="#FFB020"/>
+      <stop offset="1" stop-color="#FFD166"/>
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="10" y1="10" x2="78" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#071126"/>
+      <stop offset="1" stop-color="#0B1020"/>
+    </linearGradient>
+    <filter id="softShadow" x="0" y="0" width="96" height="96" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0B1020" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <rect x="16" y="16" width="64" height="64" rx="18" fill="url(#cardGradient)"/>
+  </g>
+  <path d="M31.6 58.5H62.7C67.1 58.5 70.6 55.1 70.6 50.9C70.6 46.9 67.5 43.6 63.6 43.2C62.5 36.9 57 32.2 50.4 32.2C45.2 32.2 40.8 35.1 38.6 39.4C37.6 39.1 36.5 39 35.4 39C29.9 39 25.4 43.3 25.4 48.7C25.4 54.1 28.1 58.5 31.6 58.5Z" fill="#111C33" stroke="#F8FAFC" stroke-opacity="0.9" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="36" y="50" width="7" height="12" rx="2" fill="url(#barGradient)"/>
+  <rect x="46" y="42" width="7" height="20" rx="2" fill="url(#barGradient)"/>
+  <rect x="56" y="34" width="7" height="28" rx="2" fill="url(#barGradient)"/>
+  <path d="M34.5 61.5C42.5 56.2 50.3 50.7 63.5 38.6" stroke="#FFB020" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M68 28.5L70.1 33.2L74.8 35.3L70.1 37.4L68 42.1L65.9 37.4L61.2 35.3L65.9 33.2L68 28.5Z" fill="#FFB020"/>
+</svg>

@@ -73,14 +73,14 @@ export function LoginPage() {
     <main className="min-h-screen bg-[#f1eef3] p-3 text-[#11182b] sm:p-6 lg:flex lg:items-center lg:justify-center lg:p-10">
       <section
         data-login-shell
-        className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1120px] overflow-hidden rounded-[24px] bg-white shadow-[0_24px_70px_rgba(25,20,35,0.14)] sm:min-h-[calc(100vh-3rem)] lg:h-[660px] lg:min-h-0 lg:grid-cols-[45%_55%]"
+        className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1180px] overflow-hidden rounded-[24px] bg-white shadow-[0_22px_56px_rgba(25,20,35,0.12)] sm:min-h-[calc(100vh-3rem)] lg:h-[660px] lg:min-h-0 lg:grid-cols-[45%_55%]"
       >
         <aside className="relative hidden overflow-hidden bg-[#fff7f3] p-12 lg:flex lg:flex-col">
-          <BrandLogo className="relative z-10 h-14 w-auto" />
+          <BrandLogo className="relative z-10 -ml-2 -mt-2 h-16 w-60 shrink-0 self-start" />
 
           <div
             data-login-promise
-            className="relative z-10 my-auto max-w-[360px] -translate-y-2"
+            className="relative z-10 my-auto max-w-[360px] -translate-y-8"
           >
             <h1 className="text-[46px] font-bold leading-[1.02] tracking-[-0.045em]">
               Stay focused.
@@ -118,13 +118,11 @@ export function LoginPage() {
         </aside>
 
         <div className="relative flex min-w-0 flex-col px-6 py-7 sm:px-12 sm:py-10 lg:px-16 lg:py-12">
-          <div className="flex items-center">
-            <BrandLogo className="h-11 w-auto lg:hidden" />
-          </div>
+          <BrandLogo className="-ml-2 h-11 w-[165px] shrink-0 self-start lg:hidden" />
 
           <div
             data-login-form
-            className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-center py-10 sm:py-12"
+            className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-start pb-6 pt-12 sm:justify-center sm:py-8 lg:py-12"
           >
             <header>
               <h2 className="text-[34px] font-bold leading-tight tracking-[-0.035em] sm:text-[38px]">
