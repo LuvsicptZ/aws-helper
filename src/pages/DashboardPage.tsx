@@ -163,7 +163,7 @@ export function DashboardPage({
               title="Reset All Progress"
             >
               <RotateCcw size={13} />
-              <span>Reset Progress</span>
+              <span>Reset</span>
             </button>
           )}
           <button
@@ -174,10 +174,11 @@ export function DashboardPage({
             title={isDark ? "Switch to light theme" : "Switch to dark theme"}
           >
             {isDark ? (
-              <Sun aria-hidden="true" size={16} />
+              <Sun aria-hidden="true" size={13} />
             ) : (
-              <Moon aria-hidden="true" size={16} />
+              <Moon aria-hidden="true" size={13} />
             )}
+            <span>Theme</span>
           </button>
         </div>
 

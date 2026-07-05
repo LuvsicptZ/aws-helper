@@ -82,7 +82,7 @@ export function SignedInAuthPanel({
           className="auth-action-button inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-60"
         >
           <LogOut aria-hidden="true" size={16} />
-          <span className="hidden md:inline">Sign out</span>
+          <span>Sign out</span>
         </button>
       </div>
     </div>

@@ -31,9 +31,6 @@ export function useTheme() {
   useEffect(() => {
     applyTheme(theme);
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-    window.dispatchEvent(
-      new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: theme }),
-    );
   }, [theme]);
 
   useEffect(() => {
@@ -63,7 +60,11 @@ export function useTheme() {
   }, []);
 
   function toggleTheme() {
-    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    window.dispatchEvent(
+      new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: nextTheme }),
+    );
   }
 
   return {

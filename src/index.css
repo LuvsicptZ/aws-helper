@@ -748,17 +748,21 @@ body {
 .dashboard-prototype__theme {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid rgba(156, 163, 175, 0.2);
   color: #9ca3af;
   cursor: pointer;
   display: inline-flex;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  gap: 0.375rem;
   height: 2rem;
-  justify-content: center;
-  transition: color 180ms ease;
-  width: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px !important;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .dashboard-prototype__theme:hover {
+  border-color: rgba(156, 163, 175, 0.4);
   color: #e2e8f0;
 }
 
@@ -1464,7 +1468,11 @@ html[data-theme="light"] .dashboard-prototype__incorrect-count {
   }
 
   .dashboard-prototype__topbar {
-    display: none;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
   }
 
   .dashboard-prototype__header {
@@ -1927,13 +1935,19 @@ html[data-theme="light"] .dashboard-prototype {
   color: #526171 !important;
 }
 
-html[data-theme="light"] .dashboard-prototype__sync,
-html[data-theme="light"] .dashboard-prototype__theme {
+html[data-theme="light"] .dashboard-prototype__sync {
   color: #748092 !important;
 }
 
+html[data-theme="light"] .dashboard-prototype__theme {
+  color: var(--study-muted) !important;
+  border-color: var(--study-line) !important;
+}
+
 html[data-theme="light"] .dashboard-prototype__theme:hover {
-  color: #111827 !important;
+  color: var(--study-ink) !important;
+  border-color: rgba(116, 94, 68, 0.4) !important;
+  background: rgba(116, 94, 68, 0.05) !important;
 }
 
 html[data-theme="light"] .dashboard-prototype__header h1 {
@@ -2448,45 +2462,59 @@ html[data-theme="dark"] [data-focused-practice-layout] .border-gray-200 {
 }
 
 .dashboard-prototype__topbar .auth-actions {
-  display: flex !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 2rem !important;
+  padding: 0 0.25rem !important;
+  border-radius: 999px !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
 }
 
 .dashboard-prototype__topbar .auth-status-pill {
   display: inline-flex !important;
 }
 
+.dashboard-prototype__topbar .auth-action-button {
+  min-height: auto !important;
+  height: 1.75rem !important;
+  padding: 0 0.5rem !important;
+  border-radius: 999px !important;
+  border: 0 !important;
+  background: transparent !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  gap: 0.375rem !important;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+}
+
 html[data-theme="light"] .dashboard-prototype__topbar .auth-actions {
-  background: rgb(255 253 248 / 0.72) !important;
-  border-color: rgb(127 103 74 / 0.14) !important;
-  box-shadow: 0 12px 34px rgb(95 71 42 / 0.08) !important;
+  background: var(--study-paper-strong) !important;
+  border-color: var(--study-line) !important;
 }
 
 html[data-theme="light"] .dashboard-prototype__topbar .auth-action-button {
-  background: transparent !important;
-  border-color: transparent !important;
-  color: #526171 !important;
+  color: var(--study-muted) !important;
 }
 
 html[data-theme="light"] .dashboard-prototype__topbar .auth-action-button:hover {
-  background: rgb(255 255 255 / 0.72) !important;
-  color: #111827 !important;
+  background: rgba(116, 94, 68, 0.05) !important;
+  color: var(--study-ink) !important;
 }
 
 html[data-theme="dark"] .dashboard-prototype__topbar .auth-actions {
-  background: rgb(18 24 36 / 0.74) !important;
-  border-color: rgb(51 65 85 / 0.64) !important;
-  box-shadow: none !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 html[data-theme="dark"] .dashboard-prototype__topbar .auth-action-button {
-  background: transparent !important;
-  border-color: transparent !important;
   color: #9ca3af !important;
 }
 
 html[data-theme="dark"] .dashboard-prototype__topbar .auth-action-button:hover {
-  background: rgb(30 41 59 / 0.54) !important;
-  color: #f1f5f9 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
 }
 
 /* ZenFocus practice page — Figma node 14:167. */
@@ -3104,7 +3132,7 @@ html[data-theme="light"] .dashboard-map-control-bg {
   color: #9ca3af;
   border-radius: 8px;
   font-weight: 600;
-  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3123,6 +3151,7 @@ html[data-theme="light"] .dashboard-map-node {
   transform: translateY(-2px) scale(1.08);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 5;
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
 html[data-theme="light"] .dashboard-map-node:hover {
@@ -3130,6 +3159,7 @@ html[data-theme="light"] .dashboard-map-node:hover {
   color: #0f172a;
   border-color: #94a3b8;
   box-shadow: 0 4px 12px rgba(118, 95, 67, 0.08);
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
 .dashboard-map-node--correct {
@@ -3422,30 +3452,39 @@ html[data-theme="dark"] .zen-practice-notes-textarea {
 .dashboard-prototype__reset-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 11px;
+  gap: 0.375rem;
+  padding: 0 0.75rem;
+  border-radius: 999px !important;
+  font-size: 0.6875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  height: 2rem;
   border: 1px solid transparent;
-  background: transparent;
-  color: #ef4444;
 }
 
-.dashboard-prototype__reset-btn:hover {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.2);
+html[data-theme="light"] .dashboard-prototype__reset-btn {
+  background: var(--study-paper-strong) !important;
+  border-color: rgba(239, 68, 68, 0.24) !important;
+  color: #ef4444 !important;
+}
+
+html[data-theme="light"] .dashboard-prototype__reset-btn:hover {
+  background: #fef2f2 !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  color: #dc2626 !important;
 }
 
 html[data-theme="dark"] .dashboard-prototype__reset-btn {
-  color: #f87171;
+  background: rgba(239, 68, 68, 0.06) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #f87171 !important;
 }
 
 html[data-theme="dark"] .dashboard-prototype__reset-btn:hover {
-  background: rgba(248, 113, 113, 0.1);
-  border-color: rgba(248, 113, 113, 0.2);
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  color: #ef4444 !important;
 }
 
 /* --- Light Mode background continuity for practice/exam pages --- */
@@ -3668,15 +3707,6 @@ html[data-theme="dark"] .zen-practice-main div {
     width: 100% !important;
     min-width: 0 !important;
     justify-content: center !important;
-  }
-  
-  .dashboard-prototype__reset-btn span {
-    display: none !important;
-  }
-  
-  .dashboard-prototype__reset-btn {
-    padding: 8px !important;
-    border-radius: 999px !important;
   }
 }
 
