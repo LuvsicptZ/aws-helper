@@ -68,7 +68,7 @@ describe("dashboard page layout", () => {
     expect(markup).not.toContain("Switch practice mode");
   });
 
-  it("renders the new Review Bookmarked card and Question Map", () => {
+  it("renders the new Review Bookmarked card and does not render Question Map", () => {
     const markup = renderToStaticMarkup(
       <DashboardPage
         onNavigate={vi.fn()}
@@ -79,7 +79,7 @@ describe("dashboard page layout", () => {
     );
 
     expect(markup).toContain("Review Bookmarked");
-    expect(markup).toContain("data-dashboard-question-map");
-    expect(markup).toContain("Question Navigation Map");
+    expect(markup).not.toContain("data-dashboard-question-map");
+    expect(markup).not.toContain("Question Navigation Map");
   });
 });

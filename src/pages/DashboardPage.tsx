@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight, Moon, Search, Star, Sun, AlertCircle, LayoutGrid, RotateCcw } from "lucide-react";
+import { ArrowRight, Moon, Sun, RotateCcw } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
 import { AnonymousProgressPrompt } from "../components/AnonymousProgressPrompt";
@@ -53,11 +53,7 @@ export function DashboardPage({
   const { isDark, toggleTheme } = useTheme();
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
 
-  // Question Navigator States
-  const [navigatorTab, setNavigatorTab] = useState<"all" | "incorrect" | "bookmarked" | "unattempted">("all");
-  const [activeChunk, setActiveChunk] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
-  const CHUNK_SIZE = 100;
+
 
   const refreshProgress = useCallback(() => {
     void getAllProgress(ownerId).then(setProgressList);
@@ -85,49 +81,7 @@ export function DashboardPage({
     : "Start a clean practice session";
   const displayName = getDashboardDisplayName(session?.user.email);
 
-  // Question Map Calculations
-  const progressMap = useMemo(() => {
-    return new Map(progressList.map((p) => [p.questionId, p]));
-  }, [progressList]);
 
-  const filteredMapQuestions = useMemo(() => {
-    let list = totalQuestions === 0 ? [] : questions;
-
-    if (navigatorTab === "incorrect") {
-      list = list.filter((q) => progressMap.get(q.id)?.lastResult === "incorrect");
-    } else if (navigatorTab === "bookmarked") {
-      list = list.filter((q) => progressMap.get(q.id)?.bookmarked === true);
-    } else if (navigatorTab === "unattempted") {
-      list = list.filter((q) => {
-        const p = progressMap.get(q.id);
-        return !p || p.attempts === 0;
-      });
-    }
-
-    if (searchQuery.trim()) {
-      const qId = parseInt(searchQuery.trim(), 10);
-      if (!isNaN(qId)) {
-        list = list.filter((q) => q.id === qId);
-      } else {
-        const query = searchQuery.toLowerCase();
-        list = list.filter((q) => q.stem.toLowerCase().includes(query));
-      }
-    }
-
-    return list;
-  }, [navigatorTab, searchQuery, progressMap]);
-
-  const totalChunks = Math.ceil(filteredMapQuestions.length / CHUNK_SIZE);
-  const safeChunk = Math.min(activeChunk, Math.max(0, totalChunks - 1));
-
-  const displayQuestions = useMemo(() => {
-    const needsChunking = navigatorTab === "all" || navigatorTab === "unattempted";
-    if (needsChunking && !searchQuery.trim()) {
-      const start = safeChunk * CHUNK_SIZE;
-      return filteredMapQuestions.slice(start, start + CHUNK_SIZE);
-    }
-    return filteredMapQuestions;
-  }, [filteredMapQuestions, navigatorTab, searchQuery, safeChunk]);
 
   return (
     <AppShell
@@ -302,167 +256,7 @@ export function DashboardPage({
           </div>
         </div>
 
-        <section className="dashboard-map-card" data-dashboard-question-map>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between dashboard-map-header">
-            <div>
-              <h2 className="dashboard-map-title flex items-center gap-2">
-                <LayoutGrid size={20} className="text-amber-500" />
-                Question Navigation Map
-              </h2>
-              <p className="text-xs text-gray-500 mt-1">
-                Visual index of all 1,019 exam questions. Click a number to jump directly to it in practice mode.
-              </p>
-            </div>
-            
-            {/* Search Box */}
-            <div className="relative w-full md:w-64">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                <Search size={14} />
-              </span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search ID (e.g. 42) or keyword..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl text-xs dashboard-map-input focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-              />
-            </div>
-          </div>
 
-          {/* Filters and Tabs */}
-          <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
-            <div className="dashboard-map-tabs-mobile dashboard-map-control-bg">
-              {(["all", "incorrect", "bookmarked"] as const).map((tab) => {
-                const isActive = navigatorTab === tab;
-                const labels: Record<typeof tab, string> = {
-                  all: "All Questions",
-                  incorrect: "Incorrect",
-                  bookmarked: "Bookmarked",
-                };
-                
-                let badgeVal = 0;
-                let badgeColor = "dashboard-map-tab-badge--all";
-                if (tab === "all") {
-                  badgeVal = totalQuestions;
-                } else if (tab === "incorrect") {
-                  badgeVal = stats.incorrectQuestions;
-                  badgeColor = "dashboard-map-tab-badge--incorrect";
-                } else if (tab === "bookmarked") {
-                  badgeVal = stats.bookmarkedQuestions;
-                  badgeColor = "dashboard-map-tab-badge--bookmarked";
-                }
-
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => {
-                      setNavigatorTab(tab);
-                      setActiveChunk(0);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${
-                      isActive
-                        ? "dashboard-map-tab--active shadow-sm"
-                        : "dashboard-map-tab"
-                    }`}
-                  >
-                    <span className="dashboard-map-tab-label-full">{labels[tab]}</span>
-                    <span className="dashboard-map-tab-label-short">
-                      {tab === "all" ? "All" : tab === "incorrect" ? "Wrong" : "Saved"}
-                    </span>
-                    <span className={`dashboard-map-tab-badge ${badgeColor}`}>
-                      {badgeVal}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Chunk selector (Pagination) */}
-            {totalChunks > 1 && (
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={safeChunk === 0}
-                  onClick={() => setActiveChunk(c => Math.max(0, c - 1))}
-                  className="p-1.5 rounded-lg dashboard-map-input hover:bg-slate-800/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <select
-                  value={safeChunk}
-                  onChange={(e) => setActiveChunk(parseInt(e.target.value, 10))}
-                  className="dashboard-map-input text-xs py-1.5 px-2.5 rounded-lg focus:outline-none"
-                >
-                  {Array.from({ length: totalChunks }).map((_, idx) => {
-                    const startRange = idx * CHUNK_SIZE + 1;
-                    const endRange = Math.min(filteredMapQuestions.length, (idx + 1) * CHUNK_SIZE);
-                    return (
-                      <option key={idx} value={idx}>
-                        Range {startRange} - {endRange}
-                      </option>
-                    );
-                  })}
-                </select>
-                <button
-                  type="button"
-                  disabled={safeChunk === totalChunks - 1}
-                  onClick={() => setActiveChunk(c => Math.min(totalChunks - 1, c + 1))}
-                  className="p-1.5 rounded-lg dashboard-map-input hover:bg-slate-800/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Grid display */}
-          {displayQuestions.length > 0 ? (
-            <div 
-              className="grid gap-2 max-h-[400px] overflow-y-auto pr-1"
-              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(48px, 1fr))" }}
-            >
-              {displayQuestions.map((q) => {
-                const qProgress = progressMap.get(q.id);
-                const isCorrect = qProgress?.lastResult === "correct";
-                const isIncorrect = qProgress?.lastResult === "incorrect";
-                const isBookmarked = qProgress?.bookmarked;
-                
-                let nodeStyle = "dashboard-map-node";
-                if (isCorrect) {
-                  nodeStyle = "dashboard-map-node--correct";
-                } else if (isIncorrect) {
-                  nodeStyle = "dashboard-map-node--incorrect";
-                }
-                
-                const borderStyle = isBookmarked ? "border-amber-500 ring-1 ring-amber-500/30" : "border";
-
-                return (
-                  <button
-                    key={q.id}
-                    type="button"
-                    onClick={() => onPracticeClick("sequential", q.id - 1)}
-                    title={`Question ${q.id}: ${q.stem.slice(0, 60)}...`}
-                    className={`relative flex flex-col h-11 items-center justify-center rounded-xl text-xs font-semibold transition-all cursor-pointer ${nodeStyle} ${borderStyle}`}
-                  >
-                    <span>{q.id}</span>
-                    {isBookmarked && (
-                      <span className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5 text-slate-950">
-                        <Star size={7} className="fill-slate-950" />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-12 border border-dashed border-gray-200 dark:border-slate-700/60 rounded-xl bg-gray-50 dark:bg-slate-900/20">
-              <AlertCircle size={24} className="mx-auto text-gray-300 dark:text-slate-600 mb-2" />
-              <p className="text-sm font-semibold text-gray-400 dark:text-slate-400">No questions found</p>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Try changing your filters or search query.</p>
-            </div>
-          )}
-        </section>
       </div>
     </AppShell>
   );
