@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  ArrowRight,
-  Mail,
-  ShieldCheck,
-} from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
-import { BrandLogo } from "./BrandLogo";
 
 function GoogleIcon() {
   return (
@@ -30,26 +24,166 @@ function GoogleIcon() {
   );
 }
 
+function ArrowIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+    >
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function EyeIcon({ hidden }: { hidden: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+    >
+      {hidden ? (
+        <>
+          <path d="m3 3 18 18" />
+          <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+          <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.5 4.4 9.6 6.1a1.7 1.7 0 0 1 0 1.8 17.7 17.7 0 0 1-2.5 3.1" />
+          <path d="M6.4 6.7A17.7 17.7 0 0 0 2.4 11a1.7 1.7 0 0 0 0 1.9C3.5 14.6 7 19 12 19a10.4 10.4 0 0 0 4.1-.8" />
+        </>
+      ) : (
+        <>
+          <path d="M2.4 11.1a1.7 1.7 0 0 0 0 1.8C3.5 14.6 7 19 12 19s8.5-4.4 9.6-6.1a1.7 1.7 0 0 0 0-1.8C20.5 9.4 17 5 12 5S3.5 9.4 2.4 11.1Z" />
+          <circle cx="12" cy="12" r="3" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function FieldIcon({ type }: { type: "email" | "password" | "shield" }) {
+  const paths = {
+    email: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m4 7 8 6 8-6" />
+      </>
+    ),
+    password: (
+      <>
+        <rect x="5" y="10" width="14" height="10" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+        <path d="M12 15v1.5" />
+      </>
+    ),
+    shield: (
+      <>
+        <path d="M12 3 5 6v5.5c0 4.1 2.7 7.5 7 9.5 4.3-2 7-5.4 7-9.5V6Z" />
+        <path d="m9.5 12 1.7 1.7 3.8-4" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+    >
+      {paths[type]}
+    </svg>
+  );
+}
+
+function normalizeAuthError(message: string) {
+  if (message.toLowerCase().includes("invalid login credentials")) {
+    return "Email or password does not look right. Try again.";
+  }
+
+  return message;
+}
+
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string>();
+  const [statusKind, setStatusKind] = useState<"error" | "success">("success");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const isSignUp = mode === "sign-up";
 
-  async function sendMagicLink() {
+  async function submitAuthForm() {
+    if (!supabaseClient || !email.trim() || !password) return;
+
+    setIsSubmitting(true);
+    setStatus(undefined);
+    setStatusKind("success");
+
+    const authResult = isSignUp
+      ? await supabaseClient.auth.signUp({
+          email: email.trim(),
+          password,
+        })
+      : await supabaseClient.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+
+    if (authResult.error) {
+      setStatusKind("error");
+      setStatus(normalizeAuthError(authResult.error.message));
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (isSignUp) {
+      setStatusKind("success");
+      setStatus(
+        "Check your inbox to confirm your account, then come back to practice.",
+      );
+      setIsSubmitting(false);
+    }
+  }
+
+  async function sendPasswordReset() {
     if (!supabaseClient || !email.trim()) return;
 
     setIsSubmitting(true);
     setStatus(undefined);
+    setStatusKind("success");
 
-    try {
-      const { error } = await supabaseClient.auth.signInWithOtp({
-        email: email.trim(),
-        options: { emailRedirectTo: window.location.origin },
-      });
-      setStatus(error ? error.message : "Check your email for the login link.");
-    } finally {
-      setIsSubmitting(false);
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(
+      email.trim(),
+      {
+        redirectTo: window.location.origin,
+      },
+    );
+
+    if (error) {
+      setStatusKind("error");
+      setStatus(normalizeAuthError(error.message));
+    } else {
+      setStatusKind("success");
+      setStatus("If this email is registered, a reset link is on its way.");
     }
+
+    setIsSubmitting(false);
   }
 
   async function signInWithGoogle() {
@@ -57,6 +191,7 @@ export function LoginPage() {
 
     setIsSubmitting(true);
     setStatus(undefined);
+    setStatusKind("success");
 
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: "google",
@@ -64,152 +199,193 @@ export function LoginPage() {
     });
 
     if (error) {
-      setStatus(error.message);
+      setStatusKind("error");
+      setStatus(normalizeAuthError(error.message));
       setIsSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-[#f1eef3] p-3 text-[#11182b] sm:p-6 lg:flex lg:items-center lg:justify-center lg:p-10">
+    <main
+      data-practice-gateway
+      className="login-calm-page"
+    >
+      <nav className="login-calm-nav">
+        <span aria-hidden="true" />
+        <a
+          href="#access"
+          className="login-calm-nav-link"
+        >
+          Sign in
+        </a>
+      </nav>
+
       <section
-        data-login-shell
-        className="mx-auto grid min-h-[calc(100vh-1.5rem)] w-full max-w-[1180px] overflow-hidden rounded-[24px] bg-white shadow-[0_22px_56px_rgba(25,20,35,0.12)] sm:min-h-[calc(100vh-3rem)] lg:h-[660px] lg:min-h-0 lg:grid-cols-[45%_55%]"
+        id="top"
+        className="login-calm-shell"
       >
-        <aside className="relative hidden overflow-hidden bg-[#fff7f3] p-12 lg:flex lg:flex-col">
-          <BrandLogo className="relative z-10 -ml-2 -mt-2 h-16 w-60 shrink-0 self-start" />
+        <div className="login-calm-copy">
+          <p className="login-calm-kicker">
+            AWS Mastery
+          </p>
+          <h1>
+            Sit down.
+            <br />
+            Keep
+            <br />
+            answering.
+          </h1>
+          <p>
+            A quiet entry point for your AWS question session. No clutter, no
+            noise—just you and the next question.
+          </p>
+        </div>
 
-          <div
-            data-login-promise
-            className="relative z-10 my-auto max-w-[360px] -translate-y-8"
-          >
-            <h1 className="text-[46px] font-bold leading-[1.02] tracking-[-0.045em]">
-              Stay focused.
-              <br />
-              Keep improving<span className="text-[#f4a340]">.</span>
-            </h1>
-            <p className="mt-6 max-w-[300px] text-lg leading-8 text-[#6e7789]">
-              Build your AWS knowledge, one question at a time.
+        <section
+          id="access"
+          data-login-form
+          className="login-calm-form-panel"
+        >
+          <header>
+            <h2>{isSignUp ? "Create account" : "Welcome back"}</h2>
+            <p>
+              {isSignUp
+                ? "Create an account to save your practice"
+                : "Sign in to continue your practice"}
             </p>
-          </div>
+          </header>
 
-          <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-40">
-            <svg
-              viewBox="0 0 560 160"
-              preserveAspectRatio="none"
-              className="h-full w-full"
-            >
-              <path
-                d="M0 88C75 62 130 112 206 105c82-7 119-75 205-58 58 11 91 48 149 31v82H0Z"
-                fill="#f1f1fb"
-              />
-              <path
-                d="M0 108c77-16 126 32 210 24 91-9 130-72 217-57 55 10 82 34 133 25v60H0Z"
-                fill="#e6e7f5"
-              />
-              <path
-                d="M0 139c98-14 147 18 229 13 92-6 148-47 232-35 39 6 66 16 99 15v28H0Z"
-                fill="#08122f"
-              />
-            </svg>
-            <span className="absolute bottom-[46px] left-[44%] h-20 w-20 rounded-full bg-[#ffd76a] shadow-[0_10px_30px_rgba(246,190,69,0.2)]" />
-            <span className="absolute bottom-[69px] left-[28%] h-3 w-6 rounded-t-full border-t-2 border-[#778198]" />
-            <span className="absolute bottom-[48px] left-[34%] h-3 w-6 rounded-t-full border-t-2 border-[#778198]" />
-          </div>
-        </aside>
-
-        <div className="relative flex min-w-0 flex-col px-6 py-7 sm:px-12 sm:py-10 lg:px-16 lg:py-12">
-          <BrandLogo className="-ml-2 h-11 w-[165px] shrink-0 self-start lg:hidden" />
-
-          <div
-            data-login-form
-            className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-start pb-6 pt-12 sm:justify-center sm:py-8 lg:py-12"
+          <form
+            className="login-calm-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitAuthForm();
+            }}
           >
-            <header>
-              <h2 className="text-[34px] font-bold leading-tight tracking-[-0.035em] sm:text-[38px]">
-                Welcome back <span aria-hidden="true">👋</span>
-              </h2>
-              <p className="mt-2 text-base text-[#768092]">
-                Sign in to continue your AWS practice.
-              </p>
-            </header>
-
-            <form
-              className="mt-10"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void sendMagicLink();
-              }}
+            <label
+              htmlFor="login-email"
+              className="sr-only"
             >
-              <label
-                htmlFor="login-email"
-                className="text-sm font-semibold text-[#20283a]"
-              >
-                Email
-              </label>
-              <div className="relative mt-2">
-                <Mail
-                  aria-hidden="true"
-                  size={19}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9aa2b0]"
-                />
-                <input
-                  id="login-email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  className="h-14 w-full rounded-xl border border-[#dfe2e8] bg-white pl-12 pr-4 text-base text-[#11182b] shadow-[0_1px_2px_rgba(15,23,42,0.02)] outline-none transition placeholder:text-[#9ba3b1] focus:border-[#8290aa] focus:ring-4 focus:ring-[#e9ebf1]"
-                />
-              </div>
+              Email
+            </label>
+            <div className="login-calm-field">
+              <span>
+                <FieldIcon type="email" />
+              </span>
+              <input
+                id="login-email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Email"
+              />
+            </div>
 
+            <label
+              htmlFor="login-password"
+              className="sr-only"
+            >
+              Password
+            </label>
+            <div className="login-calm-field">
+              <span>
+                <FieldIcon type="password" />
+              </span>
+              <input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                required
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder={isSignUp ? "Create password" : "Password"}
+              />
               <button
-                type="submit"
-                disabled={
-                  isSubmitting ||
-                  !supabaseClient
-                }
-                className="mt-6 inline-flex h-[54px] w-full items-center justify-center rounded-xl bg-[#08122f] px-5 text-base font-semibold text-white shadow-[0_8px_18px_rgba(8,18,47,0.16)] transition hover:bg-[#111d3e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#08122f] disabled:cursor-not-allowed disabled:opacity-45"
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((current) => !current)}
+                className="login-calm-eye-button"
               >
-                <span className="flex-1 text-center">
-                  {isSubmitting ? "Sending…" : "Continue"}
-                </span>
-                <ArrowRight size={19} />
+                <EyeIcon hidden={showPassword} />
               </button>
-            </form>
+            </div>
 
-            <div className="my-8 flex items-center gap-4">
-              <span className="h-px flex-1 bg-[#e6e7eb]" />
-              <span className="text-sm text-[#7f8796]">Or continue with</span>
-              <span className="h-px flex-1 bg-[#e6e7eb]" />
+            <div className="login-calm-forgot-row">
+              {!isSignUp ? (
+                <button
+                  type="button"
+                  onClick={() => void sendPasswordReset()}
+                  disabled={isSubmitting || !supabaseClient || !email.trim()}
+                  className="login-calm-link-button"
+                >
+                  Forgot password?
+                </button>
+              ) : null}
             </div>
 
             <button
-              type="button"
-              onClick={() => void signInWithGoogle()}
+              type="submit"
               disabled={isSubmitting || !supabaseClient}
-              className="inline-flex h-[54px] w-full items-center justify-center gap-3 rounded-xl border border-[#dfe2e8] bg-white px-5 text-base font-semibold text-[#20283a] shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition hover:bg-[#fafafa] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#08122f] disabled:cursor-not-allowed disabled:opacity-45"
+              className="login-calm-primary-button"
             >
-              <GoogleIcon />
-              Continue with Google
+              {isSubmitting
+                ? "Please wait..."
+                : isSignUp
+                  ? "Create account"
+                  : "Continue"}
+              <ArrowIcon />
             </button>
+          </form>
 
+          <div className="login-calm-divider">
+            <span />
+            <em>or</em>
+            <span />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void signInWithGoogle()}
+            disabled={isSubmitting || !supabaseClient}
+            className="login-calm-google-button"
+          >
+            <GoogleIcon />
+            Continue with Google
+          </button>
+
+          <p className="login-calm-switch">
+            {isSignUp ? "Already have an account? " : "New here? "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(isSignUp ? "sign-in" : "sign-up");
+                setPassword("");
+                setShowPassword(false);
+                setStatus(undefined);
+                setStatusKind("success");
+              }}
+              className="login-calm-link-button"
+            >
+              {isSignUp ? "Sign in" : "Create an account"}
+            </button>
+          </p>
+
+          <div className="login-calm-status" aria-live="polite">
             {status ? (
               <p
-                aria-live="polite"
-                className="mt-4 text-center text-sm leading-5 text-[#687287]"
+                className={
+                  statusKind === "error"
+                    ? "login-calm-status-message login-calm-status-message--error"
+                    : "login-calm-status-message login-calm-status-message--success"
+                }
               >
                 {status}
               </p>
             ) : null}
-
-            <div className="mt-10 flex items-center justify-center gap-2 border-t border-[#ececf0] pt-6 text-sm text-[#727c8e]">
-              <ShieldCheck size={17} />
-              <span>Secure cloud sync across devices</span>
-            </div>
           </div>
-        </div>
+        </section>
       </section>
     </main>
   );

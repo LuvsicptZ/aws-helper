@@ -5,17 +5,9 @@ import {
   CircleUserRound,
   LogIn,
   LogOut,
-  RefreshCw,
 } from "lucide-react";
 import { supabaseClient } from "../auth/supabaseClient";
-import { syncExamSessionsWithSupabase } from "../sync/supabaseExamSync";
-import { syncProgressWithSupabase } from "../sync/supabaseProgressSync";
-import { syncPracticeResumeWithSupabase } from "../sync/supabasePracticeResumeSync";
 import { useAuth } from "../auth/authContext";
-
-type AuthPanelProps = {
-  onSyncComplete?: () => void;
-};
 
 type AuthStatus = {
   message: string;
@@ -25,25 +17,42 @@ type AuthStatus = {
 type SignedInAuthPanelProps = {
   email?: string;
   isSubmitting: boolean;
-  isSyncing: boolean;
   onSignOut: () => void;
-  onSync: () => void;
   status?: AuthStatus;
 };
 
 export function SignedInAuthPanel({
   email,
   isSubmitting,
-  isSyncing,
   onSignOut,
-  onSync,
   status,
 }: SignedInAuthPanelProps) {
   return (
-    <div className="flex min-w-0 flex-col items-end gap-1.5">
+    <div className="flex min-w-0 items-center gap-2">
+      {status ? (
+        <p
+          aria-live="polite"
+          className={[
+            "auth-status-pill hidden max-w-[18rem] items-center gap-1.5 truncate rounded-full border px-3 py-1.5 text-xs font-medium leading-5 lg:inline-flex",
+            status.tone === "error"
+              ? "border-amber-200/70 bg-amber-50 text-amber-800"
+              : "border-emerald-200/70 bg-emerald-50 text-emerald-800",
+          ].join(" ")}
+          role="status"
+          title={status.message}
+        >
+          {status.tone === "error" ? (
+            <CircleAlert aria-hidden="true" className="shrink-0" size={13} />
+          ) : (
+            <CheckCircle2 aria-hidden="true" className="shrink-0" size={13} />
+          )}
+          <span className="truncate">{status.message}</span>
+        </p>
+      ) : null}
+
       <div
         aria-label="Account actions"
-        className="flex min-w-0 items-center gap-1 rounded-xl border border-gray-200/90 bg-white p-1 shadow-sm"
+        className="auth-actions flex min-w-0 items-center gap-1 rounded-xl border border-gray-200/90 bg-white p-1 shadow-sm"
       >
         <div className="hidden min-w-0 items-center gap-2 px-2 sm:flex">
           <CircleUserRound
@@ -66,73 +75,25 @@ export function SignedInAuthPanel({
 
         <button
           type="button"
-          aria-label="Sync progress"
-          title="Sync progress"
-          onClick={onSync}
-          disabled={isSyncing}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#0B1120] px-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-70"
-        >
-          <RefreshCw
-            aria-hidden="true"
-            className={isSyncing ? "animate-spin motion-reduce:animate-none" : ""}
-            size={16}
-          />
-          <span className="hidden md:inline">
-            {isSyncing ? "Syncing" : "Sync"}
-          </span>
-        </button>
-
-        <button
-          type="button"
           aria-label="Sign out"
           title="Sign out"
           onClick={onSignOut}
           disabled={isSubmitting}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-60"
+          className="auth-action-button inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-wait disabled:opacity-60"
         >
           <LogOut aria-hidden="true" size={16} />
           <span className="hidden md:inline">Sign out</span>
         </button>
       </div>
-
-      {status ? (
-        <p
-          aria-live="polite"
-          className={[
-            "flex max-w-[min(28rem,calc(100vw-2rem))] items-start justify-end gap-1.5 pr-1 text-right text-sm leading-5",
-            status.tone === "error"
-              ? "text-amber-700"
-              : "text-emerald-700",
-          ].join(" ")}
-          role="status"
-          title={status.message}
-        >
-          {status.tone === "error" ? (
-            <CircleAlert
-              aria-hidden="true"
-              className="mt-0.5 shrink-0"
-              size={14}
-            />
-          ) : (
-            <CheckCircle2
-              aria-hidden="true"
-              className="mt-0.5 shrink-0"
-              size={14}
-            />
-          )}
-          <span className="line-clamp-2 max-w-72">{status.message}</span>
-        </p>
-      ) : null}
     </div>
   );
 }
 
-export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
+export function AuthPanel() {
   const { session } = useAuth();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<AuthStatus>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   if (!supabaseClient) {
     return (
@@ -186,46 +147,12 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
     }
   }
 
-  async function syncNow() {
-    if (!supabaseClient || !session) return;
-
-    setIsSyncing(true);
-    setStatus(undefined);
-
-    try {
-      const progressResult = await syncProgressWithSupabase(
-        supabaseClient,
-        session.user.id,
-      );
-      const examResult = await syncExamSessionsWithSupabase(
-        supabaseClient,
-        session.user.id,
-      );
-      await syncPracticeResumeWithSupabase(supabaseClient, session.user.id);
-      setStatus({
-        tone: "success",
-        message: `Synced ${progressResult.merged} progress and ${examResult.merged} exams.`,
-      });
-      onSyncComplete?.();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Sync failed.";
-      setStatus({
-        tone: "error",
-        message: `${message} Your local progress is safe.`,
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  }
-
   if (session) {
     return (
       <SignedInAuthPanel
         email={session.user.email}
         isSubmitting={isSubmitting}
-        isSyncing={isSyncing}
         onSignOut={() => void signOut()}
-        onSync={() => void syncNow()}
         status={status}
       />
     );
@@ -249,7 +176,7 @@ export function AuthPanel({ onSyncComplete }: AuthPanelProps) {
           type="button"
           onClick={() => void sendMagicLink()}
           disabled={isSubmitting || email.trim().length === 0}
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-[#0B1120] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-[#0B1120] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <LogIn size={16} />
           Sign in
