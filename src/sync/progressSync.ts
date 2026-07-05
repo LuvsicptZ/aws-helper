@@ -76,27 +76,12 @@ export function mergeProgressRecords(
             remote.bookmarkedUpdatedAt,
           )
         : local.bookmarked === true || remote.bookmarked === true,
-    markedGuessed:
-      local.markedGuessedUpdatedAt || remote.markedGuessedUpdatedAt
-        ? pickByTimestamp(
-            local.markedGuessed,
-            local.markedGuessedUpdatedAt,
-            remote.markedGuessed,
-            remote.markedGuessedUpdatedAt,
-          )
-        : local.markedGuessed === true || remote.markedGuessed === true,
     note: pickNote(local, remote),
     bookmarkedUpdatedAt: pickByTimestamp(
       local.bookmarkedUpdatedAt,
       local.bookmarkedUpdatedAt,
       remote.bookmarkedUpdatedAt,
       remote.bookmarkedUpdatedAt,
-    ),
-    markedGuessedUpdatedAt: pickByTimestamp(
-      local.markedGuessedUpdatedAt,
-      local.markedGuessedUpdatedAt,
-      remote.markedGuessedUpdatedAt,
-      remote.markedGuessedUpdatedAt,
     ),
     noteUpdatedAt: pickByTimestamp(
       local.noteUpdatedAt,

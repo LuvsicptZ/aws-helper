@@ -18,7 +18,6 @@ describe("progress sync merge", () => {
       attempts: 1,
       correctAttempts: 1,
       bookmarked: true,
-      markedGuessed: true,
       note: "local note",
       updatedAt: "2026-01-01T00:00:00.000Z",
     });
@@ -27,7 +26,6 @@ describe("progress sync merge", () => {
       attempts: 2,
       correctAttempts: 1,
       bookmarked: false,
-      markedGuessed: false,
       note: "",
       lastSelected: ["B"],
       lastResult: "incorrect",
@@ -39,7 +37,6 @@ describe("progress sync merge", () => {
       attempts: 2,
       correctAttempts: 1,
       bookmarked: true,
-      markedGuessed: true,
       note: "local note",
       lastSelected: ["B"],
       lastResult: "incorrect",
@@ -62,27 +59,22 @@ describe("progress sync merge", () => {
     expect(mergeProgressRecords(local, remote).note).toBe("newer note");
   });
 
-  it("uses field timestamps so bookmark and guessed removals can sync", () => {
+  it("uses field timestamps so bookmark removals can sync", () => {
     const local = progress({
       questionId: 1,
       bookmarked: false,
-      markedGuessed: false,
       bookmarkedUpdatedAt: "2026-01-03T00:00:00.000Z",
-      markedGuessedUpdatedAt: "2026-01-03T00:00:00.000Z",
       updatedAt: "2026-01-03T00:00:00.000Z",
     });
     const remote = progress({
       questionId: 1,
       bookmarked: true,
-      markedGuessed: true,
       bookmarkedUpdatedAt: "2026-01-02T00:00:00.000Z",
-      markedGuessedUpdatedAt: "2026-01-02T00:00:00.000Z",
       updatedAt: "2026-01-02T00:00:00.000Z",
     });
 
     expect(mergeProgressRecords(local, remote)).toMatchObject({
       bookmarked: false,
-      markedGuessed: false,
     });
   });
 });

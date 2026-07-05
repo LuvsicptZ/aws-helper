@@ -39,7 +39,6 @@ describe("question progress", () => {
       attempts: 0,
       correctAttempts: 0,
       lastSelected: [],
-      markedGuessed: false,
       bookmarked: false,
       note: "",
     });
@@ -74,7 +73,6 @@ describe("question progress", () => {
   it("preserves review metadata when updating answer progress", () => {
     const progress = {
       ...createEmptyProgress(1),
-      markedGuessed: true,
       bookmarked: true,
       note: "Review this later",
     };
@@ -86,7 +84,6 @@ describe("question progress", () => {
       new Date("2026-01-01T00:00:00.000Z"),
     );
 
-    expect(updated.markedGuessed).toBe(true);
     expect(updated.bookmarked).toBe(true);
     expect(updated.note).toBe("Review this later");
   });
@@ -103,7 +100,6 @@ describe("question progress", () => {
       progress,
       {
         bookmarked: true,
-        markedGuessed: true,
         note: "Check Gateway Load Balancer again",
       },
       new Date("2026-01-02T00:00:00.000Z"),
@@ -116,7 +112,6 @@ describe("question progress", () => {
       lastSelected: ["A"],
       lastResult: "correct",
       bookmarked: true,
-      markedGuessed: true,
       note: "Check Gateway Load Balancer again",
       updatedAt: "2026-01-02T00:00:00.000Z",
     });

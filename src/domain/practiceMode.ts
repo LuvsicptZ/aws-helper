@@ -1,18 +1,11 @@
 import type { Question } from "./question";
 import type { QuestionProgress } from "./progress";
 
-export type PracticeMode =
-  | "sequential"
-  | "random"
-  | "incorrect"
-  | "guessed"
-  | "favorite";
+export type PracticeMode = "sequential" | "incorrect" | "favorite";
 
 export const practiceModeLabels: Record<PracticeMode, string> = {
   sequential: "Sequential",
-  random: "Random",
   incorrect: "Incorrect",
-  guessed: "Guessed",
   favorite: "Bookmarked",
 };
 
@@ -21,7 +14,7 @@ export function filterQuestionsByPracticeMode(
   questions: Question[],
   progressList: QuestionProgress[],
 ): Question[] {
-  if (mode === "sequential" || mode === "random") {
+  if (mode === "sequential") {
     return questions;
   }
 
@@ -36,21 +29,6 @@ export function filterQuestionsByPracticeMode(
       return progress?.lastResult === "incorrect";
     }
 
-    if (mode === "guessed") {
-      return progress?.markedGuessed === true;
-    }
-
     return progress?.bookmarked === true;
   });
-}
-
-export function shuffleQuestions(questions: Question[]): Question[] {
-  const shuffled = [...questions];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
-  }
-
-  return shuffled;
 }

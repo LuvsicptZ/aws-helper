@@ -6,7 +6,6 @@ export type PracticePosition = {
   questionId?: number;
   index: number;
   updatedAt?: string;
-  randomQuestionIds?: number[];
 };
 
 export type PracticeResume = {
@@ -15,13 +14,7 @@ export type PracticeResume = {
   positions: Record<PracticeMode, PracticePosition>;
 };
 
-const practiceModes: PracticeMode[] = [
-  "sequential",
-  "random",
-  "incorrect",
-  "guessed",
-  "favorite",
-];
+const practiceModes: PracticeMode[] = ["sequential", "incorrect", "favorite"];
 
 export function createEmptyPracticeResume(ownerId: string): PracticeResume {
   return {
@@ -98,21 +91,4 @@ export function mergePracticeResume(
     lastMode,
     positions,
   };
-}
-
-export function repairRandomQuestionIds(
-  savedQuestionIds: number[] | undefined,
-  availableQuestionIds: number[],
-): number[] {
-  const available = new Set(availableQuestionIds);
-  const repaired = (savedQuestionIds ?? []).filter(
-    (questionId, index, list) =>
-      available.has(questionId) && list.indexOf(questionId) === index,
-  );
-  const included = new Set(repaired);
-
-  return [
-    ...repaired,
-    ...availableQuestionIds.filter((questionId) => !included.has(questionId)),
-  ];
 }

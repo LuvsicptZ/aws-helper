@@ -24,12 +24,12 @@ export class TrainerDatabase extends Dexie {
     super("saa-c03-trainer");
 
     this.version(1).stores({
-      progress: "questionId, updatedAt, syncedAt, lastResult, markedGuessed, bookmarked",
+      progress: "questionId, updatedAt, syncedAt, lastResult, bookmarked",
       examSessions: "id, startedAt, submittedAt",
     });
 
     this.version(2).stores({
-      progress: "questionId, updatedAt, syncedAt, lastResult, markedGuessed, bookmarked",
+      progress: "questionId, updatedAt, syncedAt, lastResult, bookmarked",
       examSessions: "id, startedAt, submittedAt",
       practiceResume: "ownerId",
     });
@@ -37,9 +37,9 @@ export class TrainerDatabase extends Dexie {
     this.version(3)
       .stores({
         progress:
-          "questionId, updatedAt, syncedAt, lastResult, markedGuessed, bookmarked",
+          "questionId, updatedAt, syncedAt, lastResult, bookmarked",
         ownerProgress:
-          "key, ownerId, questionId, updatedAt, syncedAt, lastResult, markedGuessed, bookmarked",
+          "key, ownerId, questionId, updatedAt, syncedAt, lastResult, bookmarked",
         examSessions: "id, startedAt, submittedAt",
         practiceResume: "ownerId",
       })
@@ -59,9 +59,9 @@ export class TrainerDatabase extends Dexie {
     this.version(4)
       .stores({
         progress:
-          "questionId, updatedAt, syncedAt, lastResult, markedGuessed, bookmarked",
+          "questionId, updatedAt, syncedAt, lastResult, bookmarked",
         ownerProgress:
-          "key, ownerId, questionId, updatedAt, syncedAt, lastResult, markedGuessed, bookmarked",
+          "key, ownerId, questionId, updatedAt, syncedAt, lastResult, bookmarked",
         examSessions: "id, startedAt, submittedAt",
         ownerExamSessions: "key, ownerId, id, startedAt, submittedAt",
         practiceResume: "ownerId",

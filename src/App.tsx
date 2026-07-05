@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ExamPage } from "./pages/ExamPage";
 import { PracticePage } from "./pages/PracticePage";
-import { SecondaryPage } from "./pages/SecondaryPage";
 import type { PracticeMode } from "./domain/practiceMode";
 import type { ShellRoute } from "./components/AppShell";
+import { questions } from "./data/questions";
 import {
   ANONYMOUS_OWNER_ID,
   createEmptyPracticeResume,
@@ -37,16 +37,24 @@ import {
 } from "./db/examRepository";
 import { syncExamSessionsWithSupabase } from "./sync/supabaseExamSync";
 import { LoginPage } from "./components/LoginPage";
+import { ResetPasswordPage } from "./components/ResetPasswordPage";
+
+function normalizePracticeMode(mode: PracticeMode | undefined): PracticeMode {
+  return mode === "incorrect" || mode === "favorite" ? mode : "sequential";
+}
 
 export default function App() {
-  const { session, isLoading: isAuthLoading } = useAuth();
+  const {
+    session,
+    isLoading: isAuthLoading,
+    isPasswordRecovery,
+  } = useAuth();
   const [page, setPage] = useState<ShellRoute>("dashboard");
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("sequential");
   const [examRunId, setExamRunId] = useState(0);
   const [practiceResume, setPracticeResume] = useState<PracticeResume>(() =>
     createEmptyPracticeResume(ANONYMOUS_OWNER_ID),
   );
-  const [syncStatus, setSyncStatus] = useState<string>();
   const [showAnonymousProgressPrompt, setShowAnonymousProgressPrompt] =
     useState(false);
   const [progressRefreshToken, setProgressRefreshToken] = useState(0);
@@ -64,7 +72,6 @@ export default function App() {
       setPracticeResume(savedResume);
 
       if (!session || !supabaseClient) {
-        setSyncStatus(undefined);
         setShowAnonymousProgressPrompt(false);
         return;
       }
@@ -78,7 +85,6 @@ export default function App() {
       setShowAnonymousProgressPrompt(
         hasAnonymous && previousDecision === null,
       );
-      setSyncStatus("Syncing practice position…");
 
       try {
         const syncedResume = await syncPracticeResumeWithSupabase(
@@ -92,10 +98,8 @@ export default function App() {
           await syncExamSessionsWithSupabase(supabaseClient, ownerId);
           setProgressRefreshToken((token) => token + 1);
         }
-        setSyncStatus("Practice progress synced.");
       } catch {
         if (!isCurrent) return;
-        setSyncStatus("Sync failed. Local practice position is still available.");
       }
     })();
 
@@ -122,29 +126,17 @@ export default function App() {
     [],
   );
 
-  const refreshCurrentResume = useCallback(() => {
-    void getPracticeResume(ownerId).then((savedResume) => {
-      if (savedResume) setPracticeResume(savedResume);
-    });
-  }, [ownerId]);
-
   function keepAnonymousProgressSeparate() {
     localStorage.setItem(`anonymous-progress-decision:${ownerId}`, "separate");
     setShowAnonymousProgressPrompt(false);
     if (supabaseClient) {
       const client = supabaseClient;
-      setSyncStatus("Syncing account practice progress…");
       void syncProgressWithSupabase(client, ownerId)
         .then(() => syncExamSessionsWithSupabase(client, ownerId))
         .then(() => {
           setProgressRefreshToken((token) => token + 1);
-          setSyncStatus("Practice progress synced.");
         })
-        .catch(() =>
-          setSyncStatus(
-            "Sync failed. Local account progress is still available.",
-          ),
-        );
+        .catch(() => undefined);
     }
   }
 
@@ -168,22 +160,31 @@ export default function App() {
       setShowAnonymousProgressPrompt(false);
 
       if (supabaseClient) {
-        setSyncStatus("Syncing merged practice progress…");
         try {
           await syncProgressWithSupabase(supabaseClient, ownerId);
           await syncExamSessionsWithSupabase(supabaseClient, ownerId);
           await syncPracticeResumeWithSupabase(supabaseClient, ownerId);
           setProgressRefreshToken((token) => token + 1);
-          setSyncStatus("Practice progress synced.");
         } catch {
-          setSyncStatus("Sync failed. Merged progress is saved on this device.");
+          // Local merged progress remains saved even if cloud sync is unavailable.
         }
       }
     })();
   }
 
-  function openPractice(mode: PracticeMode = "sequential") {
-    setPracticeMode(mode);
+  function openPractice(mode: PracticeMode = "sequential", initialIndex?: number) {
+    const nextMode = normalizePracticeMode(mode);
+    setPracticeMode(nextMode);
+    if (initialIndex !== undefined) {
+      setPracticeResume((currentResume) => {
+        const nextResume = updatePracticePosition(currentResume, nextMode, {
+          questionId: questions[initialIndex]?.id ?? 1,
+          index: initialIndex,
+        });
+        void savePracticeResume(nextResume);
+        return nextResume;
+      });
+    }
     setPage("practice");
   }
 
@@ -192,12 +193,52 @@ export default function App() {
     setPage("exam");
   }
 
+  const handleResetProgress = useCallback(async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to reset all your practice progress? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    // 1. Clear local databases
+    await clearAllProgress(ownerId);
+    await deletePracticeResume(ownerId);
+
+    // 2. Clear remote databases if logged in
+    if (session && supabaseClient) {
+      try {
+        await supabaseClient
+          .from("question_progress")
+          .delete()
+          .eq("user_id", ownerId);
+        await supabaseClient
+          .from("practice_resume")
+          .delete()
+          .eq("user_id", ownerId);
+      } catch {
+        // Keep offline deletion even if network fails
+      }
+    }
+
+    // 3. Reset local states
+    const freshResume = createEmptyPracticeResume(ownerId);
+    await savePracticeResume(freshResume);
+    setPracticeResume(freshResume);
+    setProgressRefreshToken((token) => token + 1);
+  }, [ownerId, session]);
+
   if (isAuthLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f1eef3] text-sm text-[#687287]">
         Loading…
       </div>
     );
+  }
+
+  if (isPasswordRecovery) {
+    return <ResetPasswordPage />;
   }
 
   if (!session) {
@@ -214,7 +255,7 @@ export default function App() {
         onPositionChange={savePosition}
         onDashboardClick={() => setPage("dashboard")}
         onExamClick={openExam}
-        onPracticeClick={(mode) => openPractice(mode ?? "sequential")}
+        onPracticeClick={(mode, idx) => openPractice(mode ?? "sequential", idx)}
         onNavigate={setPage}
       />
     );
@@ -226,21 +267,9 @@ export default function App() {
         key={examRunId}
         ownerId={ownerId}
         onDashboardClick={() => setPage("dashboard")}
-        onPracticeClick={(mode) => openPractice(mode ?? "sequential")}
+        onPracticeClick={(mode, idx) => openPractice(mode ?? "sequential", idx)}
         onExamClick={openExam}
         onNavigate={setPage}
-      />
-    );
-  }
-
-  if (page !== "dashboard") {
-    return (
-      <SecondaryPage
-        ownerId={ownerId}
-        route={page}
-        onNavigate={setPage}
-        onPracticeClick={(mode) => openPractice(mode ?? "sequential")}
-        onExamClick={openExam}
       />
     );
   }
@@ -250,14 +279,13 @@ export default function App() {
       ownerId={ownerId}
       progressRefreshToken={progressRefreshToken}
       onNavigate={setPage}
-      onPracticeClick={(mode) => openPractice(mode ?? "sequential")}
+      onPracticeClick={(mode, idx) => openPractice(mode ?? "sequential", idx)}
       onExamClick={openExam}
       practiceResume={practiceResume}
-      syncStatus={syncStatus}
       showAnonymousProgressPrompt={showAnonymousProgressPrompt}
       onMergeAnonymousProgress={mergeAnonymousProgress}
       onKeepAnonymousProgressSeparate={keepAnonymousProgressSeparate}
-      onSyncComplete={refreshCurrentResume}
+      onResetProgress={handleResetProgress}
     />
   );
 }

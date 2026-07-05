@@ -6,10 +6,8 @@ export type QuestionProgress = {
   correctAttempts: number;
   lastSelected: ChoiceKey[];
   lastResult?: "correct" | "incorrect";
-  markedGuessed: boolean;
   bookmarked: boolean;
   note: string;
-  markedGuessedUpdatedAt?: string;
   bookmarkedUpdatedAt?: string;
   noteUpdatedAt?: string;
   updatedAt: string;
@@ -22,7 +20,6 @@ export function createEmptyProgress(questionId: number): QuestionProgress {
     attempts: 0,
     correctAttempts: 0,
     lastSelected: [],
-    markedGuessed: false,
     bookmarked: false,
     note: "",
     updatedAt: new Date().toISOString(),
@@ -48,9 +45,7 @@ export function updateProgressAfterAnswer(
 
 export function updateProgressReviewMetadata(
   progress: QuestionProgress,
-  metadata: Partial<
-    Pick<QuestionProgress, "bookmarked" | "markedGuessed" | "note">
-  >,
+  metadata: Partial<Pick<QuestionProgress, "bookmarked" | "note">>,
   now = new Date(),
 ): QuestionProgress {
   const updatedAt = now.toISOString();
@@ -60,10 +55,6 @@ export function updateProgressReviewMetadata(
     ...metadata,
     bookmarkedUpdatedAt:
       metadata.bookmarked === undefined ? progress.bookmarkedUpdatedAt : updatedAt,
-    markedGuessedUpdatedAt:
-      metadata.markedGuessed === undefined
-        ? progress.markedGuessedUpdatedAt
-        : updatedAt,
     noteUpdatedAt: metadata.note === undefined ? progress.noteUpdatedAt : updatedAt,
     updatedAt,
   };

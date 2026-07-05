@@ -43,10 +43,6 @@ describe("practice mode filtering", () => {
     expect(filterQuestionsByPracticeMode("sequential", questions, [])).toEqual(questions);
   });
 
-  it("returns all questions for random mode before shuffle order is applied", () => {
-    expect(filterQuestionsByPracticeMode("random", questions, [])).toEqual(questions);
-  });
-
   it("returns only questions with incorrect progress", () => {
     const filtered = filterQuestionsByPracticeMode("incorrect", questions, [
       progress({ questionId: 1, lastResult: "correct" }),
@@ -54,15 +50,6 @@ describe("practice mode filtering", () => {
     ]);
 
     expect(filtered.map((question) => question.id)).toEqual([2]);
-  });
-
-  it("returns only questions marked guessed", () => {
-    const filtered = filterQuestionsByPracticeMode("guessed", questions, [
-      progress({ questionId: 1, markedGuessed: true }),
-      progress({ questionId: 2, markedGuessed: false }),
-    ]);
-
-    expect(filtered.map((question) => question.id)).toEqual([1]);
   });
 
   it("returns only bookmarked questions", () => {

@@ -34,3 +34,9 @@ export function gradeAnswer(
     ? "correct"
     : "incorrect";
 }
+
+export function stripChoicePrefix(choice: string, text: string): string {
+  if (!text) return "";
+  const prefixRegex = new RegExp(`^\\s*${choice}\\s*[\\.\\)]\\s*`, "i");
+  return text.replace(prefixRegex, "");
+}

@@ -3,18 +3,11 @@ import type { PracticeMode } from "../domain/practiceMode";
 import {
   createEmptyPracticeResume,
   mergePracticeResume,
-  repairRandomQuestionIds,
   resolvePracticePosition,
   updatePracticePosition,
 } from "../domain/practiceResume";
 
-const modes: PracticeMode[] = [
-  "sequential",
-  "random",
-  "incorrect",
-  "guessed",
-  "favorite",
-];
+const modes: PracticeMode[] = ["sequential", "incorrect", "favorite"];
 
 describe("practice resume", () => {
   it("creates independent empty positions for every practice mode", () => {
@@ -93,11 +86,5 @@ describe("practice resume", () => {
     expect(merged.positions.sequential.questionId).toBe(5);
     expect(merged.positions.incorrect.questionId).toBe(40);
     expect(merged.lastMode).toBe("incorrect");
-  });
-
-  it("repairs a saved random order without reshuffling known questions", () => {
-    expect(repairRandomQuestionIds([3, 1, 3, 99], [1, 2, 3, 4])).toEqual([
-      3, 1, 2, 4,
-    ]);
   });
 });
