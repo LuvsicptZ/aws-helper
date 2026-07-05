@@ -1,31 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Bookmark,
-  ChevronLeft,
-  CircleUserRound,
-  Sun,
-} from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, Bookmark, Check, ChevronLeft, LayoutDashboard, X, FileText, Star, ChevronDown, ChevronUp, LayoutGrid, ListChecks, ClipboardList, CalendarX, Moon, Sun } from "lucide-react";
 import { AppShell } from "../components/AppShell";
+import { BrandLogo } from "../components/BrandLogo";
 import type { ShellRoute } from "../components/AppShell";
-import { AnswerOptions } from "../components/AnswerOptions";
 import { EmptyModeState } from "../components/EmptyModeState";
-import { ExplanationPanel } from "../components/ExplanationPanel";
-import { QuestionCard } from "../components/QuestionCard";
-import { QuestionNavigator } from "../components/QuestionNavigator";
-import { QuestionReviewPanel } from "../components/QuestionReviewPanel";
 import { questions } from "../data/questions";
 import type { ChoiceKey } from "../domain/question";
-import { gradeAnswer, normalizeAnswer } from "../domain/question";
+import { gradeAnswer, stripChoicePrefix } from "../domain/question";
 import type { PracticeMode } from "../domain/practiceMode";
-import {
-  filterQuestionsByPracticeMode,
-  shuffleQuestions,
-} from "../domain/practiceMode";
+import { filterQuestionsByPracticeMode } from "../domain/practiceMode";
 import type { PracticePosition } from "../domain/practiceResume";
-import {
-  repairRandomQuestionIds,
-  resolvePracticePosition,
-} from "../domain/practiceResume";
+import { resolvePracticePosition } from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
 import {
   createEmptyProgress,
@@ -37,21 +22,11 @@ import {
   getProgressByQuestionId,
   saveProgress,
 } from "../db/progressRepository";
+import { supabaseClient } from "../auth/supabaseClient";
+import { syncProgressWithSupabase } from "../sync/supabaseProgressSync";
+import { useTheme } from "../theme/useTheme";
 
-function upsertProgress(
-  progressList: QuestionProgress[],
-  progress: QuestionProgress,
-): QuestionProgress[] {
-  const exists = progressList.some((item) => item.questionId === progress.questionId);
-
-  if (!exists) {
-    return [...progressList, progress];
-  }
-
-  return progressList.map((item) =>
-    item.questionId === progress.questionId ? progress : item,
-  );
-}
+const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D"];
 
 type PracticePageProps = {
   ownerId?: string;
@@ -62,10 +37,24 @@ type PracticePageProps = {
     position: Omit<PracticePosition, "updatedAt">,
   ) => void;
   onDashboardClick?: () => void;
-  onPracticeClick?: (mode?: PracticeMode) => void;
+  onPracticeClick?: (mode?: PracticeMode, initialIndex?: number) => void;
   onExamClick?: () => void;
   onNavigate?: (route: ShellRoute) => void;
 };
+
+function isCorrectChoice(answer: ChoiceKey | ChoiceKey[], choice: ChoiceKey) {
+  return Array.isArray(answer) ? answer.includes(choice) : answer === choice;
+}
+
+function formatAnswer(answer: ChoiceKey | ChoiceKey[]) {
+  return Array.isArray(answer) ? answer.join(", ") : answer;
+}
+
+function getModeLabel(mode: PracticeMode) {
+  if (mode === "incorrect") return "Review incorrect";
+  if (mode === "favorite") return "Review bookmarked";
+  return "Question bank";
+}
 
 export function PracticePage({
   ownerId = "anonymous",
@@ -77,6 +66,7 @@ export function PracticePage({
   onExamClick,
   onNavigate,
 }: PracticePageProps) {
+  const { isDark, toggleTheme } = useTheme();
   const initialPosition = resumePositions?.[initialMode];
   const mode = initialMode;
   const [currentIndex, setCurrentIndex] = useState(initialPosition?.index ?? 0);
@@ -87,31 +77,66 @@ export function PracticePage({
   }>({ selected: [] });
   const [isSaving, setIsSaving] = useState(false);
   const [allProgress, setAllProgress] = useState<QuestionProgress[]>([]);
-  const [randomQuestions] = useState(() => {
-    if (!initialPosition?.randomQuestionIds) {
-      return shuffleQuestions(questions);
+  const restoredMode = useRef<PracticeMode | undefined>(undefined);
+
+  // Notes and Review States
+  const [noteText, setNoteText] = useState("");
+  const [isNoteSaving, setIsNoteSaving] = useState(false);
+  const [noteSavedMessage, setNoteSavedMessage] = useState(false);
+
+  // Background Sync Refs and Callback
+  const isSyncing = useRef(false);
+  const syncPending = useRef(false);
+  const [isNavigatorExpanded, setIsNavigatorExpanded] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
+  );
+  const explanationRef = useRef<HTMLElement>(null);
+
+  // Mobile matchMedia listener
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  function triggerBackgroundSync() {
+    if (ownerId === "anonymous" || !supabaseClient) return;
+
+    if (isSyncing.current) {
+      syncPending.current = true;
+      return;
     }
 
-    const questionById = new Map(questions.map((item) => [item.id, item]));
-    return repairRandomQuestionIds(
-      initialPosition.randomQuestionIds,
-      questions.map((item) => item.id),
-    )
-      .map((questionId) => questionById.get(questionId))
-      .filter((item): item is (typeof questions)[number] => item !== undefined);
-  });
+    isSyncing.current = true;
+    syncPending.current = false;
+
+    void (async () => {
+      try {
+        await syncProgressWithSupabase(supabaseClient, ownerId);
+      } catch (err) {
+        console.error("Background sync failed", err);
+      } finally {
+        isSyncing.current = false;
+        if (syncPending.current) {
+          triggerBackgroundSync();
+        }
+      }
+    })();
+  }
 
   const filteredQuestions = useMemo(
     () => filterQuestionsByPracticeMode(mode, questions, allProgress),
     [allProgress, mode],
   );
-  const visibleQuestions = mode === "random" ? randomQuestions : filteredQuestions;
-  const visibleTotal = visibleQuestions.length;
+  const visibleTotal = filteredQuestions.length;
   const hasQuestions = visibleTotal > 0;
   const safeCurrentIndex = hasQuestions
     ? Math.min(currentIndex, visibleTotal - 1)
     : 0;
-  const question = visibleQuestions[safeCurrentIndex];
+  const question = filteredQuestions[safeCurrentIndex];
   const currentProgress = question
     ? allProgress.find((progress) => progress.questionId === question.id)
     : undefined;
@@ -123,8 +148,18 @@ export function PracticePage({
     answerState.questionId === question?.id
       ? answerState.result
       : currentProgress?.lastResult;
-  const isMultiAnswer = question ? Array.isArray(question.answer) : false;
-  const restoredMode = useRef<PracticeMode | undefined>(undefined);
+
+  // Auto-scroll to explanation on mobile after auto-submit grading
+  useEffect(() => {
+    if (result && isMobile && explanationRef.current) {
+      setTimeout(() => {
+        explanationRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 80);
+    }
+  }, [result, isMobile]);
+
+  const progressPercent =
+    visibleTotal === 0 ? 0 : ((safeCurrentIndex + 1) / visibleTotal) * 100;
 
   useEffect(() => {
     void getAllProgress(ownerId).then(setAllProgress);
@@ -136,16 +171,14 @@ export function PracticePage({
     onPositionChange?.(mode, {
       questionId: question.id,
       index: safeCurrentIndex,
-      randomQuestionIds:
-        mode === "random" ? randomQuestions.map((item) => item.id) : undefined,
     });
-  }, [mode, onPositionChange, question, randomQuestions, safeCurrentIndex]);
+  }, [mode, onPositionChange, question, safeCurrentIndex]);
 
   useEffect(() => {
     const savedPosition = resumePositions?.[mode];
     if (
       !savedPosition ||
-      visibleQuestions.length === 0 ||
+      filteredQuestions.length === 0 ||
       restoredMode.current === mode
     ) {
       return;
@@ -154,11 +187,16 @@ export function PracticePage({
     setCurrentIndex(
       resolvePracticePosition(
         savedPosition,
-        visibleQuestions.map((item) => item.id),
+        filteredQuestions.map((item) => item.id),
       ),
     );
     restoredMode.current = mode;
-  }, [mode, resumePositions, visibleQuestions]);
+  }, [filteredQuestions, mode, resumePositions]);
+
+  // Sync note text when active question or saved note changes
+  useEffect(() => {
+    queueMicrotask(() => setNoteText(currentProgress?.note ?? ""));
+  }, [question?.id, currentProgress?.note]);
 
   async function submitAnswer(selectedAnswer: ChoiceKey[]) {
     if (!question) return;
@@ -183,57 +221,75 @@ export function PracticePage({
       );
 
       setAllProgress(await getAllProgress(ownerId));
+      triggerBackgroundSync();
     } finally {
       setIsSaving(false);
     }
   }
 
-  async function saveReviewMetadata(
-    metadata: Partial<
-      Pick<QuestionProgress, "bookmarked" | "markedGuessed" | "note">
-    >,
-  ) {
+  async function toggleBookmark() {
     if (!question) return;
-
-    const optimisticProgress = updateProgressReviewMetadata(
-      currentProgress ?? createEmptyProgress(question.id),
-      metadata,
-    );
-    setAllProgress((progressList) =>
-      upsertProgress(progressList, optimisticProgress),
-    );
-
     const existingProgress =
       (await getProgressByQuestionId(question.id, ownerId)) ??
       createEmptyProgress(question.id);
-    const updatedProgress = updateProgressReviewMetadata(existingProgress, metadata);
 
-    await saveProgress(updatedProgress, ownerId);
-    setAllProgress((progressList) => upsertProgress(progressList, updatedProgress));
+    const nextProgress = updateProgressReviewMetadata(existingProgress, {
+      bookmarked: !existingProgress.bookmarked,
+    });
+
+    await saveProgress(nextProgress, ownerId);
+    setAllProgress(await getAllProgress(ownerId));
+    triggerBackgroundSync();
   }
 
-  function handleAnswerChange(nextSelected: ChoiceKey[]) {
-    if (!question) return;
+  async function saveNote(text: string) {
+    if (!question || isSaving) return;
+    setIsNoteSaving(true);
+
+    try {
+      const existingProgress =
+        (await getProgressByQuestionId(question.id, ownerId)) ??
+        createEmptyProgress(question.id);
+
+      const nextProgress = updateProgressReviewMetadata(existingProgress, {
+        note: text,
+      });
+
+      await saveProgress(nextProgress, ownerId);
+      setAllProgress(await getAllProgress(ownerId));
+      triggerBackgroundSync();
+      
+      setNoteSavedMessage(true);
+      setTimeout(() => setNoteSavedMessage(false), 2000);
+    } finally {
+      setIsNoteSaving(false);
+    }
+  }
+
+  function handleAnswerChange(choice: ChoiceKey) {
+    if (!question || result || isSaving) return;
+
+    // On mobile with single-answer questions: auto-submit immediately on tap
+    const isSingleSelect = !Array.isArray(question.answer);
+    if (isMobile && isSingleSelect) {
+      setAnswerState({
+        questionId: question.id,
+        selected: [choice],
+        result,
+      });
+      void submitAnswer([choice]);
+      return;
+    }
 
     setAnswerState({
       questionId: question.id,
-      selected: nextSelected,
+      selected: [choice],
       result,
     });
-
-    const requiredSelections = normalizeAnswer(question.answer).length;
-    if (nextSelected.length === requiredSelections) {
-      void submitAnswer(nextSelected);
-    }
   }
 
   function resetAnswerState() {
     setAnswerState({ selected: [] });
-  }
-
-  function goToPrevious() {
-    resetAnswerState();
-    setCurrentIndex(() => Math.max(0, safeCurrentIndex - 1));
   }
 
   function goToNext() {
@@ -241,183 +297,488 @@ export function PracticePage({
     setCurrentIndex(() => Math.min(visibleTotal - 1, safeCurrentIndex + 1));
   }
 
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if (!question) return;
+
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+
+      const shortcut = event.key.toLowerCase();
+      const shortcutChoices: Record<string, ChoiceKey> = {
+        "1": "A",
+        "2": "B",
+        "3": "C",
+        "4": "D",
+      };
+
+      if (shortcut in shortcutChoices) {
+        const choice = shortcutChoices[shortcut];
+        if (question.options[choice] !== undefined && !result && !isSaving) {
+          event.preventDefault();
+          handleAnswerChange(choice);
+        }
+        return;
+      }
+
+      if (shortcut === "enter" && !result && selected.length > 0) {
+        event.preventDefault();
+        void submitAnswer(selected);
+        return;
+      }
+
+      if (shortcut === "enter" && result && safeCurrentIndex < visibleTotal - 1) {
+        event.preventDefault();
+        goToNext();
+      }
+    }
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  });
+
   return (
     <AppShell
       active="practice"
-      mobileHeader={
-        <div
-          className="flex min-h-14 items-center justify-between"
-          data-mobile-practice-header
-        >
-          <div className="flex min-w-0 items-center">
-            <button
-              aria-label="Back to dashboard"
-              className="-ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-800 transition-colors hover:bg-gray-100"
-              onClick={onDashboardClick}
-              type="button"
-            >
-              <ChevronLeft size={23} />
-            </button>
-
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center">
-                <img
-                  alt=""
-                  aria-hidden="true"
-                  className="h-10 w-10"
-                  height={40}
-                  src="/aws-mastery-mark.svg"
-                  width={40}
-                />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-bold leading-5 text-gray-950">
-                  AWS Mastery
-                </span>
-                <span className="block text-xs leading-4 text-gray-500">
-                  Practice
-                </span>
-              </span>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              aria-label="Toggle theme"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-800 transition-colors hover:bg-gray-100"
-              type="button"
-            >
-              <Sun size={20} />
-            </button>
-            <button
-              aria-label="Account"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm"
-              type="button"
-            >
-              <CircleUserRound size={22} />
-            </button>
-          </div>
-        </div>
-      }
+      hideHeader
+      immersive
       practiceMode={mode}
       onNavigate={onNavigate}
       onDashboardClick={onDashboardClick}
       onPracticeClick={onPracticeClick}
       onExamClick={onExamClick}
     >
-      <div>
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="min-w-0 space-y-4">
-            {question ? (
-              <>
-                <QuestionNavigator
-                  currentIndex={safeCurrentIndex}
-                  totalQuestions={visibleTotal}
-                  onPrevious={goToPrevious}
-                  onNext={goToNext}
-                />
+      {/* Mobile Top Header */}
+      {hasQuestions && (
+        <header className="zen-mobile-header lg:hidden">
+          <button onClick={onDashboardClick} className="zen-mobile-header-back" type="button">
+            <ChevronLeft size={20} />
+          </button>
+          <span className="zen-mobile-header-title">
+            Question {safeCurrentIndex + 1} of {visibleTotal}
+          </span>
+          <div className="zen-mobile-header-actions">
+            <button
+              aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+              className="zen-mobile-header-action"
+              onClick={toggleTheme}
+              title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+              type="button"
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button onClick={toggleBookmark} className="zen-mobile-header-action" type="button">
+              <Bookmark size={18} className={currentProgress?.bookmarked ? "fill-amber-500 text-amber-500" : ""} />
+            </button>
+            <button onClick={() => setIsDrawerOpen(true)} className="zen-mobile-header-action" type="button">
+              <LayoutGrid size={18} />
+            </button>
+          </div>
+        </header>
+      )}
 
-                <section
-                  className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:hidden"
-                  data-mobile-question-card
-                >
-                  <div className="mb-4 flex items-center justify-between gap-4">
-                    <h2 className="text-base font-semibold text-gray-950">
-                      Question
-                    </h2>
-                    <button
-                      aria-label="Bookmark question"
-                      aria-pressed={currentProgress?.bookmarked === true}
-                      className={[
-                        "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors",
-                        currentProgress?.bookmarked
-                          ? "bg-amber-50 text-amber-600"
-                          : "text-gray-400 hover:bg-gray-100 hover:text-gray-700",
-                      ].join(" ")}
-                      disabled={!question}
-                      onClick={() =>
-                        void saveReviewMetadata({
-                          bookmarked: currentProgress?.bookmarked !== true,
-                        })
-                      }
-                      type="button"
-                    >
-                      <Bookmark
-                        fill={
-                          currentProgress?.bookmarked ? "currentColor" : "none"
-                        }
-                        size={21}
-                      />
-                    </button>
-                  </div>
-
-                  <p className="break-words text-base leading-6 text-gray-900 [overflow-wrap:anywhere]">
-                    {question.stem}
-                  </p>
-
-                  <div className="mt-6">
-                    <AnswerOptions
-                      options={question.options}
-                      selected={selected}
-                      disabled={Boolean(result) || isSaving}
-                      isMultiAnswer={isMultiAnswer}
-                      result={result}
-                      correctAnswer={question.answer}
-                      onChange={handleAnswerChange}
-                    />
-                  </div>
-                </section>
-
-                <div className="hidden space-y-4 md:block">
-                  <QuestionCard question={question} />
-
-                  <AnswerOptions
-                    options={question.options}
-                    selected={selected}
-                    disabled={Boolean(result) || isSaving}
-                    isMultiAnswer={isMultiAnswer}
-                    result={result}
-                    correctAnswer={question.answer}
-                    onChange={handleAnswerChange}
-                  />
-                </div>
-
-                {isSaving ? (
-                  <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500 shadow-sm">
-                    Saving...
-                  </div>
-                ) : null}
-
-                {result ? (
-                  <ExplanationPanel
-                    result={result}
-                    correctAnswer={question.answer}
-                    explanation={question.explanation}
-                  />
-                ) : null}
-              </>
-            ) : (
-              <EmptyModeState mode={mode} />
-            )}
-          </section>
-
-          <aside className="hidden md:block xl:sticky xl:top-4 xl:self-start">
-            <QuestionReviewPanel
-              bookmarked={currentProgress?.bookmarked === true}
-              markedGuessed={currentProgress?.markedGuessed === true}
-              note={currentProgress?.note ?? ""}
-              disabled={!question}
-              onBookmarkedChange={(bookmarked) =>
-                void saveReviewMetadata({ bookmarked })
-              }
-              onMarkedGuessedChange={(markedGuessed) =>
-                void saveReviewMetadata({ markedGuessed })
-              }
-              onNoteChange={(note) => void saveReviewMetadata({ note })}
-            />
-          </aside>
+      <div className="zen-practice-page" data-focused-practice-layout>
+        <div className="zen-practice-progress" aria-hidden="true">
+          <span style={{ width: `${progressPercent}%` }} />
         </div>
+
+        <aside className="zen-practice-sidebar flex flex-col" aria-label="Practice session">
+          <div className="flex h-16 items-center justify-between gap-3 px-6 shrink-0">
+            <BrandLogo className="h-11 w-auto" onClick={onDashboardClick} />
+            <button
+              aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+              className="zen-practice-theme-button"
+              onClick={toggleTheme}
+              title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+              type="button"
+            >
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-3 py-4">
+            <div className="space-y-6">
+              <div>
+                <button
+                  className="zen-reader-nav-item"
+                  onClick={onDashboardClick}
+                  type="button"
+                >
+                  <span className="zen-reader-nav-icon">
+                    <LayoutDashboard size={16} />
+                  </span>
+                  <span>Dashboard</span>
+                </button>
+              </div>
+
+              <div>
+                <h3 className="zen-reader-nav-section">
+                  Practice
+                </h3>
+                <nav className="zen-reader-nav-list">
+                  <button
+                    className={`zen-reader-nav-item ${
+                      mode === "sequential" ? "zen-reader-nav-item--active" : ""
+                    }`}
+                    onClick={() => onPracticeClick?.("sequential")}
+                    type="button"
+                  >
+                    <span className="zen-reader-nav-icon">
+                      <ListChecks size={16} />
+                    </span>
+                    <span>Question Bank</span>
+                  </button>
+
+                  <button
+                    className="zen-reader-nav-item"
+                    onClick={onExamClick}
+                    type="button"
+                  >
+                    <span className="zen-reader-nav-icon">
+                      <ClipboardList size={16} />
+                    </span>
+                    <span>Mock Exams</span>
+                  </button>
+
+                  <button
+                    className={`zen-reader-nav-item ${
+                      mode === "incorrect" ? "zen-reader-nav-item--active" : ""
+                    }`}
+                    onClick={() => onPracticeClick?.("incorrect")}
+                    type="button"
+                  >
+                    <span className="zen-reader-nav-icon">
+                      <CalendarX size={16} />
+                    </span>
+                    <span>Review Incorrect</span>
+                  </button>
+
+                  <button
+                    className={`zen-reader-nav-item ${
+                      mode === "favorite" ? "zen-reader-nav-item--active" : ""
+                    }`}
+                    onClick={() => onPracticeClick?.("favorite")}
+                    type="button"
+                  >
+                    <span className="zen-reader-nav-icon">
+                      <Bookmark size={16} />
+                    </span>
+                    <span>Review Bookmarked</span>
+                  </button>
+                </nav>
+              </div>
+
+              {/* Sidebar Question Navigator */}
+              {hasQuestions && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsNavigatorExpanded(!isNavigatorExpanded)}
+                    className="zen-reader-nav-toggle"
+                  >
+                    <span className="zen-reader-nav-heading">
+                      <span className="zen-reader-nav-section !mb-0 !px-0">
+                        Question Navigator
+                      </span>
+                      <span className="zen-reader-nav-count">
+                        {safeCurrentIndex + 1} / {visibleTotal}
+                      </span>
+                    </span>
+                    <span className="zen-reader-nav-toggle-icon">
+                      {isNavigatorExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </span>
+                  </button>
+                  <div 
+                    className={`zen-practice-navigator-grid zen-reader-page-grid ${
+                      isNavigatorExpanded ? "zen-practice-navigator-grid--expanded" : ""
+                    }`}
+                  >
+                    {filteredQuestions.map((q, idx) => {
+                      const qProgress = allProgress.find((p) => p.questionId === q.id);
+                      const isCorrect = qProgress?.lastResult === "correct";
+                      const isIncorrect = qProgress?.lastResult === "incorrect";
+                      const isBookmarked = qProgress?.bookmarked;
+                      const isActive = idx === safeCurrentIndex;
+
+                      let dotClass = "zen-practice-navigator-dot";
+                      if (isCorrect) {
+                        dotClass = "zen-practice-navigator-dot--correct";
+                      } else if (isIncorrect) {
+                        dotClass = "zen-practice-navigator-dot--incorrect";
+                      }
+
+                      if (isActive) {
+                        dotClass += " zen-practice-navigator-dot--active";
+                      }
+
+                      return (
+                        <button
+                          key={q.id}
+                          type="button"
+                          onClick={() => {
+                            resetAnswerState();
+                            setCurrentIndex(idx);
+                          }}
+                          title={`Question ${idx + 1}`}
+                          className={`zen-reader-page-dot ${dotClass}`}
+                        >
+                          {idx + 1}
+                          {isBookmarked && (
+                            <span className="zen-reader-page-dot-bookmark">
+                              <Star size={6} />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        <main className="zen-practice-main">
+          {question ? (
+            <>
+              <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
+                <nav className="zen-practice-breadcrumb !mb-0" aria-label="Practice path">
+                  <button onClick={onDashboardClick} type="button">
+                    <LayoutDashboard aria-hidden="true" size={14} />
+                    Dashboard
+                  </button>
+                  <span aria-hidden="true">/</span>
+                  <span>{getModeLabel(mode)}</span>
+                  <span aria-hidden="true">/</span>
+                  <strong>
+                    Question {safeCurrentIndex + 1} of {visibleTotal}
+                  </strong>
+                </nav>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleBookmark}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-colors duration-150 ${
+                      currentProgress?.bookmarked
+                        ? "bg-amber-500/10 border-amber-300 text-amber-600 dark:border-amber-500/30 dark:text-amber-400"
+                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
+                  >
+                    <Bookmark
+                      size={14}
+                      className={currentProgress?.bookmarked ? "fill-amber-500 text-amber-500" : ""}
+                    />
+                    <span>{currentProgress?.bookmarked ? "Bookmarked" : "Bookmark"}</span>
+                  </button>
+                </div>
+              </div>
+
+              <section className="zen-question-block" aria-labelledby="question-title">
+                <h1 id="question-title">"{question.stem}"</h1>
+              </section>
+
+              <section className="zen-options-list" aria-label="Answer options">
+                {CHOICE_KEYS.filter((choice) => question.options[choice]).map(
+                  (choice) => {
+                    const isSelected = selected.includes(choice);
+                    const isCorrect = result ? isCorrectChoice(question.answer, choice) : false;
+                    const isIncorrectSelected = result && isSelected && !isCorrect;
+                    const shouldShowCorrect = result && isCorrect;
+                    const stateClass = shouldShowCorrect
+                      ? "zen-option--correct"
+                      : isIncorrectSelected
+                        ? "zen-option--incorrect"
+                        : "";
+
+                    return (
+                      <button
+                        key={choice}
+                        type="button"
+                        aria-pressed={isSelected}
+                        disabled={Boolean(result)}
+                        onClick={() => handleAnswerChange(choice)}
+                        className={[
+                          "zen-option",
+                          isSelected && !result ? "zen-option--selected" : "",
+                          stateClass,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <span className="zen-option-marker">
+                          {shouldShowCorrect ? (
+                            <Check aria-hidden="true" size={14} strokeWidth={2.4} />
+                          ) : isIncorrectSelected ? (
+                            <X aria-hidden="true" size={14} strokeWidth={2.1} />
+                          ) : (
+                            choice
+                          )}
+                        </span>
+                        <span className="zen-option-copy">
+                          {stripChoicePrefix(choice, question.options[choice] ?? "")}
+                        </span>
+                      </button>
+                    );
+                  }
+                )}
+              </section>
+
+              {result && (
+                <section
+                  ref={explanationRef as React.Ref<HTMLElement>}
+                  className={[
+                    "zen-explanation",
+                    result === "correct"
+                      ? "zen-explanation--correct"
+                      : "zen-explanation--incorrect",
+                  ].join(" ")}
+                  aria-live="polite"
+                >
+                  <p className="zen-explanation-kicker">
+                    {result === "correct" ? "Correct" : "Incorrect"}
+                  </p>
+                  <p className="zen-explanation-answer">
+                    Correct answer: {formatAnswer(question.answer)}
+                  </p>
+                  <p>{question.explanation}</p>
+                </section>
+              )}
+
+              {/* Study Notes */}
+              <div className="mt-8 border-t border-gray-200/80 pt-6">
+                <h3 className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  <FileText size={14} />
+                  Study Notes
+                </h3>
+                
+                <textarea
+                  className="zen-practice-notes-textarea focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="Write your study notes here. They will auto-save when you click away..."
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  onBlur={() => saveNote(noteText)}
+                />
+                
+                <div className="flex justify-between items-center mt-2.5">
+                  <span className="text-[11px] text-gray-400 min-h-[16px]">
+                    {isNoteSaving ? "Saving..." : noteSavedMessage ? "Saved!" : ""}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => saveNote(noteText)}
+                    className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-white hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
+                  >
+                    Save Note
+                  </button>
+                </div>
+              </div>
+
+              <div className="zen-practice-actions flex justify-end pt-16">
+                {/* On mobile with single-select: skip Submit (auto-graded on tap).
+                    On desktop or multi-select: show Submit / Next as usual. */}
+                {(() => {
+                  const isSingleSelect = !Array.isArray(question.answer);
+                  const hideSubmit = isMobile && isSingleSelect && !result;
+                  if (hideSubmit) return null;
+
+                  return (
+                    <button
+                      className="zen-next-button"
+                      onClick={() => {
+                        if (result) {
+                          if (safeCurrentIndex === visibleTotal - 1) {
+                            onDashboardClick?.();
+                            return;
+                          }
+                          goToNext();
+                          return;
+                        }
+                        void submitAnswer(selected);
+                      }}
+                      type="button"
+                      disabled={!result && selected.length === 0}
+                    >
+                      <span>
+                        {result
+                          ? safeCurrentIndex === visibleTotal - 1
+                            ? "Back to Dashboard"
+                            : "Next Question"
+                          : "Submit Answer"}
+                      </span>
+                      <ArrowRight aria-hidden="true" size={16} />
+                    </button>
+                  );
+                })()}
+              </div>
+            </>
+          ) : (
+            <EmptyModeState mode={mode} />
+          )}
+        </main>
       </div>
+
+      {/* Mobile Drawer (Bottom Sheet) */}
+      {isDrawerOpen && (
+        <div className="zen-navigator-overlay" onClick={() => setIsDrawerOpen(false)}>
+          <div className="zen-navigator-drawer" onClick={(e) => e.stopPropagation()}>
+            <div className="zen-navigator-drawer-header">
+              <h3>Question Navigator</h3>
+              <button onClick={() => setIsDrawerOpen(false)} type="button">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="zen-navigator-drawer-grid">
+              {filteredQuestions.map((q, idx) => {
+                const qProgress = allProgress.find((p) => p.questionId === q.id);
+                const isCorrect = qProgress?.lastResult === "correct";
+                const isIncorrect = qProgress?.lastResult === "incorrect";
+                const isBookmarked = qProgress?.bookmarked;
+                const isActive = idx === safeCurrentIndex;
+
+                let dotClass = "zen-practice-navigator-dot";
+                if (isCorrect) {
+                  dotClass = "zen-practice-navigator-dot--correct";
+                } else if (isIncorrect) {
+                  dotClass = "zen-practice-navigator-dot--incorrect";
+                }
+
+                if (isActive) {
+                  dotClass += " zen-practice-navigator-dot--active";
+                }
+
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => {
+                      resetAnswerState();
+                      setCurrentIndex(idx);
+                      setIsDrawerOpen(false);
+                    }}
+                    title={`Question ${idx + 1}`}
+                    className={`zen-reader-page-dot ${dotClass}`}
+                  >
+                    {idx + 1}
+                    {isBookmarked && (
+                      <span className="zen-reader-page-dot-bookmark">
+                        <Star size={6} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

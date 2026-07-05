@@ -1,114 +1,40 @@
-import { useCallback, useEffect, useState } from "react";
-import {
-  ArrowRight,
-  Bookmark,
-  CalendarCheck,
-  CheckCircle2,
-  CircleHelp,
-  Clock,
-  Layers,
-  Target,
-  XCircle,
-} from "lucide-react";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import { ArrowRight, ChevronLeft, ChevronRight, Moon, Search, Star, Sun, AlertCircle, LayoutGrid, RotateCcw } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
-import { AuthPanel } from "../components/AuthPanel";
 import { AnonymousProgressPrompt } from "../components/AnonymousProgressPrompt";
+import { AuthPanel } from "../components/AuthPanel";
 import { questions, totalQuestions } from "../data/questions";
-import {
-  calculateDashboardStats,
-  calculateRecentActivity,
-  calculateWeakAreas,
-} from "../domain/dashboard";
+import { calculateDashboardStats } from "../domain/dashboard";
 import type { PracticeMode } from "../domain/practiceMode";
 import { practiceModeLabels } from "../domain/practiceMode";
 import type { PracticeResume } from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
 import { getAllProgress } from "../db/progressRepository";
 import { useAuth } from "../auth/authContext";
-import { getDashboardGreeting } from "../domain/dashboardGreeting";
+import { useTheme } from "../theme/useTheme";
 
 type DashboardPageProps = {
   onNavigate: (route: ShellRoute) => void;
   ownerId?: string;
   progressRefreshToken?: number;
-  onPracticeClick: (mode?: PracticeMode) => void;
+  onPracticeClick: (mode?: PracticeMode, initialIndex?: number) => void;
   onExamClick: () => void;
   practiceResume: PracticeResume;
-  syncStatus?: string;
   showAnonymousProgressPrompt?: boolean;
   onMergeAnonymousProgress?: () => void;
   onKeepAnonymousProgressSeparate?: () => void;
-  onSyncComplete?: () => void;
+  onResetProgress?: () => Promise<void>;
 };
 
-type StatCardProps = {
-  label: string;
-  value: string | number;
-  detail: string;
-  icon: React.ReactNode;
-  accent: string;
-};
+function getDashboardDisplayName(email?: string): string {
+  if (!email) return "Ryan";
 
-function StatCard({ label, value, detail, icon, accent }: StatCardProps) {
-  return (
-    <article className="relative flex min-h-40 flex-col justify-between overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="mb-3 flex items-center text-sm font-medium text-gray-600">
-        <span className={`mr-2 ${accent}`}>{icon}</span>
-        {label}
-      </div>
-      <div>
-        <div className="mb-1 text-3xl font-bold text-gray-900">{value}</div>
-        <p className="w-2/3 text-xs leading-tight text-gray-500">{detail}</p>
-      </div>
-      <svg
-        className="absolute bottom-4 right-4 h-8 w-20"
-        preserveAspectRatio="none"
-        viewBox="0 0 100 30"
-        aria-hidden="true"
-      >
-        <path
-          d="M0,25 C20,25 30,10 50,20 C70,30 80,5 100,15"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className={accent}
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-    </article>
-  );
-}
+  const localPart = email.split("@")[0] ?? "";
+  const match = localPart.match(/[a-zA-Z]+/);
+  const name = match?.[0] ?? "Ryan";
 
-type WeakAreaProps = {
-  label: string;
-  percent: number;
-  icon: React.ReactNode;
-  iconClass: string;
-};
-
-function WeakArea({ label, percent, icon, iconClass }: WeakAreaProps) {
-  return (
-    <div className="flex items-center">
-      <div
-        className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${iconClass}`}
-      >
-        {icon}
-      </div>
-      <div className="w-16 text-sm font-medium text-gray-700">{label}</div>
-      <div className="mx-4 h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
-        <div
-          className="h-full rounded-full bg-[#0B1120]"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-      <div className="w-8 text-right text-sm text-gray-500">{percent}%</div>
-    </div>
-  );
-}
-
-function getProgressSource(progress: QuestionProgress): string {
-  return progress.syncedAt ? "Synced" : "Local";
+  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 }
 
 export function DashboardPage({
@@ -118,14 +44,20 @@ export function DashboardPage({
   onPracticeClick,
   onExamClick,
   practiceResume,
-  syncStatus,
   showAnonymousProgressPrompt = false,
   onMergeAnonymousProgress,
   onKeepAnonymousProgressSeparate,
-  onSyncComplete,
+  onResetProgress,
 }: DashboardPageProps) {
   const { session } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
+
+  // Question Navigator States
+  const [navigatorTab, setNavigatorTab] = useState<"all" | "incorrect" | "bookmarked" | "unattempted">("all");
+  const [activeChunk, setActiveChunk] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const CHUNK_SIZE = 100;
 
   const refreshProgress = useCallback(() => {
     void getAllProgress(ownerId).then(setProgressList);
@@ -136,42 +68,82 @@ export function DashboardPage({
   }, [progressRefreshToken, refreshProgress]);
 
   const stats = calculateDashboardStats(totalQuestions, progressList);
-  const weakAreas = calculateWeakAreas(questions, progressList);
-  const recentActivity = calculateRecentActivity(progressList);
   const progressPercent =
     stats.totalQuestions === 0
       ? 0
       : Math.round((stats.answeredQuestions / stats.totalQuestions) * 100);
-  const resumeMode = practiceResume.lastMode;
+  const resumeMode =
+    practiceResume.lastMode === "incorrect" || practiceResume.lastMode === "favorite"
+      ? practiceResume.lastMode
+      : "sequential";
   const resumePosition = practiceResume.positions[resumeMode];
-  const resumeLabel = resumePosition.questionId
-    ? `Continue ${practiceModeLabels[resumeMode]} · Question ${resumePosition.questionId}`
-    : "Continue Practice";
-  const greeting = getDashboardGreeting(Boolean(session));
+  const resumeQuestionLabel = resumePosition.questionId
+    ? `Question ${resumePosition.questionId}`
+    : "Question 1";
+  const resumeContext = resumePosition.questionId
+    ? `${practiceModeLabels[resumeMode]} mode · ${progressPercent}% complete`
+    : "Start a clean practice session";
+  const displayName = getDashboardDisplayName(session?.user.email);
+
+  // Question Map Calculations
+  const progressMap = useMemo(() => {
+    return new Map(progressList.map((p) => [p.questionId, p]));
+  }, [progressList]);
+
+  const filteredMapQuestions = useMemo(() => {
+    let list = totalQuestions === 0 ? [] : questions;
+
+    if (navigatorTab === "incorrect") {
+      list = list.filter((q) => progressMap.get(q.id)?.lastResult === "incorrect");
+    } else if (navigatorTab === "bookmarked") {
+      list = list.filter((q) => progressMap.get(q.id)?.bookmarked === true);
+    } else if (navigatorTab === "unattempted") {
+      list = list.filter((q) => {
+        const p = progressMap.get(q.id);
+        return !p || p.attempts === 0;
+      });
+    }
+
+    if (searchQuery.trim()) {
+      const qId = parseInt(searchQuery.trim(), 10);
+      if (!isNaN(qId)) {
+        list = list.filter((q) => q.id === qId);
+      } else {
+        const query = searchQuery.toLowerCase();
+        list = list.filter((q) => q.stem.toLowerCase().includes(query));
+      }
+    }
+
+    return list;
+  }, [navigatorTab, searchQuery, progressMap]);
+
+  const totalChunks = Math.ceil(filteredMapQuestions.length / CHUNK_SIZE);
+  const safeChunk = Math.min(activeChunk, Math.max(0, totalChunks - 1));
+
+  const displayQuestions = useMemo(() => {
+    const needsChunking = navigatorTab === "all" || navigatorTab === "unattempted";
+    if (needsChunking && !searchQuery.trim()) {
+      const start = safeChunk * CHUNK_SIZE;
+      return filteredMapQuestions.slice(start, start + CHUNK_SIZE);
+    }
+    return filteredMapQuestions;
+  }, [filteredMapQuestions, navigatorTab, searchQuery, safeChunk]);
 
   return (
     <AppShell
       active="dashboard"
+      hideHeader
       onNavigate={onNavigate}
       onDashboardClick={() => onNavigate("dashboard")}
       onPracticeClick={onPracticeClick}
       onExamClick={onExamClick}
-      headerActions={
-        <AuthPanel
-          onSyncComplete={() => {
-            refreshProgress();
-            onSyncComplete?.();
-          }}
-        />
-      }
+      sidebarBadges={{
+        incorrect: stats.incorrectQuestions,
+        favorite: stats.bookmarkedQuestions,
+      }}
+      variant="studio"
     >
-      <div className="space-y-6">
-        {syncStatus ? (
-          <p aria-live="polite" className="text-sm text-gray-500">
-            {syncStatus}
-          </p>
-        ) : null}
-
+      <div className="dashboard-prototype" data-dashboard-prototype>
         {showAnonymousProgressPrompt &&
         onMergeAnonymousProgress &&
         onKeepAnonymousProgressSeparate ? (
@@ -181,232 +153,314 @@ export function DashboardPage({
           />
         ) : null}
 
-        <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="mb-1 text-3xl font-bold text-gray-900">
-              {greeting.title}
-            </h2>
-            <p className="text-sm text-gray-500">
-              {greeting.subtitle}
-            </p>
-          </div>
-        </section>
+        <div className="dashboard-prototype__topbar">
+          {session ? <AuthPanel /> : null}
+          {onResetProgress && (
+            <button
+              type="button"
+              className="dashboard-prototype__reset-btn"
+              onClick={onResetProgress}
+              title="Reset All Progress"
+            >
+              <RotateCcw size={13} />
+              <span>Reset Progress</span>
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+            className="dashboard-prototype__theme"
+            onClick={toggleTheme}
+            title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          >
+            {isDark ? (
+              <Sun aria-hidden="true" size={16} />
+            ) : (
+              <Moon aria-hidden="true" size={16} />
+            )}
+          </button>
+        </div>
 
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <article className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
-            <div>
-              <div className="mb-4 flex items-center font-medium text-gray-900">
-                <Target size={18} className="mr-2 text-gray-400" />
-                Continue Practice
+        <header className="dashboard-prototype__header">
+          <h1>
+            Welcome back, <span>{displayName}</span>{" "}
+            <span aria-hidden="true">👋</span>
+          </h1>
+          <p>Let's continue your AWS journey.</p>
+        </header>
+
+        {/* Study Command Center Dashboard */}
+        <div className="study-command-center grid grid-cols-1 md:grid-cols-3 border-t border-b border-gray-200 dark:border-gray-800/50 py-8 mb-8 mt-4 gap-y-3 md:gap-y-0">
+          {/* Column 1: Progress */}
+          <div className="study-command-zone pr-6 md:border-r border-gray-200/50 dark:border-gray-800/50">
+            <span className="study-command-eyebrow">
+              Progress Status
+            </span>
+            <div className="mt-4">
+              <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">Answered</span>
+              <strong className="text-3xl font-extrabold text-gray-900 dark:text-white block mt-1 leading-none">
+                {stats.answeredQuestions} <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">/ {stats.totalQuestions}</span>
+              </strong>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">Accuracy</span>
+                <span className="text-base font-bold text-emerald-600 dark:text-emerald-400 block mt-1">{stats.accuracyPercent}%</span>
               </div>
-              <div className="mb-6">
-                <div className="mb-2 text-4xl font-bold text-gray-900">
-                  {stats.answeredQuestions} / {stats.totalQuestions}
-                </div>
-                <div className="mb-3 text-sm text-gray-500">
-                  {progressPercent}% completed · {stats.remainingQuestions} questions remaining
-                </div>
-                <div className="h-2 w-full rounded-full bg-gray-100">
-                  <div
-                    className="relative h-2 rounded-full bg-[#0B1120]"
-                    style={{ width: `${progressPercent}%` }}
-                  >
-                    <div className="absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-white bg-[#0B1120] shadow-sm" />
-                  </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-wider">Remaining</span>
+                <span className="text-base font-bold text-gray-700 dark:text-gray-300 block mt-1">{stats.remainingQuestions}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: Continue Practice */}
+          <div 
+            className="study-command-zone px-0 md:px-6 md:border-r border-gray-200/50 dark:border-gray-800/50 flex flex-col justify-between"
+            data-dashboard-resume-action
+          >
+            <div>
+              <span className="study-command-eyebrow">
+                Continue Practice
+              </span>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mt-3.5 leading-tight">{resumeQuestionLabel}</h2>
+              <p className="dashboard-prototype__context mt-1.5 text-xs text-gray-500 dark:text-gray-400">{resumeContext}</p>
+              
+              <div
+                className="dashboard-prototype__progress mt-4"
+                data-dashboard-progress-strip
+              >
+                <div
+                  aria-label={`${stats.answeredQuestions} of ${stats.totalQuestions} questions completed`}
+                  aria-valuemax={stats.totalQuestions}
+                  aria-valuemin={0}
+                  aria-valuenow={stats.answeredQuestions}
+                  className="dashboard-prototype__progress-track"
+                  role="progressbar"
+                >
+                  <div style={{ width: `${progressPercent}%` }} />
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="mt-6">
               <button
                 type="button"
                 onClick={() => onPracticeClick(resumeMode)}
-                className="inline-flex min-h-11 items-center rounded-xl bg-[#0B1120] px-5 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold rounded-xl hover:bg-gray-700 dark:hover:bg-gray-100 transition-all duration-200 cursor-pointer shadow-md hover:shadow-lg hover:-translate-y-0.5 w-fit"
+                aria-label={`Continue practice from ${resumeQuestionLabel}`}
               >
-                {resumeLabel}
-                <ArrowRight size={14} className="ml-2" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onPracticeClick("incorrect")}
-                className="min-h-11 rounded-xl border border-gray-200 bg-white px-5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-              >
-                Review {stats.incorrectQuestions} Incorrect
-              </button>
-              <button
-                type="button"
-                onClick={onExamClick}
-                className="min-h-11 rounded-xl border border-gray-200 bg-white px-5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-              >
-                Start Mock Exam
+                <span>Resume Practice</span>
+                <ArrowRight size={14} />
               </button>
             </div>
-          </article>
+          </div>
 
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-1 flex items-center font-medium text-gray-900">
-              <CalendarCheck size={18} className="mr-2 text-gray-400" />
-              Today's Plan
-            </div>
-            <p className="mb-6 ml-6 text-xs text-gray-500">Suggested for today</p>
-
-            <div className="mb-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                <div className="flex items-center text-sm text-gray-700">
-                  <div className="mr-3 h-4 w-4 shrink-0 rounded-full border-2 border-blue-500" />
-                  Regular questions
-                </div>
-                <span className="text-sm text-gray-500">20 questions</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                <div className="flex items-center text-sm text-gray-700">
-                  <div className="mr-3 h-4 w-4 shrink-0 rounded-full border-2 border-yellow-500" />
-                  Review incorrect
-                </div>
-                <span className="text-sm text-gray-500">
-                  {stats.incorrectQuestions} questions
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-700">
-                  <div className="mr-3 h-4 w-4 shrink-0 rounded-full border-2 border-emerald-500" />
-                  Review bookmarked
-                </div>
-                <span className="text-sm text-gray-500">
-                  {stats.bookmarkedQuestions} questions
-                </span>
-              </div>
-            </div>
-
-            <button className="flex items-center text-sm font-medium text-gray-600 transition-colors hover:text-gray-900">
-              Customize your plan
-              <ArrowRight size={14} className="ml-2" />
-            </button>
-          </article>
-        </section>
-
-        <section className="grid grid-cols-2 gap-6 lg:grid-cols-4">
-          <StatCard
-            label="Accuracy"
-            value={`${stats.accuracyPercent}%`}
-            detail="Based on all answer attempts"
-            icon={<Target size={16} />}
-            accent="text-purple-500"
-          />
-          <StatCard
-            label="Incorrect"
-            value={stats.incorrectQuestions}
-            detail="Questions to review"
-            icon={<XCircle size={16} />}
-            accent="text-red-500"
-          />
-          <StatCard
-            label="Bookmarked"
-            value={stats.bookmarkedQuestions}
-            detail="Questions saved for later"
-            icon={<Bookmark size={16} />}
-            accent="text-yellow-500"
-          />
-          <StatCard
-            label="Guessed"
-            value={stats.guessedQuestions}
-            detail="Questions marked as guessed"
-            icon={<CircleHelp size={16} />}
-            accent="text-blue-500"
-          />
-        </section>
-
-        <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <article className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-6">
-              <div className="mb-1 flex items-center font-medium text-gray-900">
-                <Layers size={18} className="mr-2 text-gray-400" />
-                Weak Areas
-              </div>
-              <p className="ml-6 text-xs text-gray-500">
-                Topics that need more attention
-              </p>
-            </div>
-
-            <div className="flex-1 space-y-5">
-              {weakAreas.map((area) => {
-                return (
-                  <WeakArea
-                    key={area.label}
-                    label={area.label}
-                    percent={area.errorRatePercent}
-                    icon={<Layers size={12} />}
-                    iconClass="bg-gray-100 text-gray-500"
-                  />
-                );
-              })}
-
-              {weakAreas.length === 0 ? (
-                <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
-                  No weak areas yet. Answer more questions and incorrect topic
-                  patterns will appear here.
-                </p>
-              ) : null}
-            </div>
-          </article>
-
-          <article className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-6">
-              <div className="mb-1 flex items-center font-medium text-gray-900">
-                <Clock size={18} className="mr-2 text-gray-400" />
-                Recent Activity
-              </div>
-              <p className="ml-6 text-xs text-gray-500">
-                Your latest question attempts
-              </p>
-            </div>
-
-            <div className="flex-1 space-y-4">
-              {recentActivity.map((progress) => {
-                const isCorrect = progress.lastResult === "correct";
-
-                return (
-                  <div
-                    key={progress.questionId}
-                    className="flex items-center justify-between border-b border-gray-50 pb-3 text-sm last:border-b-0"
-                  >
-                    <div className="flex w-1/3 items-center">
-                      {isCorrect ? (
-                        <CheckCircle2 size={16} className="mr-2 text-emerald-500" />
-                      ) : (
-                        <XCircle size={16} className="mr-2 text-red-500" />
-                      )}
-                      <span className="font-medium text-gray-700">
-                        Question #{progress.questionId}
-                      </span>
-                    </div>
-                    <div className="w-1/4">
-                      <span
-                        className={[
-                          "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium",
-                          isCorrect
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-red-50 text-red-500",
-                        ].join(" ")}
-                      >
-                        {isCorrect ? "Correct" : "Incorrect"}
-                      </span>
-                    </div>
-                    <div className="w-1/4 text-gray-500">Practice</div>
-                    <div className="w-1/6 text-right text-xs text-gray-400">
-                      {getProgressSource(progress)}
-                    </div>
+          {/* Column 3: Review Queue */}
+          <div 
+            className="study-command-zone pl-0 md:pl-6 flex flex-col justify-between"
+            data-dashboard-secondary-actions
+          >
+            <div>
+              <span className="study-command-eyebrow">
+                Review Queue
+              </span>
+              
+              <div className="mt-3.5 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => onPracticeClick("incorrect")}
+                  className="flex items-center justify-between w-full p-2.5 rounded-xl hover:bg-gray-100/50 dark:hover:bg-slate-800/40 transition-all group text-left cursor-pointer"
+                  aria-label="Review incorrect questions"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 dark:text-white">Review Incorrect</span>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Incorrect questions that need another look</p>
                   </div>
+                  <span className="text-red-500 font-bold text-xs bg-red-500/10 px-2 py-0.5 rounded flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    {stats.incorrectQuestions} <ArrowRight size={12} />
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onPracticeClick("favorite")}
+                  className="flex items-center justify-between w-full p-2.5 rounded-xl hover:bg-gray-100/50 dark:hover:bg-slate-800/40 transition-all group text-left cursor-pointer"
+                  aria-label="Review Bookmarked questions"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-gray-900 dark:text-white">Review Bookmarked</span>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Bookmarked questions for reference</p>
+                  </div>
+                  <span className="text-amber-500 font-bold text-xs bg-amber-500/10 px-2 py-0.5 rounded flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    {stats.bookmarkedQuestions} <ArrowRight size={12} />
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section className="dashboard-map-card" data-dashboard-question-map>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between dashboard-map-header">
+            <div>
+              <h2 className="dashboard-map-title flex items-center gap-2">
+                <LayoutGrid size={20} className="text-amber-500" />
+                Question Navigation Map
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                Visual index of all 1,019 exam questions. Click a number to jump directly to it in practice mode.
+              </p>
+            </div>
+            
+            {/* Search Box */}
+            <div className="relative w-full md:w-64">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                <Search size={14} />
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search ID (e.g. 42) or keyword..."
+                className="w-full pl-9 pr-4 py-2 rounded-xl text-xs dashboard-map-input focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+              />
+            </div>
+          </div>
+
+          {/* Filters and Tabs */}
+          <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
+            <div className="dashboard-map-tabs-mobile dashboard-map-control-bg">
+              {(["all", "incorrect", "bookmarked"] as const).map((tab) => {
+                const isActive = navigatorTab === tab;
+                const labels: Record<typeof tab, string> = {
+                  all: "All Questions",
+                  incorrect: "Incorrect",
+                  bookmarked: "Bookmarked",
+                };
+                
+                let badgeVal = 0;
+                let badgeColor = "dashboard-map-tab-badge--all";
+                if (tab === "all") {
+                  badgeVal = totalQuestions;
+                } else if (tab === "incorrect") {
+                  badgeVal = stats.incorrectQuestions;
+                  badgeColor = "dashboard-map-tab-badge--incorrect";
+                } else if (tab === "bookmarked") {
+                  badgeVal = stats.bookmarkedQuestions;
+                  badgeColor = "dashboard-map-tab-badge--bookmarked";
+                }
+
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => {
+                      setNavigatorTab(tab);
+                      setActiveChunk(0);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-150 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap ${
+                      isActive
+                        ? "dashboard-map-tab--active shadow-sm"
+                        : "dashboard-map-tab"
+                    }`}
+                  >
+                    <span className="dashboard-map-tab-label-full">{labels[tab]}</span>
+                    <span className="dashboard-map-tab-label-short">
+                      {tab === "all" ? "All" : tab === "incorrect" ? "Wrong" : "Saved"}
+                    </span>
+                    <span className={`dashboard-map-tab-badge ${badgeColor}`}>
+                      {badgeVal}
+                    </span>
+                  </button>
                 );
               })}
-
-              {recentActivity.length === 0 ? (
-                <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
-                  No recent activity yet. Start a practice session to populate history.
-                </p>
-              ) : null}
             </div>
-          </article>
+
+            {/* Chunk selector (Pagination) */}
+            {totalChunks > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={safeChunk === 0}
+                  onClick={() => setActiveChunk(c => Math.max(0, c - 1))}
+                  className="p-1.5 rounded-lg dashboard-map-input hover:bg-slate-800/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <select
+                  value={safeChunk}
+                  onChange={(e) => setActiveChunk(parseInt(e.target.value, 10))}
+                  className="dashboard-map-input text-xs py-1.5 px-2.5 rounded-lg focus:outline-none"
+                >
+                  {Array.from({ length: totalChunks }).map((_, idx) => {
+                    const startRange = idx * CHUNK_SIZE + 1;
+                    const endRange = Math.min(filteredMapQuestions.length, (idx + 1) * CHUNK_SIZE);
+                    return (
+                      <option key={idx} value={idx}>
+                        Range {startRange} - {endRange}
+                      </option>
+                    );
+                  })}
+                </select>
+                <button
+                  type="button"
+                  disabled={safeChunk === totalChunks - 1}
+                  onClick={() => setActiveChunk(c => Math.min(totalChunks - 1, c + 1))}
+                  className="p-1.5 rounded-lg dashboard-map-input hover:bg-slate-800/40 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Grid display */}
+          {displayQuestions.length > 0 ? (
+            <div 
+              className="grid gap-2 max-h-[400px] overflow-y-auto pr-1"
+              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(48px, 1fr))" }}
+            >
+              {displayQuestions.map((q) => {
+                const qProgress = progressMap.get(q.id);
+                const isCorrect = qProgress?.lastResult === "correct";
+                const isIncorrect = qProgress?.lastResult === "incorrect";
+                const isBookmarked = qProgress?.bookmarked;
+                
+                let nodeStyle = "dashboard-map-node";
+                if (isCorrect) {
+                  nodeStyle = "dashboard-map-node--correct";
+                } else if (isIncorrect) {
+                  nodeStyle = "dashboard-map-node--incorrect";
+                }
+                
+                const borderStyle = isBookmarked ? "border-amber-500 ring-1 ring-amber-500/30" : "border";
+
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => onPracticeClick("sequential", q.id - 1)}
+                    title={`Question ${q.id}: ${q.stem.slice(0, 60)}...`}
+                    className={`relative flex flex-col h-11 items-center justify-center rounded-xl text-xs font-semibold transition-all cursor-pointer ${nodeStyle} ${borderStyle}`}
+                  >
+                    <span>{q.id}</span>
+                    {isBookmarked && (
+                      <span className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5 text-slate-950">
+                        <Star size={7} className="fill-slate-950" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 border border-dashed border-gray-200 dark:border-slate-700/60 rounded-xl bg-gray-50 dark:bg-slate-900/20">
+              <AlertCircle size={24} className="mx-auto text-gray-300 dark:text-slate-600 mb-2" />
+              <p className="text-sm font-semibold text-gray-400 dark:text-slate-400">No questions found</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Try changing your filters or search query.</p>
+            </div>
+          )}
         </section>
       </div>
     </AppShell>

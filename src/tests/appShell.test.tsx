@@ -13,7 +13,14 @@ describe("app shell header", () => {
       },
     } as Session;
     const markup = renderToStaticMarkup(
-      <AuthContext.Provider value={{ session, isLoading: false }}>
+      <AuthContext.Provider
+        value={{
+          session,
+          isLoading: false,
+          isPasswordRecovery: false,
+          completePasswordRecovery: () => {},
+        }}
+      >
         <AppShell active="practice">
           <p>Practice</p>
         </AppShell>
@@ -54,8 +61,40 @@ describe("app shell header", () => {
 
     expect(markup).not.toContain("Focus Mode");
     expect(markup).not.toContain("Start Focus Session");
-    expect(markup).not.toContain("lucide-moon");
+    expect(markup).not.toContain("Collapse");
+    expect(markup).not.toContain("app-shell-collapse");
     expect(markup).not.toContain("lucide-settings");
+  });
+
+  it("renders a real theme toggle control", () => {
+    const markup = renderToStaticMarkup(
+      <AppShell active="dashboard">
+        <p>Dashboard</p>
+      </AppShell>,
+    );
+
+    expect(markup).toContain('aria-label="Switch to dark theme"');
+    expect(markup).toContain("lucide-moon");
+  });
+
+  it("keeps the sidebar focused on practice-only navigation", () => {
+    const markup = renderToStaticMarkup(
+      <AppShell active="dashboard">
+        <p>Dashboard</p>
+      </AppShell>,
+    );
+
+    expect(markup).toContain("Question Bank");
+    expect(markup).toContain("Mock Exams");
+    expect(markup).toContain("Review Incorrect");
+    expect(markup).toContain("Review Bookmarked");
+    expect(markup).not.toContain("Study");
+    expect(markup).not.toContain("Topics");
+    expect(markup).not.toContain("Notes");
+    expect(markup).not.toContain("Flashcards");
+    expect(markup).not.toContain("Progress");
+    expect(markup).not.toContain("Analytics");
+    expect(markup).not.toContain("Study History");
   });
 
   it("uses a page-specific mobile header without duplicating desktop actions", () => {
@@ -74,9 +113,7 @@ describe("app shell header", () => {
 
   it.each([
     ["sequential", "Question Bank"],
-    ["random", "Question Bank"],
     ["incorrect", "Review Incorrect"],
-    ["guessed", "Review Guessed"],
     ["favorite", "Review Bookmarked"],
   ] as const)("highlights %s practice mode in the sidebar", (practiceMode, label) => {
     const markup = renderToStaticMarkup(
@@ -85,9 +122,10 @@ describe("app shell header", () => {
       </AppShell>,
     );
     const activeItemPattern = new RegExp(
-      `<button[^>]*aria-current="page"[^>]*>[\\s\\S]*?${label}</button>`,
+      `<button[^>]*aria-current="page"[^>]*>[\\s\\S]*?${label}[\\s\\S]*?</button>`,
     );
 
     expect(markup).toMatch(activeItemPattern);
   });
+
 });

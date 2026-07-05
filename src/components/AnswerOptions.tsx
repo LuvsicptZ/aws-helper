@@ -1,5 +1,5 @@
 import type { ChoiceKey } from "../domain/question";
-import { normalizeAnswer } from "../domain/question";
+import { normalizeAnswer, stripChoicePrefix } from "../domain/question";
 
 type AnswerOptionsProps = {
   options: Partial<Record<ChoiceKey, string>>;
@@ -40,7 +40,7 @@ export function AnswerOptions({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3.5">
       {choiceOrder
         .filter((choice) => options[choice] !== undefined)
         .map((choice) => {
@@ -51,13 +51,13 @@ export function AnswerOptions({
 
           const optionClass = showResult
             ? isCorrect
-              ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-950"
               : isWrongSelection
-                ? "border-red-200 bg-red-50 text-red-950"
-                : "border-gray-200 bg-white text-gray-400"
+                ? "border-red-300 bg-red-50 text-red-950"
+                : "border-gray-200 bg-white text-gray-400 opacity-70"
             : isSelected
-              ? "border-[#0B1120] bg-gray-50 ring-2 ring-gray-200"
-              : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50";
+              ? "border-[#111827] bg-[#f7f4ef] ring-2 ring-[#ded7cc]"
+              : "border-gray-200 bg-white hover:border-gray-300 hover:bg-[#fbfaf8]";
 
           return (
             <button
@@ -67,26 +67,28 @@ export function AnswerOptions({
               onClick={() => toggleChoice(choice)}
               aria-label={`Choice ${choice}`}
               className={[
-                "group flex w-full min-w-0 gap-3 rounded-xl border p-4 text-left shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]",
+                "group flex w-full min-w-0 gap-4 rounded-2xl border p-4 text-left transition-[background-color,border-color,transform] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120] sm:p-5",
                 optionClass,
-                disabled ? "cursor-default" : "hover:-translate-y-0.5",
+                disabled ? "cursor-default" : "cursor-pointer hover:-translate-y-0.5",
               ].join(" ")}
             >
               <span
                 className={[
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold",
                   showResult && isCorrect
                     ? "bg-emerald-500 text-white"
                     : showResult && isWrongSelection
                       ? "bg-red-500 text-white"
-                      : "bg-gray-100 text-gray-900",
+                      : isSelected
+                        ? "bg-[#0B1120] text-white"
+                        : "bg-gray-100 text-gray-900",
                 ].join(" ")}
               >
                 {choice}
               </span>
               <span
                 className={[
-                  "min-w-0 break-words text-sm leading-6 [overflow-wrap:anywhere]",
+                  "min-w-0 break-words text-base leading-7 [overflow-wrap:anywhere]",
                   showResult && isCorrect
                     ? "text-emerald-950"
                     : showResult && isWrongSelection
@@ -96,7 +98,7 @@ export function AnswerOptions({
                         : "text-gray-800",
                 ].join(" ")}
               >
-                {options[choice]}
+                {stripChoicePrefix(choice, options[choice] ?? "")}
               </span>
             </button>
           );

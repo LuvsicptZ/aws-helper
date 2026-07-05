@@ -18,14 +18,14 @@ export function AnonymousProgressPrompt({
         <button
           type="button"
           onClick={onMerge}
-          className="min-h-11 rounded-xl bg-[#0B1120] px-4 text-sm font-semibold text-white"
+          className="min-h-11 cursor-pointer rounded-xl bg-[#0B1120] px-4 text-sm font-semibold text-white transition-colors hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]"
         >
           Merge into my account
         </button>
         <button
           type="button"
           onClick={onKeepSeparate}
-          className="min-h-11 rounded-xl border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-950"
+          className="min-h-11 cursor-pointer rounded-xl border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B1120]"
         >
           Keep separate
         </button>

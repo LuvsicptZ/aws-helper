@@ -4,9 +4,7 @@ import { practiceModeLabels } from "../domain/practiceMode";
 
 const emptyMessages: Record<PracticeMode, string> = {
   sequential: "Question bank is empty.",
-  random: "Question bank is empty.",
   incorrect: "No incorrect questions yet.",
-  guessed: "No guessed questions yet.",
   favorite: "No bookmarked questions yet.",
 };
 
