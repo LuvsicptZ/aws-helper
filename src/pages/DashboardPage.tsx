@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, Moon, Sun, RotateCcw } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
 import { AnonymousProgressPrompt } from "../components/AnonymousProgressPrompt";
 import { AuthPanel } from "../components/AuthPanel";
-import { questions, totalQuestions } from "../data/questions";
+import { totalQuestions } from "../data/questions";
 import { calculateDashboardStats } from "../domain/dashboard";
 import type { PracticeMode } from "../domain/practiceMode";
 import { practiceModeLabels } from "../domain/practiceMode";
