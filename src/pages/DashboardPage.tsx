@@ -11,6 +11,8 @@ import { practiceModeLabels } from "../domain/practiceMode";
 import type { PracticeResume } from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
 import { getAllProgress } from "../db/progressRepository";
+import { getAllExamSessions } from "../db/examRepository";
+import type { ExamSession } from "../domain/exam";
 import { useAuth } from "../auth/authContext";
 import { useTheme } from "../theme/useTheme";
 
@@ -52,16 +54,20 @@ export function DashboardPage({
   const { session } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
-
-
+  const [examSessions, setExamSessions] = useState<ExamSession[]>([]);
 
   const refreshProgress = useCallback(() => {
     void getAllProgress(ownerId).then(setProgressList);
   }, [ownerId]);
 
+  const refreshSessions = useCallback(() => {
+    void getAllExamSessions(ownerId).then(setExamSessions);
+  }, [ownerId]);
+
   useEffect(() => {
     refreshProgress();
-  }, [progressRefreshToken, refreshProgress]);
+    refreshSessions();
+  }, [progressRefreshToken, refreshProgress, refreshSessions]);
 
   const stats = calculateDashboardStats(totalQuestions, progressList);
   const progressPercent =
@@ -421,7 +427,84 @@ export function DashboardPage({
           </div>
         </div>
 
+        {/* Recent Simulator Attempts (fills lower empty space beautifully) */}
+        <div className="mt-8 border-t border-gray-200/50 dark:border-slate-800/60 pt-8 pb-12">
+          <h3 className="text-xs uppercase font-bold text-gray-400 dark:text-slate-500 tracking-wider mb-3">
+            Recent Simulator Attempts
+          </h3>
+          
+          {examSessions.length > 0 ? (
+            <div className="max-w-3xl divide-y divide-gray-200/40 dark:divide-slate-800/30">
+              {examSessions.slice(0, 4).map((sess) => {
+                const dateStr = new Date(sess.startedAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+                const totalQ = sess.questionIds.length;
+                const answeredCount = Object.keys(sess.answers).length;
+                
+                let status = "In Progress";
+                let scoreText = "-";
+                let scoreColor = "text-gray-400 dark:text-slate-500";
+                let isPassed = false;
+                
+                if (sess.submittedAt && sess.score !== undefined) {
+                  const pct = Math.round((sess.score / totalQ) * 100);
+                  status = "Submitted";
+                  scoreText = `${pct}% (${sess.score}/${totalQ})`;
+                  isPassed = pct >= 72;
+                  scoreColor = isPassed
+                    ? "text-emerald-600 dark:text-emerald-400 font-bold" 
+                    : "text-amber-600 dark:text-amber-500 font-bold";
+                } else {
+                  scoreText = `${answeredCount} / ${totalQ} answered`;
+                }
 
+                return (
+                  <div 
+                    key={sess.id} 
+                    className="flex items-center justify-between py-3.5 group transition-all duration-150"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-xl ${sess.submittedAt ? (isPassed ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500") : "bg-blue-500/10 text-blue-500"}`}>
+                        <ClipboardList size={18} />
+                      </div>
+                      <div>
+                        <span className="text-sm font-bold text-gray-900 dark:text-slate-200 block">
+                          Mock Exam Simulator
+                        </span>
+                        <span className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5 block">
+                          {dateStr}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className={`${scoreColor} text-sm block`}>{scoreText}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 block mt-0.5">
+                        {status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 px-4 border border-dashed border-gray-200 dark:border-slate-800/60 rounded-2xl bg-white/10 dark:bg-slate-950/20 text-center max-w-lg mx-auto">
+              <div className="p-3 rounded-2xl bg-gray-100/80 dark:bg-amber-500/5 text-gray-400 dark:text-amber-500/50 mb-4">
+                <ClipboardList size={22} />
+              </div>
+              <span className="text-sm font-bold text-gray-900 dark:text-slate-200 block">
+                No simulator attempts yet
+              </span>
+              <p className="text-xs text-gray-400 dark:text-slate-400 mt-1 max-w-sm leading-relaxed">
+                Complete a timed Mock Exam to test your readiness and track your scores here.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </AppShell>
   );
