@@ -282,7 +282,7 @@ export function DashboardPage({
         </div>
 
         {/* Study Command Center Dashboard */}
-        <div className="study-command-center hidden md:grid grid-cols-1 md:grid-cols-3 border-t border-b border-gray-200 dark:border-gray-800/50 py-8 mb-8 mt-4 gap-y-3 md:gap-y-0">
+        <div className="study-command-center hidden md:grid grid-cols-1 md:grid-cols-4 border-t border-b border-gray-200 dark:border-gray-800/50 py-8 mb-8 mt-4 gap-y-3 md:gap-y-0">
           {/* Column 1: Progress */}
           <div className="study-command-zone pr-6 md:border-r border-gray-200/50 dark:border-gray-800/50">
             <span className="study-command-eyebrow">
@@ -348,7 +348,35 @@ export function DashboardPage({
             </div>
           </div>
 
-          {/* Column 3: Review Queue */}
+          {/* Column 3: Mock Exam */}
+          <div 
+            className="study-command-zone px-0 md:px-6 md:border-r border-gray-200/50 dark:border-gray-800/50 flex flex-col justify-between"
+            data-dashboard-exam-action
+          >
+            <div>
+              <span className="study-command-eyebrow">
+                Testing Simulator
+              </span>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mt-3.5 leading-tight">Mock Exam</h2>
+              <p className="dashboard-prototype__context mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                Simulate a timed exam environment with 65 random questions.
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={onExamClick}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition-all duration-200 cursor-pointer shadow-md hover:shadow-lg hover:-translate-y-0.5 w-fit"
+                aria-label="Take mock exam"
+              >
+                <span>Take Mock Exam</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Column 4: Review Queue */}
           <div 
             className="study-command-zone pl-0 md:pl-6 flex flex-col justify-between"
             data-dashboard-secondary-actions

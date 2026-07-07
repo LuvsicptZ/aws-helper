@@ -409,17 +409,17 @@ export function ExamPage({
               {submittedAt && score && (
                 <section
                   aria-label="Exam score summary"
-                  className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5 shadow-sm sm:p-6 mb-8 text-slate-800"
+                  className="rounded-2xl border border-emerald-200 dark:border-emerald-900/30 bg-emerald-50/80 dark:bg-emerald-950/20 p-5 shadow-sm sm:p-6 mb-8 text-slate-800 dark:text-emerald-200"
                 >
                   <div className="flex items-start gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white">
                       <CheckCircle2 size={20} />
                     </span>
                     <div>
-                      <p className="text-base font-semibold text-emerald-950">
+                      <p className="text-base font-semibold text-emerald-950 dark:text-emerald-300">
                         Score {score.scorePercent}%
                       </p>
-                      <p className="mt-1 text-sm text-gray-700">
+                      <p className="mt-1 text-sm text-gray-700 dark:text-emerald-400/80">
                         {score.correctQuestions} correct / {score.totalQuestions} total.
                         {isSaving ? " Saving..." : " Saved locally."}
                       </p>

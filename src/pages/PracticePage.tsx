@@ -584,7 +584,7 @@ export function PracticePage({
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-colors duration-150 ${
                       currentProgress?.bookmarked
                         ? "bg-amber-500/10 border-amber-300 text-amber-600 dark:border-amber-500/30 dark:text-amber-400"
-                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                        : "bg-white dark:bg-slate-900/50 border-gray-200 dark:border-slate-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-gray-900 dark:hover:text-gray-200"
                     }`}
                   >
                     <Bookmark
