@@ -283,7 +283,7 @@ export function LoginPage() {
             viewBox="0 0 140 100"
             preserveAspectRatio="none"
           >
-            <path d="M140 0 C20 25 20 75 140 100 Z" />
+            <path d="M140 0 C50 25 50 75 140 100 Z" />
           </svg>
 
           {/* Form wrapper */}
