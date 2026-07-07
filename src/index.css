@@ -3051,16 +3051,21 @@ html[data-theme="dark"] .login-auth-form-stack .login-calm-field:focus-within {
   .login-auth-form-stack form button[type="submit"] {
     font-size: 1.18rem !important;
     margin-top: 0.55rem !important;
+    position: relative !important;
   }
 
   .login-auth-form-stack form button[type="submit"] svg {
     height: 1.35rem !important;
-    margin-left: auto;
     width: 1.35rem !important;
+    position: absolute !important;
+    right: 1.5rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
   }
 
   .login-auth-form-stack form button[type="submit"] span {
-    margin-left: auto;
+    margin: 0 auto !important;
   }
 
   .login-auth-form-stack .login-calm-divider {
@@ -3080,6 +3085,15 @@ html[data-theme="dark"] .login-auth-form-stack .login-calm-field:focus-within {
   .login-auth-form-stack > p:last-child {
     font-size: 1rem !important;
     margin-top: 2.1rem !important;
+  }
+
+  /* Mobile Dark Mode Text and Label Contrast Overrides */
+  html[data-theme="dark"] .login-auth-form-stack header p {
+    color: #94a3b8 !important; /* text-slate-400 */
+  }
+
+  html[data-theme="dark"] .login-auth-form-stack label {
+    color: #cbd5e1 !important; /* text-slate-300 */
   }
 }
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "../theme/useTheme";
+import { BrandLogo } from "./BrandLogo";
 import { supabaseClient } from "../auth/supabaseClient";
 
 function GoogleIcon() {
@@ -242,23 +243,7 @@ export function LoginPage() {
           {/* Dark scrim overlay for visual contrast */}
           <div className="absolute inset-0 bg-slate-950/20 pointer-events-none" />
 
-          <div className="login-mobile-brand hidden items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-amber-500 shadow-[0_16px_34px_rgba(2,6,23,0.22)]">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7">
-                <line x1="18" y1="20" x2="18" y2="10" />
-                <line x1="12" y1="20" x2="12" y2="4" />
-                <line x1="6" y1="20" x2="6" y2="14" />
-              </svg>
-            </div>
-            <div>
-              <span className="block text-xl font-black leading-none tracking-tight text-slate-950">
-                AWS Mastery
-              </span>
-              <span className="mt-1.5 block text-base font-semibold leading-none text-slate-600">
-                Practice
-              </span>
-            </div>
-          </div>
+
 
           {/* Slogan Content (Top-left aligned) */}
           <div className="relative z-10 max-w-xl">
@@ -304,23 +289,9 @@ export function LoginPage() {
           {/* Form wrapper */}
           <div className="login-auth-form-stack w-full max-w-[430px] relative z-10">
             
-            {/* Custom Logo header */}
-            <div className="login-panel-brand flex items-center gap-3 mb-8">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-amber-500 shadow-md">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                  <line x1="18" y1="20" x2="18" y2="10" />
-                  <line x1="12" y1="20" x2="12" y2="4" />
-                  <line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-sm font-extrabold text-slate-900 dark:text-white tracking-tight block leading-none">
-                  AWS Mastery
-                </span>
-                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-1 block leading-none uppercase tracking-wider">
-                  Practice
-                </span>
-              </div>
+            {/* Official Brand Logo header */}
+            <div className="mb-8">
+              <BrandLogo className="-ml-1 h-10 w-auto shrink-0 dark:brightness-110" />
             </div>
 
             {/* Headers */}
@@ -387,7 +358,7 @@ export function LoginPage() {
                     autoComplete={isSignUp ? "new-password" : "current-password"}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    placeholder="••••••••"
+                    placeholder=""
                     className="flex-1 bg-transparent border-0 text-sm text-slate-800 dark:text-white placeholder-slate-400 outline-none w-full"
                   />
                   <button
@@ -432,7 +403,7 @@ export function LoginPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || !supabaseClient}
-                className="w-full min-h-[44px] mt-2 bg-slate-950 dark:bg-white text-white dark:text-slate-950 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98]"
+                className="w-full min-h-[44px] mt-2 bg-slate-950 dark:bg-white text-white dark:text-slate-950 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98] relative"
               >
                 <span>
                   {isSubmitting
