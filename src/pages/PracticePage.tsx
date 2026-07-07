@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Bookmark, Check, ChevronLeft, LayoutDashboard, X, FileText, Star, ChevronDown, ChevronUp, LayoutGrid, ListChecks, ClipboardList, CalendarX, Moon, Sun } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bookmark, Check, ChevronLeft, LayoutDashboard, X, FileText, Star, ChevronDown, ChevronUp, LayoutGrid, ListChecks, ClipboardList, CalendarX, Moon, Sun } from "lucide-react";
 import { AppShell } from "../components/AppShell";
+import { MarkdownText } from "../components/MarkdownText";
 import { BrandLogo } from "../components/BrandLogo";
 import type { ShellRoute } from "../components/AppShell";
 import { EmptyModeState } from "../components/EmptyModeState";
@@ -269,9 +270,10 @@ export function PracticePage({
   function handleAnswerChange(choice: ChoiceKey) {
     if (!question || result || isSaving) return;
 
-    // On mobile with single-answer questions: auto-submit immediately on tap
-    const isSingleSelect = !Array.isArray(question.answer);
-    if (isMobile && isSingleSelect) {
+    const required = Array.isArray(question.answer) ? question.answer.length : 1;
+    const isSingleSelect = required === 1;
+
+    if (isSingleSelect) {
       setAnswerState({
         questionId: question.id,
         selected: [choice],
@@ -281,9 +283,17 @@ export function PracticePage({
       return;
     }
 
+    // Support toggling for multi-select questions in practice mode
+    let nextSelected: ChoiceKey[];
+    if (selected.includes(choice)) {
+      nextSelected = selected.filter((c) => c !== choice);
+    } else {
+      nextSelected = [...selected, choice].slice(-required);
+    }
+
     setAnswerState({
       questionId: question.id,
-      selected: [choice],
+      selected: nextSelected,
       result,
     });
   }
@@ -295,6 +305,11 @@ export function PracticePage({
   function goToNext() {
     resetAnswerState();
     setCurrentIndex(() => Math.min(visibleTotal - 1, safeCurrentIndex + 1));
+  }
+
+  function goToPrevious() {
+    resetAnswerState();
+    setCurrentIndex(() => Math.max(0, safeCurrentIndex - 1));
   }
 
   useEffect(() => {
@@ -648,7 +663,7 @@ export function PracticePage({
                   <p className="zen-explanation-answer">
                     Correct answer: {formatAnswer(question.answer)}
                   </p>
-                  <p>{question.explanation}</p>
+                  <p><MarkdownText text={question.explanation} /></p>
                 </section>
               )}
 
@@ -681,7 +696,18 @@ export function PracticePage({
                 </div>
               </div>
 
-              <div className="zen-practice-actions flex justify-end pt-16">
+              <div className="zen-practice-actions flex justify-between items-center pt-16">
+                {safeCurrentIndex > 0 && (
+                  <button
+                    className="zen-secondary-button flex items-center justify-center gap-2 flex-1 md:flex-none"
+                    onClick={goToPrevious}
+                    type="button"
+                  >
+                    <ArrowLeft aria-hidden="true" size={16} />
+                    <span>Previous</span>
+                  </button>
+                )}
+
                 {/* On mobile with single-select: skip Submit (auto-graded on tap).
                     On desktop or multi-select: show Submit / Next as usual. */}
                 {(() => {
@@ -691,7 +717,7 @@ export function PracticePage({
 
                   return (
                     <button
-                      className="zen-next-button"
+                      className="zen-next-button ml-auto flex items-center justify-center gap-2 flex-1 md:flex-none"
                       onClick={() => {
                         if (result) {
                           if (safeCurrentIndex === visibleTotal - 1) {

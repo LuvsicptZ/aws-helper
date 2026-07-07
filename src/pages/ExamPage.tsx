@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Send, ArrowRight, ChevronLeft, LayoutDashboard, Check, X, ChevronDown, ChevronUp, Bookmark, LayoutGrid, ListChecks, ClipboardList, CalendarX, Moon, Sun } from "lucide-react";
+import { CheckCircle2, Send, ArrowLeft, ArrowRight, ChevronLeft, LayoutDashboard, Check, X, ChevronDown, ChevronUp, Bookmark, LayoutGrid, ListChecks, ClipboardList, CalendarX, Moon, Sun } from "lucide-react";
 import { AppShell } from "../components/AppShell";
+import { MarkdownText } from "../components/MarkdownText";
 import { BrandLogo } from "../components/BrandLogo";
 import type { ShellRoute } from "../components/AppShell";
 import { questions } from "../data/questions";
@@ -507,7 +508,7 @@ export function ExamPage({
                   <p className="zen-explanation-answer">
                     Correct answer: {formatAnswer(question.answer)}
                   </p>
-                  <p>{question.explanation}</p>
+                  <p><MarkdownText text={question.explanation} /></p>
                 </section>
               )}
 
@@ -516,13 +517,14 @@ export function ExamPage({
                   type="button"
                   onClick={goToPrevious}
                   disabled={currentIndex === 0}
-                  className="zen-secondary-button"
+                  className="zen-secondary-button flex items-center justify-center gap-2 flex-1 md:flex-none"
                 >
-                  Previous
+                  <ArrowLeft aria-hidden="true" size={16} />
+                  <span>Previous</span>
                 </button>
 
                 <button
-                  className="zen-next-button"
+                  className="zen-next-button flex items-center justify-center gap-2 flex-1 md:flex-none ml-auto"
                   onClick={() => {
                     if (currentIndex === examQuestions.length - 1) {
                       if (submittedAt) {

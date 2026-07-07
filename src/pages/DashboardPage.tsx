@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Moon, Sun, RotateCcw } from "lucide-react";
+import { ArrowRight, Moon, Sun, RotateCcw, ClipboardList, CalendarX, Bookmark } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
 import { AnonymousProgressPrompt } from "../components/AnonymousProgressPrompt";
@@ -68,16 +68,13 @@ export function DashboardPage({
     stats.totalQuestions === 0
       ? 0
       : Math.round((stats.answeredQuestions / stats.totalQuestions) * 100);
-  const resumeMode =
-    practiceResume.lastMode === "incorrect" || practiceResume.lastMode === "favorite"
-      ? practiceResume.lastMode
-      : "sequential";
+  const resumeMode = "sequential";
   const resumePosition = practiceResume.positions[resumeMode];
   const resumeQuestionLabel = resumePosition.questionId
     ? `Question ${resumePosition.questionId}`
     : "Question 1";
   const resumeContext = resumePosition.questionId
-    ? `${practiceModeLabels[resumeMode]} mode · ${progressPercent}% complete`
+    ? `Question bank · ${progressPercent}% complete`
     : "Start a clean practice session";
   const displayName = getDashboardDisplayName(session?.user.email);
 
@@ -144,8 +141,148 @@ export function DashboardPage({
           <p>Let's continue your AWS journey.</p>
         </header>
 
+        <section
+          className="dashboard-mobile-resume-card md:hidden"
+          aria-label="Continue practice"
+        >
+          <div className="dashboard-mobile-resume-card__top">
+            <div>
+              <p className="dashboard-mobile-resume-card__eyebrow">
+                Continue Practice
+              </p>
+              <h2>{resumeQuestionLabel}</h2>
+            </div>
+            <button
+              aria-label={`Continue practice from ${resumeQuestionLabel}`}
+              className="dashboard-mobile-resume-card__arrow"
+              onClick={() => onPracticeClick(resumeMode)}
+              type="button"
+            >
+              <ArrowRight aria-hidden="true" size={24} />
+            </button>
+          </div>
+
+          <p className="dashboard-mobile-resume-card__context">
+            {resumeContext}
+          </p>
+
+          <div
+            className="dashboard-mobile-resume-card__progress"
+            role="progressbar"
+            aria-label={`${stats.answeredQuestions} of ${stats.totalQuestions} questions completed`}
+            aria-valuemax={stats.totalQuestions}
+            aria-valuemin={0}
+            aria-valuenow={stats.answeredQuestions}
+          >
+            <span style={{ width: `${progressPercent}%` }} />
+          </div>
+
+          <dl className="dashboard-mobile-resume-card__stats">
+            <div>
+              <dt>{stats.answeredQuestions}</dt>
+              <dd>Answered</dd>
+            </div>
+            <div>
+              <dt>{stats.remainingQuestions}</dt>
+              <dd>Remaining</dd>
+            </div>
+            <div>
+              <dt>{stats.accuracyPercent}%</dt>
+              <dd>Accuracy</dd>
+            </div>
+          </dl>
+        </section>
+
+        {/* Mobile Swiss-Grid Layout (highly styled and architectural) */}
+        <div className="md:hidden mt-6">
+          {/* Top Divider */}
+          <hr className="border-gray-200/40 dark:border-gray-800/20 my-6" />
+          
+          {/* Full-width Mock Exam Row */}
+          <div className="py-4 flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-widest block mb-1">
+                Testing Simulator
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white block font-sans">Mock Exam</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                Simulate a timed exam environment with 65 questions.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onExamClick}
+              className="dashboard-mobile-resume-card__arrow"
+              aria-label="Start mock exam"
+            >
+              <ArrowRight aria-hidden="true" size={18} />
+            </button>
+          </div>
+
+          {/* Horizontal Line separating Mock Exam and Reviews */}
+          <hr className="border-gray-200/40 dark:border-gray-800/20 mt-6 mb-2" />
+
+          {/* 2-Column Review Section */}
+          <div className="grid grid-cols-2">
+            {/* Review Incorrect (Left Column) */}
+            <div className="py-4 pr-4 border-r border-gray-200/40 dark:border-gray-800/20 flex flex-col justify-between min-h-[120px]">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-widest block mb-1.5">
+                  Incorrect
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-base font-bold text-gray-900 dark:text-white">Review Wrong</span>
+                  <span className="text-[10px] font-bold text-red-500 bg-red-500/10 dark:bg-red-500/20 px-2 py-0.5 rounded-full">
+                    {stats.incorrectQuestions}
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
+                  Retry questions you answered incorrectly.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onPracticeClick("incorrect")}
+                className="dashboard-mobile-resume-card__arrow mt-4 w-9 h-9 self-end"
+                aria-label="Review incorrect questions"
+              >
+                <ArrowRight aria-hidden="true" size={16} />
+              </button>
+            </div>
+
+            {/* Review Bookmarked (Right Column) */}
+            <div className="py-4 pl-4 flex flex-col justify-between min-h-[120px]">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 tracking-widest block mb-1.5">
+                  Bookmarks
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-base font-bold text-gray-900 dark:text-white">Review Saved</span>
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/20 px-2 py-0.5 rounded-full">
+                    {stats.bookmarkedQuestions}
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">
+                  Revise questions you saved for review.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onPracticeClick("favorite")}
+                className="dashboard-mobile-resume-card__arrow mt-4 w-9 h-9 self-end"
+                aria-label="Review saved questions"
+              >
+                <ArrowRight aria-hidden="true" size={16} />
+              </button>
+            </div>
+          </div>
+          
+          {/* Bottom spacer */}
+          <div className="h-6" />
+        </div>
+
         {/* Study Command Center Dashboard */}
-        <div className="study-command-center grid grid-cols-1 md:grid-cols-3 border-t border-b border-gray-200 dark:border-gray-800/50 py-8 mb-8 mt-4 gap-y-3 md:gap-y-0">
+        <div className="study-command-center hidden md:grid grid-cols-1 md:grid-cols-3 border-t border-b border-gray-200 dark:border-gray-800/50 py-8 mb-8 mt-4 gap-y-3 md:gap-y-0">
           {/* Column 1: Progress */}
           <div className="study-command-zone pr-6 md:border-r border-gray-200/50 dark:border-gray-800/50">
             <span className="study-command-eyebrow">

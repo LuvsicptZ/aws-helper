@@ -2786,6 +2786,12 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.05em;
 }
 
+.zen-option--selected .zen-option-marker {
+  border-color: #d88a12;
+  background: #d88a12;
+  color: #ffffff;
+}
+
 .zen-option--correct .zen-option-marker {
   border-color: #87a96b;
   background: #87a96b;
@@ -2800,9 +2806,10 @@ h1, h2, h3, h4, h5, h6 {
 .zen-option-copy {
   display: block;
   color: #374151;
-  font-size: 15.5px;
+  font-size: 0.95rem;
   font-weight: 400;
-  line-height: 1.7;
+  line-height: 1.62;
+  font-family: "Lora", Georgia, Cambria, serif;
 }
 
 .zen-option-letter {
@@ -2829,6 +2836,8 @@ h1, h2, h3, h4, h5, h6 {
   color: #374151;
   font-size: 15px;
   line-height: 1.75;
+  font-family: "Lora", Georgia, Cambria, serif;
+  white-space: pre-wrap;
 }
 
 .zen-explanation--correct {
@@ -3064,6 +3073,189 @@ html[data-theme="dark"] .study-command-eyebrow {
   min-height: 0 !important;
 }
 
+.dashboard-mobile-resume-card {
+  position: relative;
+  overflow: hidden;
+  margin: 1.6rem 0 1.25rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0;
+}
+
+.dashboard-mobile-resume-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-mobile-resume-card__eyebrow {
+  margin: 0 0 1rem;
+  color: rgb(116 106 93 / 0.74);
+  font-size: 0.7rem;
+  font-weight: 760;
+  letter-spacing: 0.22em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.dashboard-mobile-resume-card h2 {
+  margin: 0;
+  color: var(--study-ink);
+  font-family: "Lora", Georgia, Cambria, serif;
+  font-size: clamp(1.8rem, 7.5vw, 2.2rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.dashboard-mobile-resume-card__arrow {
+  display: inline-flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(116 94 68 / 0.12);
+  border-radius: 999px;
+  background: rgb(255 250 242 / 0.64);
+  color: var(--study-ink);
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.72),
+    0 0.4rem 1rem rgb(75 54 26 / 0.04);
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.dashboard-mobile-resume-card__arrow:hover {
+  background: rgb(255 250 242 / 0.94);
+  transform: scale(1.05);
+}
+
+.dashboard-mobile-resume-card__context {
+  margin: 1rem 0 1.65rem;
+  color: var(--study-muted);
+  font-size: clamp(0.95rem, 4vw, 1.08rem);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.dashboard-mobile-resume-card__progress {
+  position: relative;
+  height: 0.24rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(116 94 68 / 0.14);
+}
+
+.dashboard-mobile-resume-card__progress span {
+  display: block;
+  height: 100%;
+  min-width: 0.75rem;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f59e0b, #d88a12);
+  box-shadow: 0 0 1rem rgb(216 138 18 / 0.24);
+}
+
+.dashboard-mobile-resume-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: clamp(2.15rem, 8vw, 3rem) 0 0;
+  padding: 0;
+}
+
+.dashboard-mobile-resume-card__stats div {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+  min-width: 0;
+  padding-inline: clamp(0.75rem, 4vw, 1.3rem);
+  border-left: 1px solid rgb(116 94 68 / 0.13);
+}
+
+.dashboard-mobile-resume-card__stats div:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.dashboard-mobile-resume-card__stats div:last-child {
+  padding-right: 0;
+}
+
+.dashboard-mobile-resume-card__stats dt {
+  margin: 0;
+  color: var(--study-ink);
+  font-family: "Lora", Georgia, Cambria, serif;
+  font-size: clamp(1.75rem, 8vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.dashboard-mobile-resume-card__stats div:last-child dt {
+  color: var(--study-accent);
+}
+
+.dashboard-mobile-resume-card__stats dd {
+  margin: 0;
+  color: var(--study-muted);
+  font-size: clamp(0.76rem, 3.4vw, 0.92rem);
+  font-weight: 560;
+  line-height: 1.1;
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card__eyebrow,
+html[data-theme="dark"] .dashboard-mobile-resume-card__context,
+html[data-theme="dark"] .dashboard-mobile-resume-card__stats dd {
+  color: var(--dark-muted);
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card h2,
+html[data-theme="dark"] .dashboard-mobile-resume-card__stats dt {
+  color: var(--dark-text-strong);
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card__stats div:last-child dt {
+  color: #d8a657;
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card__arrow {
+  border-color: var(--dark-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dark-text-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0.4rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card__arrow:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card__progress {
+  background: rgb(255 255 255 / 0.1);
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card__progress span {
+  background: linear-gradient(90deg, #d8a657, #f0cf8b);
+}
+
+html[data-theme="dark"] .dashboard-mobile-resume-card__stats div {
+  border-left-color: var(--dark-border);
+}
+
 /* Sidebar question navigator */
 .zen-practice-navigator-sidebar {
   margin-top: 1.5rem;
@@ -3291,6 +3483,12 @@ html[data-theme="dark"] .zen-option--selected {
   border-color: rgba(216, 166, 87, 0.22) !important;
 }
 
+html[data-theme="dark"] .zen-option--selected .zen-option-marker {
+  background: #d8a657 !important;
+  border-color: #d8a657 !important;
+  color: #1a1e27 !important;
+}
+
 html[data-theme="dark"] .zen-option--correct {
   border: 1px solid rgba(16, 185, 129, 0.4) !important;
   border-left: 4px solid #10b981 !important;
@@ -3399,14 +3597,16 @@ html[data-theme="dark"] .zen-practice-main div {
 
 @media (max-width: 640px) {
   .zen-practice-actions {
-    flex-direction: column-reverse !important;
-    gap: 12px !important;
-    padding-top: 32px !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    padding-top: 24px !important;
   }
   
   .zen-practice-actions button {
-    width: 100% !important;
+    flex: 1 1 0% !important;
+    width: auto !important;
     min-width: 0 !important;
+    padding-inline: 8px !important;
     justify-content: center !important;
   }
 }
@@ -4001,9 +4201,19 @@ html[data-theme="light"] .zen-option:not(.zen-option--correct, .zen-option--inco
   border-color: var(--study-line-soft) !important;
 }
 
-html[data-theme="light"] .zen-option:not(:disabled):hover,
-html[data-theme="light"] .zen-option--selected {
+html[data-theme="light"] .zen-option:not(:disabled):hover {
   background: rgb(255 250 242 / 0.68) !important;
+}
+
+html[data-theme="light"] .zen-option--selected {
+  background: rgb(255 250 240 / 0.9) !important;
+  border-color: var(--study-ink) !important;
+}
+
+html[data-theme="light"] .zen-option--selected .zen-option-marker {
+  background: var(--study-ink) !important;
+  border-color: var(--study-ink) !important;
+  color: var(--study-paper-strong) !important;
 }
 
 html[data-theme="light"] .zen-next-button {
