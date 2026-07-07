@@ -214,7 +214,7 @@ export function LoginPage() {
       className="login-calm-page login-auth-page min-h-screen flex flex-col relative"
     >
       {/* Floating Theme Switcher top bar */}
-      <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
+      <div className="login-auth-theme absolute top-6 right-6 z-50 flex items-center gap-3">
         <button
           type="button"
           aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
@@ -242,6 +242,24 @@ export function LoginPage() {
           {/* Dark scrim overlay for visual contrast */}
           <div className="absolute inset-0 bg-slate-950/20 pointer-events-none" />
 
+          <div className="login-mobile-brand hidden items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-amber-500 shadow-[0_16px_34px_rgba(2,6,23,0.22)]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+            </div>
+            <div>
+              <span className="block text-xl font-black leading-none tracking-tight text-slate-950">
+                AWS Mastery
+              </span>
+              <span className="mt-1.5 block text-base font-semibold leading-none text-slate-600">
+                Practice
+              </span>
+            </div>
+          </div>
+
           {/* Slogan Content (Top-left aligned) */}
           <div className="relative z-10 max-w-xl">
             <span className="text-[10px] font-black tracking-[0.2em] text-orange-500 uppercase block mb-3">
@@ -253,7 +271,7 @@ export function LoginPage() {
               Ace <span className="text-orange-500">the cloud.</span>
             </h1>
             <p className="mt-4 text-sm sm:text-base font-medium text-slate-200/90 leading-relaxed">
-              Practice smarter. Improve faster. Achieve more.
+              Focused practice. Smarter revision. Better results.
             </p>
           </div>
 
@@ -273,19 +291,21 @@ export function LoginPage() {
           data-login-form
           className="login-auth-panel relative flex flex-col justify-center items-center px-6 py-12 sm:px-16 lg:px-20 bg-[#fdfcfb] dark:bg-[#0d121a] lg:max-h-screen lg:overflow-y-auto min-h-0 lg:min-h-screen w-full"
         >
-          {/* Wave SVG divider on the left edge of the right panel, overlaying the image */}
-          <svg 
-            className="login-auth-wave absolute top-0 left-0 h-full w-24 text-[#fdfcfb] dark:text-[#0d121a] fill-current -translate-x-full pointer-events-none hidden lg:block" 
-            viewBox="0 0 100 100" 
+          {/* Soft vertical curve divider. The right panel remains white; this shape creates the visible curved left edge. */}
+          <svg
+            aria-hidden="true"
+            className="login-auth-curve absolute top-0 left-0 hidden h-full pointer-events-none lg:block"
+            viewBox="0 0 140 100"
             preserveAspectRatio="none"
           >
-            <path d="M100,0 C32,32 32,68 100,100 Z" />
+            <path d="M140 0 H104 C90 17 78 33 84 48 C91 66 75 84 96 100 H140 Z" />
           </svg>
+
           {/* Form wrapper */}
           <div className="login-auth-form-stack w-full max-w-[430px] relative z-10">
             
             {/* Custom Logo header */}
-            <div className="flex items-center gap-3 mb-8">
+            <div className="login-panel-brand flex items-center gap-3 mb-8">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-amber-500 shadow-md">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                   <line x1="18" y1="20" x2="18" y2="10" />

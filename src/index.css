@@ -2680,7 +2680,7 @@ html[data-theme="dark"] .login-calm-visual-overlay {
 
 .login-auth-visual::after {
   background:
-    linear-gradient(90deg, rgb(2 6 23 / 0.28), transparent 42%),
+    linear-gradient(90deg, rgb(2 6 23 / 0.22), transparent 44%),
     linear-gradient(180deg, rgb(2 6 23 / 0.08), rgb(2 6 23 / 0.18));
   content: "";
   inset: 0;
@@ -2695,15 +2695,30 @@ html[data-theme="dark"] .login-calm-visual-overlay {
 }
 
 .login-auth-panel {
+  --auth-curve-width: clamp(5.25rem, 6.4vw, 8rem);
   background:
     radial-gradient(circle at 55% 28%, rgb(255 255 255 / 0.88), transparent 30rem),
     linear-gradient(180deg, #fffefd 0%, #fbfaf7 100%) !important;
-  padding-inline: clamp(3rem, 6vw, 8rem) !important;
+  margin-left: calc(var(--auth-curve-width) * -0.78);
+  overflow: visible !important;
+  padding-left: calc(clamp(3rem, 6vw, 8rem) + var(--auth-curve-width) * 0.72) !important;
+  padding-right: clamp(3rem, 6vw, 8rem) !important;
+  width: calc(100% + var(--auth-curve-width) * 0.78) !important;
+  z-index: 2;
 }
 
-.login-auth-wave {
-  opacity: 0.96;
-  width: clamp(3rem, 5vw, 5.5rem) !important;
+.login-auth-curve {
+  color: #fbfaf7;
+  fill: currentColor;
+  filter: drop-shadow(-1.4rem 0 2.2rem rgb(15 23 42 / 0.08));
+  left: calc(var(--auth-curve-width) * -1) !important;
+  opacity: 1;
+  width: var(--auth-curve-width);
+  z-index: 0;
+}
+
+.login-auth-form-stack {
+  z-index: 1;
 }
 
 .login-auth-form-stack {
@@ -2787,6 +2802,10 @@ html[data-theme="dark"] .login-auth-panel {
     linear-gradient(180deg, #0d121a 0%, #090d13 100%) !important;
 }
 
+html[data-theme="dark"] .login-auth-curve {
+  color: #0d121a;
+}
+
 html[data-theme="dark"] .login-auth-form-stack .login-calm-field {
   background: rgb(15 23 42 / 0.44) !important;
   border-color: rgb(148 163 184 / 0.16) !important;
@@ -2805,7 +2824,8 @@ html[data-theme="dark"] .login-auth-form-stack .login-calm-field:focus-within {
   }
 
   .login-auth-panel {
-    padding-inline: clamp(4rem, 7vw, 9.5rem) !important;
+    padding-left: calc(clamp(4rem, 7vw, 9.5rem) + var(--auth-curve-width) * 0.72) !important;
+    padding-right: clamp(4rem, 7vw, 9.5rem) !important;
   }
 }
 
@@ -2824,8 +2844,11 @@ html[data-theme="dark"] .login-auth-form-stack .login-calm-field:focus-within {
   }
 
   .login-auth-panel {
+    margin-left: 0;
+    overflow: hidden !important;
     min-height: auto !important;
     padding: 3.4rem 1.5rem 4rem !important;
+    width: 100% !important;
   }
 
   .login-auth-form-stack {
@@ -2835,17 +2858,228 @@ html[data-theme="dark"] .login-auth-form-stack .login-calm-field:focus-within {
 }
 
 @media (max-width: 640px) {
+  .login-auth-page {
+    background: #fbfaf7 !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+  }
+
+  .login-auth-page::before {
+    display: none !important;
+  }
+
+  .login-auth-theme {
+    display: none !important;
+  }
+
+  .login-auth-grid {
+    display: block !important;
+    min-height: 100dvh !important;
+  }
+
   .login-auth-visual {
-    min-height: 18rem !important;
-    padding: 2.35rem 1.4rem !important;
+    align-items: flex-start !important;
+    background-position: 52% 45% !important;
+    display: flex !important;
+    min-height: 56dvh !important;
+    padding: clamp(2.2rem, 8vw, 3.5rem) clamp(1.85rem, 7vw, 2.5rem) 8.2rem !important;
+    position: relative !important;
+  }
+
+  .login-auth-visual::before {
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.78) 0%, rgb(255 255 255 / 0.34) 30%, rgb(255 255 255 / 0.1) 58%, transparent 78%),
+      linear-gradient(90deg, rgb(255 247 236 / 0.56) 0%, rgb(255 247 236 / 0.18) 58%, transparent 100%),
+      radial-gradient(circle at 16% 48%, rgb(255 231 198 / 0.62), transparent 18rem);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 0;
+  }
+
+  .login-auth-visual::after {
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(2 6 23 / 0.06) 48%, rgb(2 6 23 / 0.16) 100%);
+  }
+
+  .login-mobile-brand {
+    display: flex !important;
+    margin-bottom: clamp(2.55rem, 8.5vh, 4.5rem);
+    position: relative;
+    z-index: 2;
+  }
+
+  .login-auth-visual .relative.z-10.max-w-xl {
+    margin-top: 0 !important;
+    max-width: 22.5rem !important;
+    position: relative;
+    z-index: 2;
+  }
+
+  .login-auth-visual span.uppercase {
+    color: #e85d04 !important;
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.24em !important;
+    margin-bottom: 1.05rem !important;
+    text-shadow: 0 1px 16px rgb(255 255 255 / 0.42);
   }
 
   .login-auth-visual h1 {
-    font-size: clamp(2.45rem, 11vw, 3.5rem) !important;
+    color: #132031 !important;
+    font-size: clamp(2.42rem, 10vw, 3.18rem) !important;
+    font-weight: 760 !important;
+    letter-spacing: -0.052em !important;
+    line-height: 1.09 !important;
+    max-width: 20.5rem;
+    text-shadow:
+      0 1px 0 rgb(255 255 255 / 0.18),
+      0 16px 34px rgb(255 255 255 / 0.28);
+  }
+
+  .login-auth-visual h1 span {
+    color: #f26b12 !important;
+    font-weight: 780 !important;
+  }
+
+  .login-auth-visual p {
+    color: rgb(41 52 68 / 0.7) !important;
+    font-size: 1.02rem !important;
+    font-weight: 680 !important;
+    line-height: 1.62 !important;
+    margin-top: 1.15rem !important;
+    max-width: 19rem;
+    text-shadow: 0 1px 18px rgb(255 255 255 / 0.38);
   }
 
   .login-auth-panel {
-    padding-inline: 1.2rem !important;
+    background:
+      radial-gradient(circle at 52% 0%, rgb(255 255 255 / 1), transparent 18rem),
+      linear-gradient(180deg, #fffefd 0%, #fbfaf8 100%) !important;
+    border-radius: 4.6rem 4.6rem 0 0 !important;
+    box-shadow: 0 -24px 52px rgb(15 23 42 / 0.1) !important;
+    margin-top: -5.15rem !important;
+    overflow: visible !important;
+    padding: 4.95rem clamp(1.85rem, 7vw, 2.55rem) 2.8rem !important;
+    position: relative !important;
+    z-index: 5 !important;
+  }
+
+  .login-auth-panel::before {
+    background: rgb(15 23 42 / 0.14);
+    border-radius: 999px;
+    content: "";
+    height: 0.48rem;
+    left: 50%;
+    position: absolute;
+    top: 1.45rem;
+    transform: translateX(-50%);
+    width: 4.9rem;
+  }
+
+  .login-panel-brand {
+    display: none !important;
+  }
+
+  .login-auth-form-stack {
+    max-width: 100% !important;
+  }
+
+  .login-auth-form-stack header {
+    margin-bottom: 2.15rem !important;
+  }
+
+  .login-auth-form-stack header h2 {
+    font-size: 2rem !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  .login-auth-form-stack header p {
+    color: #687181 !important;
+    font-size: 1.02rem !important;
+    margin-top: 0.7rem !important;
+  }
+
+  .login-auth-form-stack label {
+    color: #566071 !important;
+    font-size: 0.96rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 0.72rem !important;
+  }
+
+  .login-auth-form-stack form {
+    gap: 1.35rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-field {
+    border-color: rgb(15 23 42 / 0.12) !important;
+    border-radius: 1.15rem !important;
+    min-height: 4.1rem !important;
+    padding-inline: 1.25rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-field > span {
+    margin-right: 0.9rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-field svg {
+    height: 1.45rem !important;
+    width: 1.45rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-field input {
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+  }
+
+  .login-auth-form-stack form > .flex.justify-end {
+    margin-top: -0.35rem !important;
+  }
+
+  .login-auth-form-stack form > .flex.justify-end button {
+    font-size: 0.98rem !important;
+    min-height: 2.4rem !important;
+  }
+
+  .login-auth-form-stack form button[type="submit"],
+  .login-auth-form-stack > button {
+    border-radius: 1.05rem !important;
+    min-height: 4.25rem !important;
+  }
+
+  .login-auth-form-stack form button[type="submit"] {
+    font-size: 1.18rem !important;
+    margin-top: 0.55rem !important;
+  }
+
+  .login-auth-form-stack form button[type="submit"] svg {
+    height: 1.35rem !important;
+    margin-left: auto;
+    width: 1.35rem !important;
+  }
+
+  .login-auth-form-stack form button[type="submit"] span {
+    margin-left: auto;
+  }
+
+  .login-auth-form-stack .login-calm-divider {
+    gap: 2rem !important;
+    margin-block: 2.1rem 1.9rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-divider em {
+    font-size: 1.05rem !important;
+    text-transform: lowercase !important;
+  }
+
+  .login-auth-form-stack > button {
+    font-size: 1.06rem !important;
+  }
+
+  .login-auth-form-stack > p:last-child {
+    font-size: 1rem !important;
+    margin-top: 2.1rem !important;
   }
 }
 
