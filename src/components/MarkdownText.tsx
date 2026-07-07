@@ -1,5 +1,3 @@
-import React from "react";
-
 interface MarkdownTextProps {
   text: string;
 }
@@ -7,8 +5,9 @@ interface MarkdownTextProps {
 export function MarkdownText({ text }: MarkdownTextProps) {
   if (!text) return null;
 
-  // Split by markdown links, bold text, inline code, and bare URLs
-  const regex = /(\[.*?\]\(.*?\))|(\*\*.*?\*\*)|(`.*?`)|((?:https?:\/\/)[^\s()<>]+(?:(?:\([^\s()<>]+\))|[^\s`!()\[\]{};:'".,<>?«»“”区域‘’]))/g;
+  // Split by markdown links, bold text, inline code, and bare URLs.
+  const regex =
+    /(\[.*?\]\(.*?\))|(\*\*.*?\*\*)|(`.*?`)|((?:https?:\/\/)[^\s()<>]+(?:(?:\([^\s()<>]+\))|[^\s`!()[\]{};:'".,<>?]))/g;
   const parts = text.split(regex);
 
   return (
@@ -20,7 +19,7 @@ export function MarkdownText({ text }: MarkdownTextProps) {
         if (part.startsWith("[") && part.includes("](")) {
           const match = part.match(/\[(.*?)\]\((.*?)\)/);
           if (match) {
-            const [_, linkText, linkUrl] = match;
+            const [, linkText, linkUrl] = match;
             return (
               <a
                 key={index}

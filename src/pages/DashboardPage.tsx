@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Moon, Sun, RotateCcw, ClipboardList, CalendarX, Bookmark } from "lucide-react";
+import { ArrowRight, Moon, Sun, RotateCcw, ClipboardList } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
 import { AnonymousProgressPrompt } from "../components/AnonymousProgressPrompt";
@@ -7,7 +7,6 @@ import { AuthPanel } from "../components/AuthPanel";
 import { totalQuestions } from "../data/questions";
 import { calculateDashboardStats } from "../domain/dashboard";
 import type { PracticeMode } from "../domain/practiceMode";
-import { practiceModeLabels } from "../domain/practiceMode";
 import type { PracticeResume } from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
 import { getAllProgress } from "../db/progressRepository";
@@ -446,7 +445,7 @@ export function DashboardPage({
                 const answeredCount = Object.keys(sess.answers).length;
                 
                 let status = "In Progress";
-                let scoreText = "-";
+                let scoreText: string;
                 let scoreColor = "text-gray-400 dark:text-slate-500";
                 let isPassed = false;
                 

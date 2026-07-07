@@ -1,5 +1,6 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   color: #111827;
@@ -2180,7 +2181,7 @@ html[data-theme="dark"] [data-focused-practice-layout] .border-gray-200 {
   justify-content: space-between;
   margin-inline: auto;
   max-width: 90rem;
-  padding: 4.3rem 6.1rem 0;
+  padding: 2.5rem 6.1rem 0;
   position: relative;
   z-index: 1;
 }
@@ -2206,7 +2207,7 @@ html[data-theme="dark"] [data-focused-practice-layout] .border-gray-200 {
   margin-inline: auto;
   max-width: 90rem;
   min-height: calc(100vh - 7.6rem);
-  padding: 6.2rem 6.1rem 6rem;
+  padding: 3.2rem 6.1rem 6rem;
   position: relative;
   z-index: 1;
 }
@@ -2428,25 +2429,227 @@ html[data-theme="dark"] [data-focused-practice-layout] .border-gray-200 {
   color: #346538;
 }
 
+/* Force transparent input background globally for calm fields */
+.login-calm-field input {
+  background-color: transparent !important;
+}
+
+/* --- Calm Login Page Dark Theme Overrides --- */
+html[data-theme="dark"] .login-calm-page {
+  background:
+    radial-gradient(circle at 70% 28%, rgb(30 41 59 / 0.15), transparent 35rem),
+    radial-gradient(circle at 16% 88%, rgb(75 54 26 / 0.12), transparent 28rem),
+    linear-gradient(115deg, #090d13 0%, #0d121a 48%, #070b10 100%) !important;
+  color: var(--dark-text) !important;
+}
+
+html[data-theme="dark"] .login-calm-page::before {
+  background:
+    linear-gradient(100deg, transparent 0 16%, rgb(255 255 255 / 0.02) 17% 19%, transparent 20% 100%),
+    radial-gradient(ellipse at left center, rgb(255 255 255 / 0.04), transparent 26rem) !important;
+}
+
+html[data-theme="dark"] .login-calm-nav-link {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .login-calm-nav-link:hover {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .login-calm-copy .login-calm-kicker {
+  color: #34d399 !important;
+}
+
+html[data-theme="dark"] .login-calm-copy h1 {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .login-calm-copy p {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .login-calm-form-panel header h2 {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .login-calm-form-panel header p {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .login-calm-field {
+  border-color: rgb(255 255 255 / 0.08) !important;
+  background-color: rgb(255 255 255 / 0.02) !important;
+}
+
+html[data-theme="dark"] .login-calm-field:focus-within {
+  border-color: rgb(255 255 255 / 0.24) !important;
+  background-color: rgb(255 255 255 / 0.04) !important;
+}
+
+html[data-theme="dark"] .login-calm-field > span {
+  color: #64748b !important;
+}
+
+html[data-theme="dark"] .login-calm-field input {
+  background-color: transparent !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .login-calm-field input::placeholder {
+  color: #475569 !important;
+}
+
+html[data-theme="dark"] .login-calm-eye-button {
+  color: #64748b !important;
+}
+
+html[data-theme="dark"] .login-calm-link-button {
+  color: #94a3b8 !important;
+  border-bottom-color: rgb(255 255 255 / 0.15) !important;
+}
+
+html[data-theme="dark"] .login-calm-link-button:hover {
+  color: #f8fafc !important;
+  border-bottom-color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .login-calm-switch {
+  color: #64748b !important;
+}
+
+html[data-theme="dark"] .login-calm-divider em {
+  color: #64748b !important;
+}
+
+html[data-theme="dark"] .login-calm-divider span {
+  background: rgb(255 255 255 / 0.08) !important;
+}
+
+html[data-theme="dark"] .login-calm-primary-button {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="dark"] .login-calm-primary-button:hover {
+  background: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .login-calm-google-button {
+  background: transparent !important;
+  border-color: rgb(255 255 255 / 0.08) !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .login-calm-google-button:hover {
+  background: rgb(255 255 255 / 0.04) !important;
+  border-color: rgb(255 255 255 / 0.2) !important;
+}
+
+/* Autofill Overrides */
+.login-calm-field input:-webkit-autofill,
+.login-calm-field input:-webkit-autofill:hover, 
+.login-calm-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #242424 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #fbfaf7 inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+html[data-theme="dark"] .login-calm-field input:-webkit-autofill,
+html[data-theme="dark"] .login-calm-field input:-webkit-autofill:hover, 
+html[data-theme="dark"] .login-calm-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f8fafc !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0d121a inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* --- Calm Login Page Visual Banner Styles --- */
+.login-calm-visual-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: clamp(20rem, 40vw, 36rem);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 20px 48px rgba(75, 54, 26, 0.06);
+}
+
+.login-calm-visual-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.login-calm-visual-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13, 18, 26, 0.05) 0%, rgba(13, 18, 26, 0.4) 60%, rgba(13, 18, 26, 0.65) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 3rem 2.8rem;
+  z-index: 2;
+}
+
+html[data-theme="dark"] .login-calm-visual-overlay {
+  background: linear-gradient(180deg, rgba(9, 13, 19, 0.1) 0%, rgba(9, 13, 19, 0.5) 60%, rgba(9, 13, 19, 0.8) 100%) !important;
+}
+
+.login-calm-visual-overlay .login-calm-kicker {
+  color: #a7f3d0 !important;
+  margin: 0 0 0.8rem !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.22em !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+.login-calm-visual-overlay h1 {
+  color: #ffffff !important;
+  font-family: "Newsreader", "Instrument Serif", Georgia, serif !important;
+  font-size: clamp(2.4rem, 4vw, 3.8rem) !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1.05 !important;
+  margin: 0 !important;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
 @media (max-width: 980px) {
   .login-calm-page {
     overflow: auto;
   }
 
   .login-calm-nav {
-    padding: 2rem 1.5rem 0;
+    padding: 1.2rem 1.5rem 0;
   }
 
   .login-calm-shell {
-    gap: 3rem;
+    gap: 2.2rem;
     grid-template-columns: 1fr;
     min-height: auto;
-    padding: 4rem 1.5rem 5rem;
+    padding: 1.8rem 1.5rem 5rem;
   }
 
   .login-calm-form-panel {
     margin-top: 0;
     max-width: 30rem;
+  }
+
+  .login-calm-kicker {
+    margin-bottom: 1.2rem !important;
+  }
+
+  .login-calm-visual-container {
+    min-height: 15rem;
+    height: 18rem;
+  }
+  .login-calm-visual-overlay {
+    padding: 1.8rem 1.6rem;
+  }
+  .login-calm-visual-overlay h1 {
+    font-size: 2.1rem !important;
   }
 
 }
@@ -2458,6 +2661,191 @@ html[data-theme="dark"] [data-focused-practice-layout] .border-gray-200 {
 
   .login-calm-copy p:not(.login-calm-kicker) {
     font-size: 1.05rem;
+  }
+}
+
+/* --- Login page layout polish: balanced split, stronger form rhythm --- */
+.login-auth-page {
+  min-height: 100dvh !important;
+}
+
+.login-auth-grid {
+  min-height: 100dvh;
+}
+
+.login-auth-visual {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.login-auth-visual::after {
+  background:
+    linear-gradient(90deg, rgb(2 6 23 / 0.28), transparent 42%),
+    linear-gradient(180deg, rgb(2 6 23 / 0.08), rgb(2 6 23 / 0.18));
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.login-auth-visual > * {
+  position: relative;
+  z-index: 1;
+}
+
+.login-auth-panel {
+  background:
+    radial-gradient(circle at 55% 28%, rgb(255 255 255 / 0.88), transparent 30rem),
+    linear-gradient(180deg, #fffefd 0%, #fbfaf7 100%) !important;
+  padding-inline: clamp(3rem, 6vw, 8rem) !important;
+}
+
+.login-auth-wave {
+  opacity: 0.96;
+  width: clamp(3rem, 5vw, 5.5rem) !important;
+}
+
+.login-auth-form-stack {
+  max-width: min(27rem, 100%) !important;
+  transform: translateY(-0.35rem);
+}
+
+.login-auth-form-stack > .flex:first-child {
+  margin-bottom: clamp(2rem, 4vh, 3rem) !important;
+}
+
+.login-auth-form-stack header {
+  margin-bottom: 1.85rem !important;
+}
+
+.login-auth-form-stack header h2 {
+  font-size: clamp(1.75rem, 2.4vw, 2.2rem) !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1.04 !important;
+}
+
+.login-auth-form-stack header p {
+  font-size: 0.95rem !important;
+  line-height: 1.55 !important;
+  margin-top: 0.55rem !important;
+}
+
+.login-auth-form-stack form {
+  display: grid;
+  gap: 1.05rem !important;
+}
+
+.login-auth-form-stack label {
+  margin-bottom: 0.55rem !important;
+}
+
+.login-auth-form-stack .login-calm-field {
+  background: rgb(255 255 255 / 0.78) !important;
+  border-color: rgb(15 23 42 / 0.12) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.03);
+  min-height: 3.55rem !important;
+  padding-inline: 1.05rem !important;
+}
+
+.login-auth-form-stack .login-calm-field:focus-within {
+  background: #ffffff !important;
+  border-color: rgb(234 88 12 / 0.36) !important;
+  box-shadow:
+    0 0 0 4px rgb(234 88 12 / 0.08),
+    0 8px 24px rgb(15 23 42 / 0.05);
+}
+
+.login-auth-form-stack .login-calm-field input {
+  font-size: 0.98rem !important;
+}
+
+.login-auth-form-stack form button[type="submit"],
+.login-auth-form-stack > button {
+  border-radius: 1rem !important;
+  min-height: 3.55rem !important;
+}
+
+.login-auth-form-stack form button[type="submit"] {
+  box-shadow: 0 16px 34px rgb(2 6 23 / 0.14) !important;
+  font-size: 0.95rem !important;
+  margin-top: 0.65rem !important;
+}
+
+.login-auth-form-stack .login-calm-divider {
+  margin-block: 1.9rem 1.75rem !important;
+}
+
+.login-auth-form-stack > p:last-child {
+  margin-top: 2.1rem !important;
+}
+
+html[data-theme="dark"] .login-auth-panel {
+  background:
+    radial-gradient(circle at 55% 28%, rgb(30 41 59 / 0.18), transparent 30rem),
+    linear-gradient(180deg, #0d121a 0%, #090d13 100%) !important;
+}
+
+html[data-theme="dark"] .login-auth-form-stack .login-calm-field {
+  background: rgb(15 23 42 / 0.44) !important;
+  border-color: rgb(148 163 184 / 0.16) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .login-auth-form-stack .login-calm-field:focus-within {
+  background: rgb(15 23 42 / 0.68) !important;
+  border-color: rgb(251 146 60 / 0.42) !important;
+  box-shadow: 0 0 0 4px rgb(251 146 60 / 0.08) !important;
+}
+
+@media (min-width: 1600px) {
+  .login-auth-grid {
+    grid-template-columns: minmax(0, 1.14fr) minmax(34rem, 0.86fr) !important;
+  }
+
+  .login-auth-panel {
+    padding-inline: clamp(4rem, 7vw, 9.5rem) !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  .login-auth-page {
+    overflow: auto !important;
+  }
+
+  .login-auth-grid {
+    min-height: auto;
+  }
+
+  .login-auth-visual {
+    min-height: 22rem !important;
+    padding: 3rem 2rem !important;
+  }
+
+  .login-auth-panel {
+    min-height: auto !important;
+    padding: 3.4rem 1.5rem 4rem !important;
+  }
+
+  .login-auth-form-stack {
+    max-width: min(28rem, 100%) !important;
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-auth-visual {
+    min-height: 18rem !important;
+    padding: 2.35rem 1.4rem !important;
+  }
+
+  .login-auth-visual h1 {
+    font-size: clamp(2.45rem, 11vw, 3.5rem) !important;
+  }
+
+  .login-auth-panel {
+    padding-inline: 1.2rem !important;
   }
 }
 
