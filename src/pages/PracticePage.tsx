@@ -371,14 +371,16 @@ export function PracticePage({
       onExamClick={onExamClick}
     >
       {/* Mobile Top Header */}
-      {hasQuestions && (
-        <header className="zen-mobile-header lg:hidden">
-          <button onClick={onDashboardClick} className="zen-mobile-header-back" type="button">
-            <ChevronLeft size={20} />
-          </button>
-          <span className="zen-mobile-header-title">
-            Question {safeCurrentIndex + 1} of {visibleTotal}
-          </span>
+      <header className="zen-mobile-header lg:hidden">
+        <button onClick={onDashboardClick} className="zen-mobile-header-back" type="button">
+          <ChevronLeft size={20} />
+        </button>
+        <span className="zen-mobile-header-title">
+          {hasQuestions
+            ? `Question ${safeCurrentIndex + 1} of ${visibleTotal}`
+            : practiceModeLabels[mode] || "Practice"}
+        </span>
+        {hasQuestions && (
           <div className="zen-mobile-header-actions">
             <button
               aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
@@ -396,8 +398,8 @@ export function PracticePage({
               <LayoutGrid size={18} />
             </button>
           </div>
-        </header>
-      )}
+        )}
+      </header>
 
       <div className="zen-practice-page" data-focused-practice-layout>
         <div className="zen-practice-progress" aria-hidden="true">
@@ -746,7 +748,7 @@ export function PracticePage({
               </div>
             </>
           ) : (
-            <EmptyModeState mode={mode} />
+            <EmptyModeState mode={mode} onBack={onDashboardClick} />
           )}
         </main>
       </div>

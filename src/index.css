@@ -2741,7 +2741,7 @@ html[data-theme="dark"] .login-calm-visual-overlay {
 }
 
 .login-auth-form-stack header p {
-  font-size: 0.95rem !important;
+  font-size: 1.02rem !important;
   line-height: 1.55 !important;
   margin-top: 0.55rem !important;
 }
@@ -2752,6 +2752,8 @@ html[data-theme="dark"] .login-calm-visual-overlay {
 }
 
 .login-auth-form-stack label {
+  font-size: 0.94rem !important;
+  font-weight: 700 !important;
   margin-bottom: 0.55rem !important;
 }
 
@@ -2773,7 +2775,7 @@ html[data-theme="dark"] .login-calm-visual-overlay {
 }
 
 .login-auth-form-stack .login-calm-field input {
-  font-size: 0.98rem !important;
+  font-size: 1.02rem !important;
 }
 
 .login-auth-form-stack form button[type="submit"],
@@ -2784,7 +2786,7 @@ html[data-theme="dark"] .login-calm-visual-overlay {
 
 .login-auth-form-stack form button[type="submit"] {
   box-shadow: 0 16px 34px rgb(2 6 23 / 0.14) !important;
-  font-size: 0.95rem !important;
+  font-size: 1.08rem !important;
   margin-top: 0.65rem !important;
 }
 
@@ -2792,7 +2794,12 @@ html[data-theme="dark"] .login-calm-visual-overlay {
   margin-block: 1.9rem 1.75rem !important;
 }
 
+.login-auth-form-stack form > .flex.justify-end button {
+  font-size: 0.9rem !important;
+}
+
 .login-auth-form-stack > p:last-child {
+  font-size: 0.94rem !important;
   margin-top: 2.1rem !important;
 }
 

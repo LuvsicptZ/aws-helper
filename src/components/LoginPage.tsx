@@ -246,16 +246,16 @@ export function LoginPage() {
 
 
           {/* Slogan Content (Top-left aligned) */}
-          <div className="relative z-10 max-w-xl">
-            <span className="text-[10px] font-black tracking-[0.2em] text-orange-500 uppercase block mb-3">
+          <div className="relative z-10 max-w-2xl">
+            <span className="text-[10px] lg:text-xs font-black tracking-[0.2em] lg:tracking-[0.25em] text-orange-500 uppercase block mb-3 lg:mb-4">
               Master AWS.
             </span>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-white leading-tight lg:leading-[1.08] tracking-tight lg:tracking-[-0.03em]">
               Build confidence.
               <br />
               Ace <span className="text-orange-500">the cloud.</span>
             </h1>
-            <p className="mt-4 text-sm sm:text-base font-medium text-slate-200/90 leading-relaxed">
+            <p className="mt-4 lg:mt-6 text-sm sm:text-base lg:text-lg font-medium text-slate-200/90 leading-relaxed">
               Focused practice. Smarter revision. Better results.
             </p>
           </div>
@@ -291,7 +291,7 @@ export function LoginPage() {
             
             {/* Official Brand Logo header */}
             <div className="mb-8">
-              <BrandLogo className="-ml-1 h-10 w-auto shrink-0 dark:brightness-110" />
+              <BrandLogo className="-ml-1.5 h-[52px] w-auto shrink-0 dark:brightness-110" />
             </div>
 
             {/* Headers */}
