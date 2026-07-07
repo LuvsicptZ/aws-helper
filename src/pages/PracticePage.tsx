@@ -9,7 +9,7 @@ import { questions } from "../data/questions";
 import type { ChoiceKey } from "../domain/question";
 import { gradeAnswer, stripChoicePrefix } from "../domain/question";
 import type { PracticeMode } from "../domain/practiceMode";
-import { filterQuestionsByPracticeMode } from "../domain/practiceMode";
+import { filterQuestionsByPracticeMode, practiceModeLabels } from "../domain/practiceMode";
 import type { PracticePosition } from "../domain/practiceResume";
 import { resolvePracticePosition } from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
@@ -748,7 +748,7 @@ export function PracticePage({
               </div>
             </>
           ) : (
-            <EmptyModeState mode={mode} onBack={onDashboardClick} />
+            <EmptyModeState mode={mode} />
           )}
         </main>
       </div>
