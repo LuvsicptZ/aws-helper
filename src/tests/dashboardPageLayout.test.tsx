@@ -26,7 +26,7 @@ const practiceResume: PracticeResume = {
 };
 
 describe("dashboard page layout", () => {
-  it("renders the prototype-inspired dashboard card layout", () => {
+  it("renders the minimal editorial dashboard layout", () => {
     const markup = renderToStaticMarkup(
       <DashboardPage
         onNavigate={vi.fn()}
@@ -36,22 +36,22 @@ describe("dashboard page layout", () => {
       />,
     );
 
-    expect(markup).toContain("data-dashboard-prototype");
+    expect(markup).toContain("minimal-dashboard");
     expect(markup).toContain("Question 42");
-    expect(markup).toContain("Continue Practice");
-    expect(markup).toContain("data-dashboard-resume-action");
-    expect(markup).toContain("data-dashboard-secondary-actions");
-    expect(markup).toContain("data-dashboard-progress-strip");
-    expect(markup).not.toContain("Last synced just now");
+    expect(markup).toContain("Continue where you left off");
+    expect(markup).toContain("minimal-hero-container");
+    expect(markup).toContain("minimal-progress-bar-container");
+    expect(markup).toContain("minimal-progress-thumb");
+    expect(markup).toContain("042"); // Watermark formatted with padding
+    expect(markup).not.toContain("data-dashboard-prototype");
     expect(markup).not.toContain("At a glance");
     expect(markup).not.toContain("data-dashboard-resume-card");
     expect(markup).not.toContain("Today's Plan");
     expect(markup).not.toContain("Start Mock Exam");
-    expect(markup).not.toContain("Study queue");
     expect(markup).not.toContain("Customize your plan");
   });
 
-  it("keeps review focused and removes the old dashboard footer actions", () => {
+  it("renders mock exam and review rows correctly", () => {
     const markup = renderToStaticMarkup(
       <DashboardPage
         onNavigate={vi.fn()}
@@ -61,25 +61,11 @@ describe("dashboard page layout", () => {
       />,
     );
 
-    expect(markup).toContain("Review Incorrect");
-    expect(markup).not.toContain("Review bookmarked");
-    expect(markup).not.toContain("Latest:");
+    expect(markup).toContain("Mock exam");
+    expect(markup).toContain("Review incorrect");
+    expect(markup).toContain("Review bookmarked");
+    expect(markup).toContain("65 questions · 130 minutes");
     expect(markup).not.toContain("data-dashboard-quick-modes");
     expect(markup).not.toContain("Switch practice mode");
-  });
-
-  it("renders the new Review Bookmarked card and does not render Question Map", () => {
-    const markup = renderToStaticMarkup(
-      <DashboardPage
-        onNavigate={vi.fn()}
-        onPracticeClick={vi.fn()}
-        onExamClick={vi.fn()}
-        practiceResume={practiceResume}
-      />,
-    );
-
-    expect(markup).toContain("Review Bookmarked");
-    expect(markup).not.toContain("data-dashboard-question-map");
-    expect(markup).not.toContain("Question Navigation Map");
   });
 });

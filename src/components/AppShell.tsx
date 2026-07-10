@@ -6,6 +6,8 @@ import {
   ListChecks,
   Moon,
   Sun,
+  Clock,
+  FileText,
 } from "lucide-react";
 import type { PracticeMode } from "../domain/practiceMode";
 import { AuthPanel } from "./AuthPanel";
@@ -24,7 +26,7 @@ type AppShellProps = {
   hideHeader?: boolean;
   immersiveHeader?: React.ReactNode;
   immersive?: boolean;
-  variant?: "default" | "studio";
+  variant?: "default" | "studio" | "minimal";
   mobileHeader?: React.ReactNode;
   practiceMode?: PracticeMode;
   sidebarBadges?: Partial<Record<"incorrect" | "favorite", number>>;
@@ -119,22 +121,71 @@ export function AppShell({
   const isQuestionBankActive =
     active === "practice" && practiceMode === "sequential";
   const isStudio = variant === "studio";
+  const isMinimal = variant === "minimal";
 
   return (
     <div
       className={[
         "app-shell-root flex h-screen overflow-hidden bg-[#f6f3ef] font-sans text-gray-900 antialiased",
         isStudio ? "app-shell-root--studio" : "",
+        isMinimal ? "app-shell-root--minimal" : "",
       ].join(" ")}
     >
-      {!immersive ? (
-      <aside className="app-shell-sidebar hidden h-full w-64 shrink-0 flex-col border-r border-gray-200 bg-[#f6f3ef] md:flex">
-        <div className="flex h-16 items-center px-6">
-          <BrandLogo
-            className={isStudio ? "h-12 w-auto" : "h-11 w-auto"}
-            onClick={onDashboardClick ?? (() => onNavigate?.("dashboard"))}
-          />
-        </div>
+      {isMinimal ? (
+        <aside className="app-shell-sidebar--minimal hidden h-full shrink-0 flex-col md:flex">
+          <div className="logo-container">
+            <BrandLogo
+              variant="compact"
+              onClick={onDashboardClick ?? (() => onNavigate?.("dashboard"))}
+            />
+          </div>
+          <div className="nav-stack">
+            <button
+              title="Dashboard"
+              aria-label="Dashboard"
+              type="button"
+              className={["nav-btn", active === "dashboard" ? "nav-btn--active" : ""].join(" ")}
+              onClick={onDashboardClick ?? (() => onNavigate?.("dashboard"))}
+            >
+              <Home size={20} strokeWidth={2} />
+            </button>
+            <button
+              title="Question Bank"
+              aria-label="Question Bank"
+              type="button"
+              className={["nav-btn", (active === "practice" && practiceMode === "sequential") ? "nav-btn--active" : ""].join(" ")}
+              onClick={() => onPracticeClick?.("sequential")}
+            >
+              <FileText size={20} strokeWidth={2} />
+            </button>
+            <button
+              title="Mock Exams"
+              aria-label="Mock Exams"
+              type="button"
+              className={["nav-btn", active === "exam" ? "nav-btn--active" : ""].join(" ")}
+              onClick={onExamClick}
+            >
+              <Clock size={20} strokeWidth={2} />
+            </button>
+            <button
+              title="Review Bookmarked"
+              aria-label="Review Bookmarked"
+              type="button"
+              className={["nav-btn", (active === "practice" && practiceMode === "favorite") ? "nav-btn--active" : ""].join(" ")}
+              onClick={() => onPracticeClick?.("favorite")}
+            >
+              <Bookmark size={20} strokeWidth={2} />
+            </button>
+          </div>
+        </aside>
+      ) : !immersive ? (
+        <aside className="app-shell-sidebar hidden h-full w-64 shrink-0 flex-col border-r border-gray-200 bg-[#f6f3ef] md:flex">
+          <div className="flex h-16 items-center px-6">
+            <BrandLogo
+              className={isStudio ? "h-12 w-auto" : "h-11 w-auto"}
+              onClick={onDashboardClick ?? (() => onNavigate?.("dashboard"))}
+            />
+          </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
           <div className="space-y-6">
