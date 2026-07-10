@@ -131,6 +131,9 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const isSignUp = mode === "sign-up";
+  const isEmailActionReady = Boolean(
+    supabaseClient && email.trim() && password && !isSubmitting,
+  );
 
   async function submitAuthForm() {
     if (!supabaseClient || !email.trim() || !password) return;
@@ -228,25 +231,29 @@ export function LoginPage() {
           ) : (
             <Moon aria-hidden="true" size={13} />
           )}
-          <span>Theme</span>
+          <span>{isDark ? "Light mode" : "Dark mode"}</span>
         </button>
       </div>
 
       {/* Main split grid */}
-      <div className="login-auth-grid flex-1 grid grid-cols-1 lg:grid-cols-[1.18fr_0.92fr]">
+      <div
+        data-login-shell
+        className="login-auth-grid flex-1 grid grid-cols-1 lg:grid-cols-[1.18fr_0.92fr]"
+      >
         
         {/* Left Side: Visual Backdrop */}
-        <section 
+        <section
+          data-login-visual
           className="login-auth-visual relative flex flex-col justify-between p-8 sm:p-12 lg:p-20 bg-cover bg-center min-h-[260px] sm:min-h-[320px] lg:min-h-screen"
           style={{ backgroundImage: 'url("/login_backdrop.jpg")' }}
         >
           {/* Dark scrim overlay for visual contrast */}
-          <div className="absolute inset-0 bg-slate-950/20 pointer-events-none" />
+          <div className="login-auth-scrim absolute inset-0 bg-slate-950/20 pointer-events-none" />
 
 
 
           {/* Slogan Content (Top-left aligned) */}
-          <div className="relative z-10 max-w-2xl">
+          <div data-login-promise className="relative z-10 max-w-2xl">
             <span className="text-[10px] lg:text-xs font-black tracking-[0.2em] lg:tracking-[0.25em] text-orange-500 uppercase block mb-3 lg:mb-4">
               Master AWS.
             </span>
@@ -260,20 +267,11 @@ export function LoginPage() {
             </p>
           </div>
 
-          {/* Screen reader text for tests accessibility */}
-          <div className="sr-only">
-            <h1>Sit down. Keep answering.</h1>
-            <p>
-              A quiet entry point for your AWS question session. No clutter, no noise—just you and the next question.
-            </p>
-          </div>
-
         </section>
 
         {/* Right Side: Form Panel */}
         <section 
           id="access"
-          data-login-form
           className="login-auth-panel relative flex flex-col justify-center items-center px-6 py-12 sm:px-16 lg:px-20 bg-[#fdfcfb] dark:bg-[#0d121a] lg:max-h-screen lg:overflow-y-auto min-h-0 lg:min-h-screen w-full"
         >
           {/* Soft vertical curve divider. The right panel remains white; this shape creates the visible curved left edge. */}
@@ -287,7 +285,10 @@ export function LoginPage() {
           </svg>
 
           {/* Form wrapper */}
-          <div className="login-auth-form-stack w-full max-w-[430px] relative z-10">
+          <div
+            data-login-form
+            className="login-auth-form-stack w-full max-w-[430px] relative z-10"
+          >
             
             {/* Official Brand Logo header */}
             <div className="mb-8">
@@ -297,12 +298,12 @@ export function LoginPage() {
             {/* Headers */}
             <header className="mb-8">
               <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                {isSignUp ? "Create account" : "Welcome back"}
+                {isSignUp ? "Create account" : "Ready for the next question?"}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-normal">
                 {isSignUp
                   ? "Create an account to save your practice."
-                  : "Sign in to continue your AWS journey."}
+                  : "Sign in and continue where you left off."}
               </p>
             </header>
 
@@ -365,7 +366,7 @@ export function LoginPage() {
                     type="button"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     onClick={() => setShowPassword((current) => !current)}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-2"
+                    className="ml-1 inline-flex min-h-11 min-w-11 items-center justify-center text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:hover:text-slate-200"
                   >
                     <EyeIcon hidden={showPassword} />
                   </button>
@@ -379,7 +380,7 @@ export function LoginPage() {
                     type="button"
                     onClick={() => void sendPasswordReset()}
                     disabled={isSubmitting || !supabaseClient || !email.trim()}
-                    className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 transition-colors"
+                    className="text-[11px] font-semibold text-slate-500 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:text-slate-500 dark:hover:text-slate-300"
                   >
                     Forgot password?
                   </button>
@@ -388,7 +389,9 @@ export function LoginPage() {
 
               {/* Error or success messages */}
               {status && (
-                <div 
+                <div
+                  aria-live={statusKind === "success" ? "polite" : undefined}
+                  role={statusKind === "error" ? "alert" : "status"}
                   className={`p-3 rounded-xl text-xs font-semibold border ${
                     statusKind === "error" 
                       ? "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400" 
@@ -402,8 +405,8 @@ export function LoginPage() {
               {/* Primary action button */}
               <button
                 type="submit"
-                disabled={isSubmitting || !supabaseClient}
-                className="w-full min-h-[44px] mt-2 bg-slate-950 dark:bg-white text-white dark:text-slate-950 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98] relative"
+                disabled={!isEmailActionReady}
+                className="relative mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-slate-950 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 dark:disabled:hover:bg-white"
               >
                 <span>
                   {isSubmitting
@@ -456,14 +459,6 @@ export function LoginPage() {
         </section>
       </div>
 
-      {/* Hidden test-harness elements to satisfy integration tests without affecting layout flow */}
-      <div style={{ display: 'none' }} aria-hidden="true">
-        <nav className="login-calm-nav">
-          <a href="#access" className="login-calm-nav-link">
-            Sign in
-          </a>
-        </nav>
-      </div>
     </main>
   );
 }

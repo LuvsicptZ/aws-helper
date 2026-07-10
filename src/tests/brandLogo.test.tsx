@@ -19,11 +19,16 @@ describe("brand logo", () => {
     const markup = renderToStaticMarkup(<LoginPage />);
 
     expect(markup).toContain("data-practice-gateway");
+    expect(markup).toContain("data-login-shell");
+    expect(markup).toContain("data-login-visual");
+    expect(markup).toContain("data-login-promise");
     expect(markup).toContain("data-login-form");
-    expect(markup).toContain("Welcome back");
-    expect(markup).toContain("Sit down.");
+    expect(markup).toContain("Ready for the next question?");
+    expect(markup).toContain("Sign in and continue where you left off.");
     expect(markup).toContain("AWS Mastery");
-    expect(markup).toContain("No clutter, no noise");
+    expect(markup.match(/<h1/g)).toHaveLength(1);
+    expect(markup).not.toContain("Sit down.");
+    expect(markup).not.toContain("No clutter, no noise");
     expect(markup).not.toContain("Desktop");
     expect(markup).not.toContain("Mobile");
     expect(markup).not.toContain("The interface stays quiet");
@@ -31,11 +36,11 @@ describe("brand logo", () => {
     expect(markup).not.toContain("AI study engine");
   });
 
-  it("keeps the gateway navigation minimal like the reference design", () => {
+  it("does not render hidden test-only navigation", () => {
     const markup = renderToStaticMarkup(<LoginPage />);
 
-    expect(markup).toContain("login-calm-nav");
-    expect(markup).toContain('href="#access"');
+    expect(markup).not.toContain("login-calm-nav");
+    expect(markup).not.toContain('style="display:none"');
     expect(markup).not.toContain('aria-label="AWS Mastery home"');
   });
 

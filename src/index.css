@@ -5276,10 +5276,180 @@ html[data-theme="light"] .zen-secondary-button:not(:disabled):hover {
     color: var(--dark-text-strong);
   }
 
-  html[data-theme="dark"]
+html[data-theme="dark"]
     .zen-navigator-drawer-grid
     .zen-reader-page-dot.zen-practice-navigator-dot--answered {
     background: rgb(255 255 255 / 0.055);
     color: var(--dark-text);
+  }
+}
+
+/* Login gateway refinement: compact study-first entry without changing auth flow. */
+.login-auth-page,
+.login-auth-page h1,
+.login-auth-page h2,
+.login-auth-page button,
+.login-auth-page input {
+  font-family: "Plus Jakarta Sans", Aptos, system-ui, sans-serif;
+}
+
+.login-auth-form-stack {
+  max-width: min(25rem, 100%) !important;
+}
+
+.login-auth-form-stack header h2 {
+  font-weight: 750 !important;
+}
+
+@media (min-width: 1024px) {
+  .login-auth-visual {
+    justify-content: center !important;
+  }
+}
+
+.login-auth-form-stack form > .flex.justify-end button:disabled {
+  color: #94a3b8 !important;
+  text-decoration: none;
+}
+
+html[data-theme="dark"]
+  .login-auth-form-stack
+  form
+  > .flex.justify-end
+  button:disabled {
+  color: #64748b !important;
+}
+
+@media (max-width: 640px) {
+  .login-auth-visual {
+    background-position: 52% 48% !important;
+    height: 15rem !important;
+    min-height: 15rem !important;
+    padding: 1.65rem 1.5rem 2.6rem !important;
+  }
+
+  .login-auth-visual::before {
+    background:
+      linear-gradient(
+        90deg,
+        rgb(255 250 242 / 0.94) 0%,
+        rgb(255 250 242 / 0.88) 74%,
+        rgb(255 250 242 / 0.82) 100%
+      ),
+      radial-gradient(circle at 18% 45%, rgb(255 231 198 / 0.5), transparent 15rem) !important;
+  }
+
+  .login-auth-scrim {
+    display: none !important;
+  }
+
+  .login-auth-visual span.uppercase {
+    color: #8f2f0b !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.22em !important;
+    margin-bottom: 0.72rem !important;
+  }
+
+  .login-auth-visual h1 {
+    font-size: clamp(2.05rem, 9vw, 2.35rem) !important;
+    letter-spacing: -0.045em !important;
+    line-height: 1.04 !important;
+    max-width: 19rem;
+    text-shadow: none !important;
+  }
+
+  .login-auth-visual p {
+    color: #293444 !important;
+    font-size: 0.85rem !important;
+    font-weight: 620 !important;
+    line-height: 1.45 !important;
+    margin-top: 0.78rem !important;
+    max-width: 18rem;
+    text-shadow: none !important;
+  }
+
+  .login-auth-panel {
+    border-radius: 2rem 2rem 0 0 !important;
+    margin-top: -2rem !important;
+    padding: 2.9rem 1.5rem 2.5rem !important;
+  }
+
+  .login-auth-panel::before {
+    height: 0.3rem;
+    top: 1rem;
+    width: 3.2rem;
+  }
+
+  .login-auth-form-stack > div:first-child {
+    margin-bottom: 1.35rem !important;
+  }
+
+  .login-auth-form-stack header {
+    margin-bottom: 1.35rem !important;
+  }
+
+  .login-auth-form-stack header h2 {
+    font-size: 1.62rem !important;
+    line-height: 1.08 !important;
+  }
+
+  .login-auth-form-stack header p {
+    font-size: 0.9rem !important;
+    margin-top: 0.45rem !important;
+  }
+
+  .login-auth-form-stack form {
+    gap: 1rem !important;
+  }
+
+  .login-auth-form-stack label {
+    font-size: 0.84rem !important;
+    margin-bottom: 0.48rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-field {
+    border-radius: 0.8rem !important;
+    min-height: 3.55rem !important;
+    padding-inline: 0.9rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-field > span {
+    margin-right: 0.55rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-field svg {
+    height: 1.1rem !important;
+    width: 1.1rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-field input {
+    font-size: 0.96rem !important;
+    font-weight: 550 !important;
+  }
+
+  .login-auth-form-stack form button[type="submit"],
+  .login-auth-form-stack > button {
+    border-radius: 0.85rem !important;
+    min-height: 3.55rem !important;
+  }
+
+  .login-auth-form-stack form button[type="submit"] {
+    font-size: 1rem !important;
+    margin-top: 0.3rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-divider {
+    gap: 1.25rem !important;
+    margin-block: 1.45rem 1.35rem !important;
+  }
+
+  .login-auth-form-stack .login-calm-divider em,
+  .login-auth-form-stack > button,
+  .login-auth-form-stack > p:last-child {
+    font-size: 0.9rem !important;
+  }
+
+  .login-auth-form-stack > p:last-child {
+    margin-top: 1.5rem !important;
   }
 }

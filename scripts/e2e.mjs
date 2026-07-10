@@ -30,7 +30,7 @@ async function verifyLoginPage(page, viewport) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
 
   await expectVisible(
-    page.getByRole("heading", { name: "Welcome back" }),
+    page.getByRole("heading", { name: "Ready for the next question?" }),
     "login heading",
   );
   await expectVisible(page.getByLabel("Email"), "email field");
@@ -58,7 +58,6 @@ async function verifyLoginPage(page, viewport) {
 
   if (viewport.width >= 1024) {
     const layout = await page.locator("[data-login-shell]").evaluate((shell) => {
-      const rect = shell.getBoundingClientRect();
       const leftTitle = shell
         .querySelector("[data-login-promise]")
         ?.getBoundingClientRect();
@@ -67,8 +66,7 @@ async function verifyLoginPage(page, viewport) {
         ?.getBoundingClientRect();
 
       return {
-        width: rect.width,
-        height: rect.height,
+        formWidth: form?.width ?? Number.POSITIVE_INFINITY,
         centerDelta:
           leftTitle && form
             ? Math.abs(
@@ -80,11 +78,73 @@ async function verifyLoginPage(page, viewport) {
       };
     });
 
-    expect(layout.width <= 1125, `Expected a tighter login width, got ${layout.width}`);
-    expect(layout.height <= 680, `Expected a tighter login height, got ${layout.height}`);
     expect(
-      layout.centerDelta <= 70,
+      layout.formWidth <= 400,
+      `Expected the login form to be at most 400px wide, got ${layout.formWidth}px`,
+    );
+    expect(
+      layout.centerDelta <= 80,
       `Expected the two columns to share a visual axis, delta was ${layout.centerDelta}px`,
+    );
+  }
+
+  if (viewport.width === 768) {
+    const bounds = await page.locator("[data-login-shell]").evaluate((shell) =>
+      ["[data-login-visual]", "[data-login-form]"].map((selector) => {
+        const rect = shell.querySelector(selector)?.getBoundingClientRect();
+        return {
+          selector,
+          left: rect?.left ?? Number.NEGATIVE_INFINITY,
+          right: rect?.right ?? Number.POSITIVE_INFINITY,
+        };
+      }),
+    );
+
+    for (const bound of bounds) {
+      expect(
+        bound.left >= -1 && bound.right <= 769,
+        `Expected ${bound.selector} inside the tablet viewport, got ${bound.left}-${bound.right}`,
+      );
+    }
+  }
+
+  if (viewport.width === 390) {
+    const mobileLayout = await page.locator("[data-login-shell]").evaluate((shell) => {
+      const visual = shell
+        .querySelector("[data-login-visual]")
+        ?.getBoundingClientRect();
+      const panelElement = shell.querySelector("#access");
+      const panel = panelElement?.getBoundingClientRect();
+      const email = shell.querySelector("#login-email")?.closest(".login-calm-field")
+        ?.getBoundingClientRect();
+      const panelRadius = panelElement
+        ? Number.parseFloat(getComputedStyle(panelElement).borderTopLeftRadius)
+        : Number.POSITIVE_INFINITY;
+
+      return {
+        emailBottom: email?.bottom ?? Number.POSITIVE_INFINITY,
+        heroHeight: visual?.height ?? Number.POSITIVE_INFINITY,
+        overlap:
+          visual && panel ? Math.max(0, visual.bottom - panel.top) : Number.POSITIVE_INFINITY,
+        panelRadius,
+      };
+    });
+
+    expect(
+      mobileLayout.heroHeight >= 224 && mobileLayout.heroHeight <= 256,
+      `Expected a 224-256px mobile hero, got ${mobileLayout.heroHeight}px`,
+    );
+    expect(
+      mobileLayout.overlap <= 40,
+      `Expected at most 40px mobile overlap, got ${mobileLayout.overlap}px`,
+    );
+    expect(
+      mobileLayout.panelRadius <= 32,
+      `Expected at most 32px mobile panel radius, got ${mobileLayout.panelRadius}px`,
+    );
+    expect(
+      mobileLayout.emailBottom <= viewport.height,
+      `Expected the complete email field above the fold, bottom was ${mobileLayout.emailBottom}px`,
     );
   }
 }
@@ -114,6 +174,9 @@ try {
 
   console.log("E2E login: mobile");
   await verifyLoginPage(page, { width: 390, height: 844 });
+
+  console.log("E2E login: tablet");
+  await verifyLoginPage(page, { width: 768, height: 1024 });
 
   expect(
     browserErrors.length === 0,
