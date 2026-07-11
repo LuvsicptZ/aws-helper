@@ -112,7 +112,9 @@ export function DashboardPage({
 
         {/* Minimal Header */}
         <div className="minimal-header">
-          <div />
+          <div className="minimal-title">
+            <span className="md:hidden">AWS Mastery</span>
+          </div>
           <div className="flex items-center gap-4">
             {onResetProgress && (
               <button
