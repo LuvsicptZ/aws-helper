@@ -43,14 +43,58 @@ function normalizePracticeMode(mode: PracticeMode | undefined): PracticeMode {
   return mode === "incorrect" || mode === "favorite" ? mode : "sequential";
 }
 
+function readRouteFromLocation(): {
+  page: ShellRoute;
+  practiceMode: PracticeMode;
+} {
+  if (typeof window === "undefined") {
+    return { page: "dashboard", practiceMode: "sequential" };
+  }
+
+  const practiceMode = normalizePracticeMode(
+    new URLSearchParams(window.location.search).get("mode") as
+      | PracticeMode
+      | undefined,
+  );
+
+  if (window.location.pathname === "/practice") {
+    return { page: "practice", practiceMode };
+  }
+
+  if (window.location.pathname === "/exam") {
+    return { page: "exam", practiceMode };
+  }
+
+  return { page: "dashboard", practiceMode };
+}
+
+function replaceRouteInLocation(
+  page: ShellRoute,
+  practiceMode: PracticeMode = "sequential",
+) {
+  if (typeof window === "undefined") return;
+
+  const path =
+    page === "practice"
+      ? `/practice?mode=${practiceMode}`
+      : page === "exam"
+        ? "/exam"
+        : "/";
+  window.history.replaceState(null, "", path);
+}
+
 export default function App() {
   const {
     session,
     isLoading: isAuthLoading,
     isPasswordRecovery,
   } = useAuth();
-  const [page, setPage] = useState<ShellRoute>("dashboard");
-  const [practiceMode, setPracticeMode] = useState<PracticeMode>("sequential");
+  const [page, setPage] = useState<ShellRoute>(
+    () => readRouteFromLocation().page,
+  );
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>(
+    () => readRouteFromLocation().practiceMode,
+  );
   const [examRunId, setExamRunId] = useState(0);
   const [practiceResume, setPracticeResume] = useState<PracticeResume>(() =>
     createEmptyPracticeResume(ANONYMOUS_OWNER_ID),
@@ -185,12 +229,19 @@ export default function App() {
         return nextResume;
       });
     }
+    replaceRouteInLocation("practice", nextMode);
     setPage("practice");
   }
 
   function openExam() {
     setExamRunId((currentRunId) => currentRunId + 1);
+    replaceRouteInLocation("exam");
     setPage("exam");
+  }
+
+  function navigate(page: ShellRoute) {
+    replaceRouteInLocation(page, practiceMode);
+    setPage(page);
   }
 
   const handleResetProgress = useCallback(async () => {
@@ -253,10 +304,10 @@ export default function App() {
         initialMode={practiceMode}
         resumePositions={practiceResume.positions}
         onPositionChange={savePosition}
-        onDashboardClick={() => setPage("dashboard")}
+        onDashboardClick={() => navigate("dashboard")}
         onExamClick={openExam}
         onPracticeClick={(mode, idx) => openPractice(mode ?? "sequential", idx)}
-        onNavigate={setPage}
+        onNavigate={navigate}
       />
     );
   }
@@ -266,10 +317,10 @@ export default function App() {
       <ExamPage
         key={examRunId}
         ownerId={ownerId}
-        onDashboardClick={() => setPage("dashboard")}
+        onDashboardClick={() => navigate("dashboard")}
         onPracticeClick={(mode, idx) => openPractice(mode ?? "sequential", idx)}
         onExamClick={openExam}
-        onNavigate={setPage}
+        onNavigate={navigate}
       />
     );
   }
@@ -278,7 +329,7 @@ export default function App() {
     <DashboardPage
       ownerId={ownerId}
       progressRefreshToken={progressRefreshToken}
-      onNavigate={setPage}
+      onNavigate={navigate}
       onPracticeClick={(mode, idx) => openPractice(mode ?? "sequential", idx)}
       onExamClick={openExam}
       practiceResume={practiceResume}
