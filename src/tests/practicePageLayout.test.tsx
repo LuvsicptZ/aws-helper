@@ -34,6 +34,7 @@ describe("practice page layout", () => {
     );
 
     expect(markup).toContain("zen-practice-page");
+    expect(markup).toContain("ui-product-surface");
     expect(markup).toContain("zen-practice-sidebar");
     expect(markup).toContain("zen-practice-main");
     expect(markup).toContain("zen-practice-progress");

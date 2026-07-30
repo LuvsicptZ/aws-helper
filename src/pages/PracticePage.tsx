@@ -401,7 +401,10 @@ export function PracticePage({
         )}
       </header>
 
-      <div className="zen-practice-page" data-focused-practice-layout>
+      <div
+        className="ui-product-surface zen-practice-page"
+        data-focused-practice-layout
+      >
         <div className="zen-practice-progress" aria-hidden="true">
           <span style={{ width: `${progressPercent}%` }} />
         </div>

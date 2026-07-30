@@ -37,12 +37,14 @@ describe("dashboard page layout", () => {
     );
 
     expect(markup).toContain("minimal-dashboard");
+    expect(markup).toContain("ui-product-surface");
     expect(markup).toContain("Question 42");
     expect(markup).toContain("Continue where you left off");
     expect(markup).toContain("minimal-hero-container");
     expect(markup).toContain("minimal-progress-bar-container");
     expect(markup).toContain("minimal-progress-thumb");
-    expect(markup).toContain("042"); // Watermark formatted with padding
+    expect(markup).not.toContain("minimal-watermark");
+    expect(markup).not.toContain("042");
     expect(markup).not.toContain("data-dashboard-prototype");
     expect(markup).not.toContain("At a glance");
     expect(markup).not.toContain("data-dashboard-resume-card");

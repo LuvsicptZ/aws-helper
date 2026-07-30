@@ -215,7 +215,7 @@ export function LoginPage() {
   return (
     <main
       data-practice-gateway
-      className="login-calm-page login-auth-page min-h-screen flex flex-col relative"
+      className="ui-product-surface login-calm-page login-auth-page min-h-screen flex flex-col relative"
     >
       {/* Floating Theme Switcher top bar */}
       <div className="login-auth-theme absolute top-6 right-6 z-50 flex items-center gap-3">
@@ -274,16 +274,6 @@ export function LoginPage() {
           id="access"
           className="login-auth-panel relative flex flex-col justify-center items-center px-6 py-12 sm:px-16 lg:px-20 bg-[#fdfcfb] dark:bg-[#0d121a] lg:max-h-screen lg:overflow-y-auto min-h-0 lg:min-h-screen w-full"
         >
-          {/* Soft vertical curve divider. The right panel remains white; this shape creates the visible curved left edge. */}
-          <svg
-            aria-hidden="true"
-            className="login-auth-curve absolute top-0 left-0 hidden h-full pointer-events-none lg:block"
-            viewBox="0 0 140 100"
-            preserveAspectRatio="none"
-          >
-            <path d="M140 0 C50 25 50 75 140 100 Z" />
-          </svg>
-
           {/* Form wrapper */}
           <div
             data-login-form
@@ -335,7 +325,7 @@ export function LoginPage() {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="you@example.com"
-                    className="flex-1 bg-transparent border-0 text-sm text-slate-800 dark:text-white placeholder-slate-400 outline-none w-full"
+                    className="login-calm-field-control flex-1 bg-transparent border-0 text-sm text-slate-800 dark:text-white placeholder-slate-400 outline-none w-full"
                   />
                 </div>
               </div>
@@ -360,7 +350,7 @@ export function LoginPage() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder=""
-                    className="flex-1 bg-transparent border-0 text-sm text-slate-800 dark:text-white placeholder-slate-400 outline-none w-full"
+                    className="login-calm-field-control flex-1 bg-transparent border-0 text-sm text-slate-800 dark:text-white placeholder-slate-400 outline-none w-full"
                   />
                   <button
                     type="button"

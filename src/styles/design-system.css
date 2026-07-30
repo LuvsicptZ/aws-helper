@@ -1,0 +1,380 @@
+:root {
+  --ui-bg: #f7f5f0;
+  --ui-surface: #fffdf9;
+  --ui-surface-muted: #f0ede6;
+  --ui-text: #17191c;
+  --ui-text-muted: #667085;
+  --ui-line: rgb(23 25 28 / 0.12);
+  --ui-accent: #b45309;
+  --ui-focus: #c2410c;
+  --ui-correct: #477a42;
+  --ui-incorrect: #a84f4a;
+  --ui-radius-control: 0.625rem;
+  --ui-radius-surface: 0.875rem;
+  --ui-font:
+    "Plus Jakarta Sans", Aptos, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+html[data-theme="dark"] {
+  --ui-bg: #111315;
+  --ui-surface: #181b1f;
+  --ui-surface-muted: #20242a;
+  --ui-text: #f5f7fa;
+  --ui-text-muted: #a8b0bd;
+  --ui-line: rgb(245 247 250 / 0.14);
+  --ui-accent: #f5a524;
+  --ui-focus: #f5a524;
+  --ui-correct: #8ac184;
+  --ui-incorrect: #ef8a82;
+}
+
+.ui-product-surface,
+.app-shell-root:has(.ui-product-surface) {
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+}
+
+.ui-product-surface :where(h1, h2, h3, h4, h5, h6, button, input, textarea),
+.app-shell-root:has(.ui-product-surface)
+  :where(h1, h2, h3, h4, h5, h6, button, input, textarea) {
+  font-family: var(--ui-font);
+}
+
+.ui-product-surface
+  :where(button, input, textarea, [tabindex]):focus-visible,
+.app-shell-root:has(.ui-product-surface)
+  :where(button, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 3px;
+}
+
+/* Login */
+.login-auth-page.ui-product-surface {
+  background: var(--ui-bg);
+}
+
+.login-auth-page .login-auth-panel {
+  border-left: 1px solid var(--ui-line);
+  background: var(--ui-surface) !important;
+}
+
+.login-auth-page .login-auth-scrim {
+  background: rgb(17 19 21 / 0.38);
+}
+
+.login-auth-page [data-login-promise] > span {
+  color: #f5a524 !important;
+}
+
+.login-auth-page [data-login-promise] h1,
+.login-auth-page [data-login-promise] p {
+  font-family: var(--ui-font);
+}
+
+.login-auth-page .login-calm-field {
+  border-color: var(--ui-line) !important;
+  border-radius: var(--ui-radius-control) !important;
+  background: var(--ui-surface-muted) !important;
+  box-shadow: none !important;
+}
+
+.login-auth-page .login-calm-field:focus-within {
+  border-color: var(--ui-focus) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-focus) 16%, transparent) !important;
+}
+
+.login-auth-page .login-calm-field input {
+  color: var(--ui-text) !important;
+}
+
+.login-auth-page .login-calm-field-control:focus-visible {
+  outline: none;
+}
+
+.login-auth-page [data-login-form] button[type="submit"] {
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-text);
+  color: var(--ui-surface);
+  box-shadow: none;
+}
+
+.login-auth-page [data-login-form] > button {
+  border-color: var(--ui-line) !important;
+  border-radius: var(--ui-radius-control) !important;
+  background: transparent !important;
+  color: var(--ui-text) !important;
+}
+
+.login-auth-page [data-login-form] > button:hover {
+  background: var(--ui-surface-muted) !important;
+}
+
+.login-auth-page .login-calm-divider span {
+  background: var(--ui-line) !important;
+}
+
+.login-auth-page .login-auth-theme button {
+  border-color: var(--ui-line) !important;
+  border-radius: var(--ui-radius-control) !important;
+  background: color-mix(in srgb, var(--ui-surface) 88%, transparent) !important;
+  color: var(--ui-text-muted) !important;
+  box-shadow: none !important;
+}
+
+/* Dashboard */
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface),
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-content,
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-main {
+  background: var(--ui-bg) !important;
+  color: var(--ui-text);
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-sidebar {
+  border-color: var(--ui-line) !important;
+  background: var(--ui-surface-muted) !important;
+  box-shadow: none !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-button--studio {
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-text-muted);
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-button--studio:hover {
+  background: color-mix(in srgb, var(--ui-surface) 72%, transparent) !important;
+  color: var(--ui-text) !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-button--active {
+  background: var(--ui-surface) !important;
+  box-shadow: inset 3px 0 0 var(--ui-accent) !important;
+  color: var(--ui-text) !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-button--active
+  .app-shell-nav-icon {
+  color: var(--ui-accent) !important;
+}
+
+.minimal-dashboard.ui-product-surface {
+  --minimal-bg: var(--ui-bg);
+  --minimal-bg-dark: var(--ui-bg);
+  --minimal-text: var(--ui-text);
+  --minimal-text-dark: var(--ui-text);
+  --minimal-text-muted: var(--ui-text-muted);
+  --minimal-text-muted-dark: var(--ui-text-muted);
+  --minimal-border: var(--ui-line);
+  --minimal-border-dark: var(--ui-line);
+}
+
+.minimal-dashboard .minimal-hero-container {
+  grid-template-columns: minmax(0, 42rem);
+}
+
+.minimal-dashboard .minimal-hero-title {
+  font-family: var(--ui-font);
+  font-size: clamp(2.75rem, 6vw, 3.5rem);
+}
+
+.minimal-dashboard .minimal-progress-fill,
+.minimal-dashboard .minimal-progress-thumb {
+  background: var(--ui-accent);
+}
+
+.minimal-dashboard .minimal-btn-primary {
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-text);
+  color: var(--ui-surface);
+}
+
+.minimal-dashboard .minimal-btn-primary:hover {
+  background: color-mix(in srgb, var(--ui-text) 86%, var(--ui-bg));
+}
+
+.minimal-dashboard .minimal-btn-secondary {
+  color: var(--ui-text);
+}
+
+.minimal-dashboard .minimal-btn-secondary:hover {
+  color: var(--ui-accent);
+}
+
+.minimal-dashboard .minimal-list-section,
+.minimal-dashboard .minimal-list-row {
+  border-color: var(--ui-line);
+}
+
+.minimal-dashboard .minimal-list-row:hover {
+  background: color-mix(in srgb, var(--ui-surface) 58%, transparent);
+}
+
+.minimal-dashboard .minimal-row-action {
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-text);
+}
+
+/* Practice */
+html[data-theme] .app-shell-root:has(.zen-practice-page.ui-product-surface),
+html[data-theme]
+  .app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .app-shell-content,
+html[data-theme]
+  .app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .app-shell-main,
+html[data-theme] .zen-practice-page.ui-product-surface {
+  background: var(--ui-bg) !important;
+  color: var(--ui-text);
+}
+
+.app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .zen-practice-sidebar {
+  border-color: var(--ui-line) !important;
+  background: var(--ui-surface-muted) !important;
+}
+
+.app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .zen-reader-nav-item {
+  border-radius: var(--ui-radius-control);
+  color: var(--ui-text-muted);
+}
+
+.app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .zen-reader-nav-item:hover {
+  background: color-mix(in srgb, var(--ui-surface) 72%, transparent);
+  color: var(--ui-text);
+}
+
+.app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .zen-reader-nav-item--active {
+  background: var(--ui-surface) !important;
+  box-shadow: inset 3px 0 0 var(--ui-accent);
+  color: var(--ui-text) !important;
+}
+
+.app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .zen-reader-nav-item--active
+  .zen-reader-nav-icon {
+  color: var(--ui-accent) !important;
+}
+
+.zen-practice-page.ui-product-surface .zen-practice-progress {
+  background: var(--ui-line) !important;
+}
+
+.zen-practice-page.ui-product-surface .zen-practice-progress span {
+  background: var(--ui-accent);
+}
+
+.zen-practice-page.ui-product-surface .zen-practice-breadcrumb,
+.zen-practice-page.ui-product-surface .zen-practice-breadcrumb button {
+  color: var(--ui-text-muted);
+}
+
+.zen-practice-page.ui-product-surface .zen-practice-breadcrumb strong {
+  color: var(--ui-text);
+}
+
+.zen-practice-page.ui-product-surface .zen-question-block h1 {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: clamp(1.125rem, 1.5vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+.zen-practice-page.ui-product-surface .zen-option {
+  border-color: var(--ui-line) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  background: var(--ui-surface);
+  box-shadow: none;
+}
+
+.zen-practice-page.ui-product-surface .zen-option:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--ui-accent) 45%, var(--ui-line)) !important;
+  background: var(--ui-surface) !important;
+  box-shadow: 0 6px 18px rgb(23 25 28 / 0.06);
+}
+
+.zen-practice-page.ui-product-surface .zen-option-copy,
+.zen-practice-page.ui-product-surface .zen-explanation {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.zen-practice-page.ui-product-surface .zen-option--selected {
+  border-color: var(--ui-accent) !important;
+  background: color-mix(in srgb, var(--ui-accent) 8%, var(--ui-surface)) !important;
+}
+
+.zen-practice-page.ui-product-surface .zen-option--selected .zen-option-marker {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent);
+}
+
+.zen-practice-page.ui-product-surface .zen-option--correct,
+.zen-practice-page.ui-product-surface .zen-explanation--correct {
+  border-color: var(--ui-correct) !important;
+  border-left-color: var(--ui-correct) !important;
+  background: color-mix(in srgb, var(--ui-correct) 10%, var(--ui-surface)) !important;
+}
+
+.zen-practice-page.ui-product-surface .zen-option--incorrect,
+.zen-practice-page.ui-product-surface .zen-explanation--incorrect {
+  border-color: var(--ui-incorrect) !important;
+  border-left-color: var(--ui-incorrect) !important;
+  background: color-mix(in srgb, var(--ui-incorrect) 10%, var(--ui-surface)) !important;
+}
+
+.zen-practice-page.ui-product-surface .zen-practice-notes-textarea {
+  border-color: var(--ui-line);
+  border-radius: var(--ui-radius-surface);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+}
+
+.zen-practice-page.ui-product-surface
+  :where(.zen-next-button, .zen-secondary-button) {
+  border-radius: var(--ui-radius-control) !important;
+}
+
+.app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .zen-mobile-header {
+  border-color: var(--ui-line) !important;
+  background: color-mix(in srgb, var(--ui-bg) 92%, transparent) !important;
+  box-shadow: none;
+}
+
+.app-shell-root:has(.zen-practice-page.ui-product-surface)
+  :where(.zen-mobile-header-back, .zen-mobile-header-action) {
+  border-color: var(--ui-line);
+  background: var(--ui-surface);
+  color: var(--ui-text-muted) !important;
+}
+
+.app-shell-root:has(.zen-practice-page.ui-product-surface)
+  .zen-navigator-drawer {
+  border-color: var(--ui-line);
+  background: var(--ui-surface) !important;
+}
+
+@media (max-width: 767px) {
+  .zen-practice-page.ui-product-surface .zen-question-block h1 {
+    font-size: 1.125rem !important;
+    line-height: 1.6 !important;
+  }
+
+  .zen-practice-page.ui-product-surface .zen-option {
+    border-radius: var(--ui-radius-surface) !important;
+    background: var(--ui-surface) !important;
+  }
+}

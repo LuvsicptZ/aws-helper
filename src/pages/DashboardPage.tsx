@@ -83,9 +83,6 @@ export function DashboardPage({
 
 
 
-  const questionIdNum = resumePosition.questionId || 1;
-  const watermarkStr = String(questionIdNum).padStart(3, "0");
-
   return (
     <AppShell
       active="dashboard"
@@ -100,7 +97,7 @@ export function DashboardPage({
       }}
       variant="studio"
     >
-      <div className="minimal-dashboard">
+      <div className="ui-product-surface minimal-dashboard">
         {showAnonymousProgressPrompt &&
         onMergeAnonymousProgress &&
         onKeepAnonymousProgressSeparate ? (
@@ -203,10 +200,6 @@ export function DashboardPage({
             </div>
           </div>
 
-          {/* Watermark Background Number */}
-          <div className="minimal-watermark">
-            {watermarkStr}
-          </div>
         </div>
 
         {/* Mock Exam & Review List */}

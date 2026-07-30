@@ -153,6 +153,15 @@ describe("login page", () => {
   it("labels the theme action and provides a full-size password control", () => {
     render(<LoginPage />);
 
+    expect(document.querySelector("[data-practice-gateway]")).toHaveClass(
+      "ui-product-surface",
+    );
+    expect(screen.getByLabelText("Email")).toHaveClass(
+      "login-calm-field-control",
+    );
+    expect(screen.getByLabelText("Password")).toHaveClass(
+      "login-calm-field-control",
+    );
     const theme = screen.getByRole("button", { name: "Switch to dark theme" });
     expect(theme).toHaveTextContent("Dark mode");
     const passwordToggle = screen.getByRole("button", { name: "Show password" });
