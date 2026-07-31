@@ -378,3 +378,40 @@ html[data-theme] .zen-practice-page.ui-product-surface {
     background: var(--ui-surface) !important;
   }
 }
+
+@media (max-width: 639px) {
+  .minimal-dashboard .minimal-attempt-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem 1rem;
+  }
+
+  .minimal-dashboard .minimal-attempt-summary,
+  .minimal-dashboard .minimal-attempt-result {
+    min-width: 0;
+  }
+
+  .minimal-dashboard .minimal-attempt-summary {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .minimal-dashboard .minimal-attempt-summary .minimal-row-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .minimal-dashboard .minimal-attempt-result {
+    grid-column: 1;
+    grid-row: 2;
+    text-align: left;
+  }
+
+  .minimal-dashboard .minimal-attempt-action {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

@@ -292,9 +292,9 @@ export function DashboardPage({
                 return (
                   <div 
                     key={sess.id} 
-                    className="minimal-list-row"
+                    className="minimal-list-row minimal-attempt-row"
                   >
-                    <div className="minimal-row-info flex-1">
+                    <div className="minimal-row-info minimal-attempt-summary flex-1">
                       <span className="minimal-row-title text-sm font-semibold">
                         Mock Exam Simulator
                       </span>
@@ -303,27 +303,23 @@ export function DashboardPage({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <div className="text-right hidden sm:block">
-                        <span className={`text-sm block ${scoreColorClass}`}>
-                          {scoreText}
-                        </span>
-                        <span className="text-[10px] text-gray-400 dark:text-slate-500 block">
-                          {status}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={onExamClick}
-                        className="minimal-row-action"
-                      >
-                        <span className={`sm:hidden mr-1 text-xs ${scoreColorClass}`}>
-                          {scoreText}
-                        </span>
-                        <span>Open</span>
-                        <ArrowRight size={14} />
-                      </button>
+                    <div className="minimal-attempt-result text-right">
+                      <span className={`text-sm block ${scoreColorClass}`}>
+                        {scoreText}
+                      </span>
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 block">
+                        {status}
+                      </span>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={onExamClick}
+                      className="minimal-row-action minimal-attempt-action"
+                    >
+                      <span>Open</span>
+                      <ArrowRight size={14} />
+                    </button>
                   </div>
                 );
               })}
