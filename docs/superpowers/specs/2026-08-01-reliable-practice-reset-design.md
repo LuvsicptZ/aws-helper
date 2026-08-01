@@ -15,41 +15,44 @@ Reset does not delete exam sessions. No visual redesign is included.
 
 ## Chosen Approach
 
-Use a server-authored reset generation represented by a timestamp. A new `practice_progress_state` row stores the latest `reset_at` for each user. An authenticated PostgreSQL function performs the reset atomically: it advances `reset_at`, deletes `question_progress`, and deletes `practice_resume` in one transaction.
+Use a server-authored, monotonically increasing integer generation. A new `practice_progress_state` row stores the current `generation` for each user. Every cloud `question_progress` and `practice_resume` row carries the generation in which it was written. An authenticated PostgreSQL function performs the reset atomically: it increments the generation, deletes `question_progress`, and deletes `practice_resume` in one transaction.
 
-Each browser stores the newest reset marker it has applied. Before authenticated practice synchronization, it compares the cloud marker with its local marker. A newer cloud marker causes that browser to clear all local practice progress and replace its practice resume with an empty resume before normal merge synchronization runs. Clearing all local practice state, rather than comparing client timestamps, avoids clock-skew errors and guarantees that an old offline browser cannot resurrect pre-reset data.
+Each browser stores the newest generation it has applied. Before authenticated practice synchronization, it compares the cloud generation with its local generation. A newer cloud generation causes that browser to clear all local practice progress and replace its practice resume with an empty resume before normal merge synchronization runs. Clearing all local practice state avoids clock-skew errors.
+
+Database RLS requires every inserted or updated practice row to carry the user’s current generation. Therefore, a stale tab or device that fetched generation 3 before a reset advances it to 4 cannot upsert generation-3 rows after the reset; the database rejects them even if the client-side queues are independent.
 
 ## Database Design
 
 Add `public.practice_progress_state`:
 
 - `user_id uuid primary key references auth.users(id) on delete cascade`
-- `reset_at timestamptz not null`
+- `generation bigint not null default 0 check (generation >= 0)`
 
-Enable RLS. Authenticated users may select, insert, and update only their own row. Direct deletion is unnecessary.
+Enable RLS. Authenticated users may select only their own row. Explicitly revoke direct insert, update, and delete privileges from `anon` and `authenticated`; the reset RPC is the sole mutation path.
+
+Add `reset_generation bigint not null default 0` to both `question_progress` and `practice_resume`. Their insert and update RLS checks require `reset_generation` to equal the caller’s current generation, treating a missing state row as generation 0. Existing rows migrate safely with generation 0.
 
 Add `public.reset_practice_progress()`:
 
 1. Reject unauthenticated callers.
-2. Generate the reset timestamp on the database server.
-3. Upsert the caller’s `practice_progress_state` row.
-4. Delete the caller’s `question_progress` rows.
-5. Delete the caller’s `practice_resume` row.
-6. Return the reset timestamp.
+2. Atomically insert generation 1 or increment the existing generation and return it. The conflict update derives the new value from the locked current row, so concurrent resets cannot move the generation backwards or reuse a generation.
+3. Delete the caller’s `question_progress` rows.
+4. Delete the caller’s `practice_resume` row.
+5. Return the new generation.
 
-The function uses invoker rights, an explicit empty search path, and is executable only by the `authenticated` role. The existing question-progress and practice-resume DELETE policies remain in place so the invoker-rights function can delete those rows.
+The function uses definer rights with an explicit empty search path, derives the target user only from `auth.uid()`, and is executable only by the `authenticated` role. Execution is revoked from `public` and `anon`. Its owner is the only role allowed to mutate the generation table. Existing client DELETE policies may remain, but the application reset path uses only the RPC.
 
 Both the canonical schema and an incremental migration will contain the new database objects.
 
 ## Local Persistence
 
-Upgrade the Dexie database with an owner-keyed `practiceProgressState` table containing `ownerId` and `resetAt`.
+Upgrade the Dexie database with an owner-keyed `practiceProgressState` table containing `ownerId` and `generation`.
 
 Repository operations will:
 
-- read the locally applied reset marker;
-- save a newer marker;
-- atomically clear owner-scoped question progress, replace the owner’s practice resume, and record the applied marker.
+- read the locally applied generation, defaulting to 0;
+- save a newer generation;
+- atomically clear owner-scoped question progress, replace the owner’s practice resume with `createEmptyPracticeResume(ownerId)`, and record the applied generation.
 
 Exam-session tables are not touched.
 
@@ -59,15 +62,17 @@ Introduce one owner-scoped practice-operation queue shared by initial synchroniz
 
 Before a queued authenticated practice sync:
 
-1. Fetch the remote reset marker.
-2. Compare it with the locally applied marker.
-3. If it is newer, atomically clear local practice progress, install an empty resume, and record the marker.
-4. Continue with the existing resume and question-progress merge.
+1. Fetch the remote generation, defaulting to 0 when no state row exists.
+2. Compare it numerically with the locally applied generation.
+3. If it is newer, atomically clear local practice progress, install an empty resume, and record the generation.
+4. Continue with the existing resume and question-progress merge, tagging every remote write with the fetched generation.
+
+If a queued sync write is rejected because its generation became stale, it does not retry the stale payload. A later normal sync fetches the newer generation, clears stale local practice data, and proceeds from the new empty generation.
 
 Reset runs through the same queue:
 
 1. Call the atomic Supabase RPC and check its returned error.
-2. Only after RPC success, clear local practice data and record the returned marker atomically.
+2. Only after RPC success, clear local practice data and record the returned generation atomically.
 3. Update React state and refresh the dashboard.
 
 If the RPC fails, local state remains unchanged and the user receives an error message. This prevents a local-only reset from being undone by the next cloud sync.
@@ -83,7 +88,7 @@ After saving a completed authenticated exam locally, the exam page will trigger 
 ## Error Handling
 
 - Every Supabase query or RPC used by reset must inspect the returned `error` value.
-- Failed remote reset leaves both local practice data and the local reset marker unchanged.
+- Failed remote reset leaves both local practice data and the local generation unchanged.
 - Background progress and exam sync failures preserve local data and remain retryable.
 - Invalid or missing reset RPC data is treated as reset failure.
 
@@ -91,12 +96,14 @@ After saving a completed authenticated exam locally, the exam page will trigger 
 
 Add tests that prove:
 
-- the schema and migration define the reset-state table, RLS, restricted RPC, and existing DELETE policies;
-- applying a newer remote marker clears only local question progress and practice resume, preserving exam sessions;
-- an equal or older marker does not clear current local practice data;
+- the schema and migration define generation columns, reset-state RLS, a restricted RPC, and generation checks on practice writes;
+- applying a newer remote generation clears only local question progress and practice resume, preserving exam sessions;
+- an equal or older generation does not clear current local practice data;
+- a stale-generation cloud write is rejected after reset;
+- concurrent reset calls produce strictly increasing generations;
 - owner-scoped queued operations execute sequentially;
 - reset failure does not clear local data;
-- successful reset records the server marker and leaves an empty practice resume;
+- successful reset records the server generation and leaves an empty practice resume;
 - dashboard exam scores use percentage semantics;
 - completed authenticated exams request background synchronization.
 
