@@ -13,12 +13,18 @@ export type StoredExamSession = ExamSession & {
   ownerId: string;
 };
 
+export type StoredPracticeProgressState = {
+  ownerId: string;
+  generation: number;
+};
+
 export class TrainerDatabase extends Dexie {
   progress!: Table<QuestionProgress, number>;
   ownerProgress!: Table<StoredQuestionProgress, string>;
   examSessions!: Table<ExamSession, string>;
   ownerExamSessions!: Table<StoredExamSession, string>;
   practiceResume!: Table<PracticeResume, string>;
+  practiceProgressState!: Table<StoredPracticeProgressState, string>;
 
   constructor() {
     super("saa-c03-trainer");
@@ -78,6 +84,16 @@ export class TrainerDatabase extends Dexie {
           })),
         );
       });
+
+    this.version(5).stores({
+      progress: "questionId, updatedAt, syncedAt, lastResult, bookmarked",
+      ownerProgress:
+        "key, ownerId, questionId, updatedAt, syncedAt, lastResult, bookmarked",
+      examSessions: "id, startedAt, submittedAt",
+      ownerExamSessions: "key, ownerId, id, startedAt, submittedAt",
+      practiceResume: "ownerId",
+      practiceProgressState: "ownerId",
+    });
   }
 }
 

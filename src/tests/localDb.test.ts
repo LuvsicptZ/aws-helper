@@ -16,12 +16,26 @@ import {
   saveExamSession,
 } from "../db/examRepository";
 import type { ExamSession } from "../domain/exam";
+import {
+  createEmptyPracticeResume,
+  updatePracticePosition,
+} from "../domain/practiceResume";
+import {
+  applyLocalPracticeReset,
+  getAppliedPracticeGeneration,
+} from "../db/practiceProgressStateRepository";
+import {
+  getPracticeResume,
+  savePracticeResume,
+} from "../db/practiceResumeRepository";
 
 beforeEach(async () => {
   await db.progress.clear();
   await db.ownerProgress.clear();
   await db.examSessions.clear();
   await db.ownerExamSessions.clear();
+  await db.practiceResume.clear();
+  await db.practiceProgressState.clear();
 });
 
 describe("progressRepository", () => {
@@ -170,5 +184,50 @@ describe("examRepository", () => {
 
     await expect(getAllExamSessions("user-2")).resolves.toEqual([]);
     await expect(getAllExamSessions("user-1")).resolves.toHaveLength(1);
+  });
+});
+
+describe("practice progress reset state", () => {
+  it("atomically clears one owner's practice data and preserves exams", async () => {
+    await saveProgress(createEmptyProgress(1), "user-1");
+    await saveProgress(createEmptyProgress(2), "user-2");
+    await savePracticeResume(
+      updatePracticePosition(
+        createEmptyPracticeResume("user-1"),
+        "sequential",
+        { questionId: 12, index: 11 },
+      ),
+    );
+    await saveExamSession(
+      {
+        id: "kept-exam",
+        questionIds: [1],
+        startedAt: "2026-08-01T00:00:00.000Z",
+        durationSeconds: 60,
+        answers: {},
+      },
+      "user-1",
+    );
+
+    await applyLocalPracticeReset("user-1", 2);
+
+    await expect(getAppliedPracticeGeneration("user-1")).resolves.toBe(2);
+    await expect(getAllProgress("user-1")).resolves.toEqual([]);
+    await expect(getPracticeResume("user-1")).resolves.toEqual(
+      createEmptyPracticeResume("user-1"),
+    );
+    await expect(getAllExamSessions("user-1")).resolves.toHaveLength(1);
+    await expect(getAllProgress("user-2")).resolves.toHaveLength(1);
+  });
+
+  it("does not reapply an equal or older generation", async () => {
+    await applyLocalPracticeReset("user-1", 2);
+    await saveProgress(createEmptyProgress(3), "user-1");
+
+    await applyLocalPracticeReset("user-1", 2);
+    await applyLocalPracticeReset("user-1", 1);
+
+    await expect(getAllProgress("user-1")).resolves.toHaveLength(1);
+    await expect(getAppliedPracticeGeneration("user-1")).resolves.toBe(2);
   });
 });
