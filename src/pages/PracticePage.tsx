@@ -24,7 +24,7 @@ import {
   saveProgress,
 } from "../db/progressRepository";
 import { supabaseClient } from "../auth/supabaseClient";
-import { syncProgressWithSupabase } from "../sync/supabaseProgressSync";
+import { syncQuestionProgress } from "../sync/supabasePracticeCoordinator";
 import { useTheme } from "../theme/useTheme";
 
 const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D"];
@@ -116,7 +116,7 @@ export function PracticePage({
 
     void (async () => {
       try {
-        await syncProgressWithSupabase(supabaseClient, ownerId);
+        await syncQuestionProgress(supabaseClient, ownerId);
       } catch (err) {
         console.error("Background sync failed", err);
       } finally {

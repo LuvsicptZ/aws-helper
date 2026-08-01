@@ -3,6 +3,7 @@ import type { ChoiceKey } from "../domain/question";
 import type { QuestionProgress } from "../domain/progress";
 import { getAllProgress, saveProgress } from "../db/progressRepository";
 import { syncProgress, type ProgressSyncResult } from "./progressSync";
+import { parsePracticeGeneration } from "../domain/practiceGeneration";
 
 const PROGRESS_TABLE = "question_progress";
 
@@ -19,6 +20,7 @@ type RemoteProgressRow = {
   note_updated_at: string | null;
   updated_at: string;
   synced_at: string | null;
+  reset_generation: number;
 };
 
 function fromRemoteRow(row: RemoteProgressRow): QuestionProgress {
@@ -37,7 +39,11 @@ function fromRemoteRow(row: RemoteProgressRow): QuestionProgress {
   };
 }
 
-function toRemoteRow(userId: string, progress: QuestionProgress): RemoteProgressRow {
+function toRemoteRow(
+  userId: string,
+  progress: QuestionProgress,
+  generation: number,
+): RemoteProgressRow {
   return {
     user_id: userId,
     question_id: progress.questionId,
@@ -51,13 +57,16 @@ function toRemoteRow(userId: string, progress: QuestionProgress): RemoteProgress
     note_updated_at: progress.noteUpdatedAt ?? null,
     updated_at: progress.updatedAt,
     synced_at: progress.syncedAt ?? null,
+    reset_generation: generation,
   };
 }
 
 export async function syncProgressWithSupabase(
   supabaseClient: SupabaseClient,
   userId: string,
+  generationValue: number,
 ): Promise<ProgressSyncResult> {
+  const generation = parsePracticeGeneration(generationValue);
   const localProgress = await getAllProgress(userId);
   const { data, error } = await supabaseClient
     .from(PROGRESS_TABLE)
@@ -68,9 +77,10 @@ export async function syncProgressWithSupabase(
     throw error;
   }
 
-  const remoteProgress = (data ?? []).map((row) =>
-    fromRemoteRow(row as RemoteProgressRow),
-  );
+  const remoteProgress = (data ?? [])
+    .map((row) => row as RemoteProgressRow)
+    .filter((row) => row.reset_generation === generation)
+    .map(fromRemoteRow);
 
   return syncProgress({
     localProgress,
@@ -86,7 +96,9 @@ export async function syncProgressWithSupabase(
       const { error } = await supabaseClient
         .from(PROGRESS_TABLE)
         .upsert(
-          progressList.map((progress) => toRemoteRow(userId, progress)),
+          progressList.map((progress) =>
+            toRemoteRow(userId, progress, generation),
+          ),
           { onConflict: "user_id,question_id" },
         );
 

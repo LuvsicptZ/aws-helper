@@ -8,6 +8,7 @@ import {
   savePracticeResume,
 } from "../db/practiceResumeRepository";
 import { syncPracticeResume } from "./practiceResumeSync";
+import { parsePracticeGeneration } from "../domain/practiceGeneration";
 
 const PRACTICE_RESUME_TABLE = "practice_resume";
 
@@ -15,12 +16,15 @@ type RemotePracticeResumeRow = {
   user_id: string;
   last_mode: PracticeResume["lastMode"];
   positions: PracticeResume["positions"];
+  reset_generation: number;
 };
 
 export async function syncPracticeResumeWithSupabase(
   supabaseClient: SupabaseClient,
   userId: string,
+  generationValue: number,
 ): Promise<PracticeResume> {
+  const generation = parsePracticeGeneration(generationValue);
   const localResume =
     (await getPracticeResume(userId)) ?? createEmptyPracticeResume(userId);
   const { data, error } = await supabaseClient
@@ -32,7 +36,7 @@ export async function syncPracticeResumeWithSupabase(
   if (error) throw error;
 
   const remoteRow = data as RemotePracticeResumeRow | null;
-  const remoteResume = remoteRow
+  const remoteResume = remoteRow?.reset_generation === generation
     ? {
         ownerId: userId,
         lastMode: remoteRow.last_mode,
@@ -53,6 +57,7 @@ export async function syncPracticeResumeWithSupabase(
             last_mode: resume.lastMode,
             positions: resume.positions,
             updated_at: new Date().toISOString(),
+            reset_generation: generation,
           },
           { onConflict: "user_id" },
         );

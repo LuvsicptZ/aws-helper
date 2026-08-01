@@ -28,8 +28,11 @@ import {
 } from "./db/progressRepository";
 import { useAuth } from "./auth/authContext";
 import { supabaseClient } from "./auth/supabaseClient";
-import { syncPracticeResumeWithSupabase } from "./sync/supabasePracticeResumeSync";
-import { syncProgressWithSupabase } from "./sync/supabaseProgressSync";
+import {
+  syncAllPracticeData,
+  syncPracticeResumeData,
+  syncQuestionProgress,
+} from "./sync/supabasePracticeCoordinator";
 import {
   clearAllExamSessions,
   copyExamSessions,
@@ -131,14 +134,11 @@ export default function App() {
       );
 
       try {
-        const syncedResume = await syncPracticeResumeWithSupabase(
-          supabaseClient,
-          ownerId,
-        );
+        const syncedResume = await syncPracticeResumeData(supabaseClient, ownerId);
         if (!isCurrent) return;
         setPracticeResume(syncedResume);
         if (!hasAnonymous || previousDecision !== null) {
-          await syncProgressWithSupabase(supabaseClient, ownerId);
+          await syncQuestionProgress(supabaseClient, ownerId);
           await syncExamSessionsWithSupabase(supabaseClient, ownerId);
           setProgressRefreshToken((token) => token + 1);
         }
@@ -175,7 +175,7 @@ export default function App() {
     setShowAnonymousProgressPrompt(false);
     if (supabaseClient) {
       const client = supabaseClient;
-      void syncProgressWithSupabase(client, ownerId)
+      void syncQuestionProgress(client, ownerId)
         .then(() => syncExamSessionsWithSupabase(client, ownerId))
         .then(() => {
           setProgressRefreshToken((token) => token + 1);
@@ -205,9 +205,12 @@ export default function App() {
 
       if (supabaseClient) {
         try {
-          await syncProgressWithSupabase(supabaseClient, ownerId);
+          const { resume: syncedResume } = await syncAllPracticeData(
+            supabaseClient,
+            ownerId,
+          );
           await syncExamSessionsWithSupabase(supabaseClient, ownerId);
-          await syncPracticeResumeWithSupabase(supabaseClient, ownerId);
+          setPracticeResume(syncedResume);
           setProgressRefreshToken((token) => token + 1);
         } catch {
           // Local merged progress remains saved even if cloud sync is unavailable.
