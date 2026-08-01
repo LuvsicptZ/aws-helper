@@ -14,7 +14,10 @@ import type { ChoiceKey } from "../domain/question";
 import { normalizeAnswer, stripChoicePrefix } from "../domain/question";
 import { saveExamSession } from "../db/examRepository";
 import type { PracticeMode } from "../domain/practiceMode";
+import { ANONYMOUS_OWNER_ID } from "../domain/practiceResume";
 import { useTheme } from "../theme/useTheme";
+import { supabaseClient } from "../auth/supabaseClient";
+import { syncExamSessionsWithSupabase } from "../sync/supabaseExamSync";
 
 type ExamPageProps = {
   ownerId?: string;
@@ -105,6 +108,14 @@ export function ExamPage({
         answers,
         score: nextScore.scorePercent,
       }, ownerId);
+
+      if (ownerId !== ANONYMOUS_OWNER_ID && supabaseClient) {
+        void syncExamSessionsWithSupabase(supabaseClient, ownerId).catch(
+          (error) => {
+            console.error("Exam background sync failed", error);
+          },
+        );
+      }
     } finally {
       setIsSaving(false);
     }

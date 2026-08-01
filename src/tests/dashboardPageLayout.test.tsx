@@ -133,4 +133,31 @@ describe("dashboard page layout", () => {
     fireEvent.click(row);
     expect(onExamClick).toHaveBeenCalledTimes(1);
   });
+
+  it("displays a stored exam percentage without converting it again", async () => {
+    repositoryMocks.getAllExamSessions.mockResolvedValue([
+      {
+        id: "scored-exam",
+        questionIds: Array.from({ length: 65 }, (_, index) => index + 1),
+        startedAt: "2026-07-06T01:50:00.000Z",
+        submittedAt: "2026-07-06T02:10:00.000Z",
+        durationSeconds: 7800,
+        answers: {},
+        score: 80,
+      },
+    ]);
+
+    render(
+      <DashboardPage
+        onNavigate={vi.fn()}
+        onPracticeClick={vi.fn()}
+        onExamClick={vi.fn()}
+        practiceResume={practiceResume}
+      />,
+    );
+
+    expect(await screen.findByText("80%")).not.toBeNull();
+    expect(screen.queryByText(/123%/)).toBeNull();
+    expect(screen.queryByText(/80\/65/)).toBeNull();
+  });
 });

@@ -277,9 +277,9 @@ export function DashboardPage({
                 let isPassed = false;
                 
                 if (sess.submittedAt && sess.score !== undefined) {
-                  const pct = Math.round((sess.score / totalQ) * 100);
+                  const pct = Math.round(sess.score);
                   status = "Submitted";
-                  scoreText = `${pct}% (${sess.score}/${totalQ})`;
+                  scoreText = `${pct}%`;
                   isPassed = pct >= 72;
                 } else {
                   scoreText = `${answeredCount} / ${totalQ} answered`;
