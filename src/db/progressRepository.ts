@@ -1,7 +1,6 @@
 import type { QuestionProgress } from "../domain/progress";
 import { db } from "./localDb";
 import { ANONYMOUS_OWNER_ID } from "../domain/practiceResume";
-import { mergeProgressRecords } from "../sync/progressSync";
 import { createEmptyProgress } from "../domain/progress";
 import {
   parsePracticeGeneration,
@@ -118,23 +117,4 @@ export async function clearAllProgress(
 
 export async function hasProgress(ownerId: string): Promise<boolean> {
   return (await db.ownerProgress.where("ownerId").equals(ownerId).count()) > 0;
-}
-
-export async function copyProgress(
-  fromOwnerId: string,
-  toOwnerId: string,
-): Promise<void> {
-  const records = await getAllProgress(fromOwnerId);
-  const generation = await currentGeneration(toOwnerId);
-  for (const progress of records) {
-    const existing = await getProgressByQuestionId(
-      progress.questionId,
-      toOwnerId,
-    );
-    await saveProgress(
-      existing ? mergeProgressRecords(existing, progress) : progress,
-      toOwnerId,
-      generation,
-    );
-  }
 }

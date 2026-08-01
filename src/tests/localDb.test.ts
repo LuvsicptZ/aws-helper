@@ -4,7 +4,6 @@ import { createEmptyProgress } from "../domain/progress";
 import { db } from "../db/localDb";
 import {
   clearAllProgress,
-  copyProgress,
   getAllProgress,
   getProgressByQuestionId,
   saveProgress,
@@ -75,32 +74,6 @@ describe("progressRepository", () => {
     await expect(getAllProgress("user-2")).resolves.toMatchObject([
       { questionId: 2 },
     ]);
-  });
-
-  it("merges anonymous progress into an account without losing newer data", async () => {
-    await saveProgress(
-      {
-        ...createEmptyProgress(1),
-        attempts: 2,
-        updatedAt: "2026-06-24T01:00:00.000Z",
-      },
-      "anonymous",
-    );
-    await saveProgress(
-      {
-        ...createEmptyProgress(1),
-        attempts: 3,
-        updatedAt: "2026-06-24T02:00:00.000Z",
-      },
-      "user-1",
-    );
-
-    await copyProgress("anonymous", "user-1");
-
-    await expect(getProgressByQuestionId(1, "user-1")).resolves.toMatchObject({
-      attempts: 3,
-      updatedAt: "2026-06-24T02:00:00.000Z",
-    });
   });
 
   it("clears progress records", async () => {

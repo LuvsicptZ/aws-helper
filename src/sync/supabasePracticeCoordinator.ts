@@ -35,26 +35,6 @@ async function preparePracticeGeneration(
   return generation;
 }
 
-export async function syncAllPracticeData(
-  client: SupabaseClient,
-  ownerId: string,
-) {
-  return runPracticeOperation(ownerId, async () => {
-    const generation = await preparePracticeGeneration(client, ownerId);
-    const resume = await syncPracticeResumeWithSupabase(
-      client,
-      ownerId,
-      generation,
-    );
-    const progress = await syncProgressWithSupabase(
-      client,
-      ownerId,
-      generation,
-    );
-    return { generation, resume, progress };
-  });
-}
-
 export async function syncQuestionProgress(
   client: SupabaseClient,
   ownerId: string,

@@ -1,9 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  syncAllPracticeData,
-  syncQuestionProgress,
-} from "../sync/supabasePracticeCoordinator";
+import { syncQuestionProgress } from "../sync/supabasePracticeCoordinator";
 
 const mocks = vi.hoisted(() => ({
   applyLocalPracticeReset: vi.fn(),
@@ -52,15 +49,10 @@ describe("Supabase practice coordinator", () => {
     mocks.syncProgressWithSupabase.mockResolvedValue({ merged: 0 });
   });
 
-  it("applies a newer generation before syncing practice data", async () => {
-    await syncAllPracticeData(clientWithGeneration(3), "user-1");
+  it("applies a newer generation before syncing question progress", async () => {
+    await syncQuestionProgress(clientWithGeneration(3), "user-1");
 
     expect(mocks.applyLocalPracticeReset).toHaveBeenCalledWith("user-1", 3);
-    expect(mocks.syncPracticeResumeWithSupabase).toHaveBeenCalledWith(
-      expect.anything(),
-      "user-1",
-      3,
-    );
     expect(mocks.syncProgressWithSupabase).toHaveBeenCalledWith(
       expect.anything(),
       "user-1",
@@ -69,7 +61,7 @@ describe("Supabase practice coordinator", () => {
     expect(
       mocks.applyLocalPracticeReset.mock.invocationCallOrder[0],
     ).toBeLessThan(
-      mocks.syncPracticeResumeWithSupabase.mock.invocationCallOrder[0],
+      mocks.syncProgressWithSupabase.mock.invocationCallOrder[0],
     );
   });
 
