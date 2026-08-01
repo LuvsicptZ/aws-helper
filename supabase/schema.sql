@@ -39,6 +39,11 @@ create policy "Users can update their own question progress"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+create policy "Users can delete their own question progress"
+  on public.question_progress
+  for delete
+  using (auth.uid() = user_id);
+
 create table if not exists public.exam_sessions (
   user_id uuid not null references auth.users(id) on delete cascade,
   id text not null,
@@ -93,3 +98,8 @@ create policy "Users can update their own practice resume"
   for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+create policy "Users can delete their own practice resume"
+  on public.practice_resume
+  for delete
+  using (auth.uid() = user_id);
