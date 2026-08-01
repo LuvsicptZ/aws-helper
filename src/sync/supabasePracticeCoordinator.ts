@@ -73,3 +73,17 @@ export async function syncPracticeResumeData(
     return syncPracticeResumeWithSupabase(client, ownerId, generation);
   });
 }
+
+export async function resetPracticeData(
+  client: SupabaseClient,
+  ownerId: string,
+): Promise<number> {
+  return runPracticeOperation(ownerId, async () => {
+    const { data, error } = await client.rpc("reset_practice_progress");
+    if (error) throw error;
+
+    const generation = parsePracticeGeneration(data);
+    await applyLocalPracticeReset(ownerId, generation);
+    return generation;
+  });
+}

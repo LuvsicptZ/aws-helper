@@ -30,6 +30,7 @@ import { useAuth } from "./auth/authContext";
 import { supabaseClient } from "./auth/supabaseClient";
 import {
   syncAllPracticeData,
+  resetPracticeData,
   syncPracticeResumeData,
   syncQuestionProgress,
 } from "./sync/supabasePracticeCoordinator";
@@ -256,29 +257,23 @@ export default function App() {
       return;
     }
 
-    // 1. Clear local databases
-    await clearAllProgress(ownerId);
-    await deletePracticeResume(ownerId);
+    const freshResume = createEmptyPracticeResume(ownerId);
 
-    // 2. Clear remote databases if logged in
-    if (session && supabaseClient) {
-      try {
-        await supabaseClient
-          .from("question_progress")
-          .delete()
-          .eq("user_id", ownerId);
-        await supabaseClient
-          .from("practice_resume")
-          .delete()
-          .eq("user_id", ownerId);
-      } catch {
-        // Keep offline deletion even if network fails
+    try {
+      if (session && supabaseClient) {
+        await resetPracticeData(supabaseClient, ownerId);
+      } else {
+        await clearAllProgress(ownerId);
+        await deletePracticeResume(ownerId);
+        await savePracticeResume(freshResume);
       }
+    } catch {
+      window.alert(
+        "Reset failed. Your progress was not changed. Please try again.",
+      );
+      return;
     }
 
-    // 3. Reset local states
-    const freshResume = createEmptyPracticeResume(ownerId);
-    await savePracticeResume(freshResume);
     setPracticeResume(freshResume);
     setProgressRefreshToken((token) => token + 1);
   }, [ownerId, session]);
