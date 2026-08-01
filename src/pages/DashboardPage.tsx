@@ -290,8 +290,11 @@ export function DashboardPage({
                   : "text-blue-500 font-bold";
 
                 return (
-                  <div 
-                    key={sess.id} 
+                  <button
+                    key={sess.id}
+                    type="button"
+                    aria-label="Open mock exam attempt"
+                    onClick={onExamClick}
                     className="minimal-list-row minimal-attempt-row"
                   >
                     <div className="minimal-row-info minimal-attempt-summary flex-1">
@@ -307,20 +310,24 @@ export function DashboardPage({
                       <span className={`text-sm block ${scoreColorClass}`}>
                         {scoreText}
                       </span>
+                      <span
+                        className="minimal-attempt-result-separator"
+                        aria-hidden="true"
+                      >
+                        ·
+                      </span>
                       <span className="text-[10px] text-gray-400 dark:text-slate-500 block">
                         {status}
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={onExamClick}
+                    <span
                       className="minimal-row-action minimal-attempt-action"
                     >
-                      <span>Open</span>
+                      <span className="minimal-attempt-action-label">Open</span>
                       <ArrowRight size={14} />
-                    </button>
-                  </div>
+                    </span>
+                  </button>
                 );
               })}
             </div>

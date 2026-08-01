@@ -5302,8 +5302,29 @@ html[data-theme="dark"]
 }
 
 @media (min-width: 1024px) {
+  .login-auth-page {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: auto;
+    min-height: 0 !important;
+  }
+
+  .login-auth-grid {
+    height: 100%;
+    min-height: 0;
+  }
+
   .login-auth-visual {
+    height: 100%;
+    min-height: 0 !important;
     justify-content: center !important;
+  }
+
+  .login-auth-panel {
+    height: 100%;
+    min-height: 0 !important;
+    max-height: none !important;
   }
 }
 

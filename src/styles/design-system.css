@@ -216,6 +216,30 @@ html[data-theme="dark"] {
   background: color-mix(in srgb, var(--ui-surface) 58%, transparent);
 }
 
+.minimal-dashboard .minimal-attempt-row {
+  width: 100%;
+  appearance: none;
+  border: 0;
+  border-bottom: 1px solid var(--ui-line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.minimal-dashboard .minimal-attempt-row:active {
+  transform: scale(0.995);
+}
+
+.minimal-dashboard .minimal-attempt-result-separator {
+  display: none;
+}
+
+.minimal-dashboard .minimal-attempt-row:hover .minimal-attempt-action svg {
+  transform: translateX(3px);
+}
+
 .minimal-dashboard .minimal-row-action {
   border-radius: var(--ui-radius-control);
   color: var(--ui-text);
@@ -385,6 +409,7 @@ html[data-theme] .zen-practice-page.ui-product-surface {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.75rem 1rem;
+    padding-block: 1.25rem;
   }
 
   .minimal-dashboard .minimal-attempt-summary,
@@ -405,7 +430,15 @@ html[data-theme] .zen-practice-page.ui-product-surface {
   .minimal-dashboard .minimal-attempt-result {
     grid-column: 1;
     grid-row: 2;
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
     text-align: left;
+  }
+
+  .minimal-dashboard .minimal-attempt-result-separator {
+    display: inline;
+    color: var(--ui-text-muted);
   }
 
   .minimal-dashboard .minimal-attempt-action {
@@ -413,5 +446,15 @@ html[data-theme] .zen-practice-page.ui-product-surface {
     grid-row: 1 / span 2;
     min-width: 44px;
     min-height: 44px;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .minimal-dashboard .minimal-attempt-action-label {
+    display: none;
   }
 }

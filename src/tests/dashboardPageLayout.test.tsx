@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardPage } from "../pages/DashboardPage";
@@ -98,7 +98,7 @@ describe("dashboard page layout", () => {
     expect(markup).not.toContain("Switch practice mode");
   });
 
-  it("separates mobile simulator attempt content from its action", async () => {
+  it("opens a simulator attempt from one accessible row action", async () => {
     repositoryMocks.getAllExamSessions.mockResolvedValue([
       {
         id: "submitted-exam",
@@ -111,30 +111,26 @@ describe("dashboard page layout", () => {
       },
     ]);
 
+    const onExamClick = vi.fn();
+
     render(
       <DashboardPage
         onNavigate={vi.fn()}
         onPracticeClick={vi.fn()}
-        onExamClick={vi.fn()}
+        onExamClick={onExamClick}
         practiceResume={practiceResume}
       />,
     );
 
-    const title = await screen.findByText("Mock Exam Simulator");
-    const row = title.closest(".minimal-attempt-row");
-    expect(row).not.toBeNull();
+    const row = await screen.findByRole("button", {
+      name: "Open mock exam attempt",
+    });
+    expect(within(row).queryAllByRole("button")).toHaveLength(0);
+    expect(
+      row.querySelector(".minimal-attempt-action-label"),
+    ).not.toBeNull();
 
-    const attemptRow = row as HTMLElement;
-    expect(
-      attemptRow.querySelector(".minimal-attempt-summary"),
-    ).not.toBeNull();
-    expect(
-      attemptRow.querySelector(".minimal-attempt-result"),
-    ).not.toBeNull();
-    expect(
-      within(attemptRow)
-        .getByRole("button", { name: "Open" })
-        .classList.contains("minimal-attempt-action"),
-    ).toBe(true);
+    fireEvent.click(row);
+    expect(onExamClick).toHaveBeenCalledTimes(1);
   });
 });
