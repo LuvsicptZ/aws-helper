@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   applyLocalPracticeReset,
   getAppliedPracticeGeneration,
+  mergeAnonymousPracticeData,
 } from "../db/practiceProgressStateRepository";
 import { parsePracticeGeneration } from "../domain/practiceGeneration";
 import { runPracticeOperation } from "./practiceOperationQueue";
@@ -85,5 +86,26 @@ export async function resetPracticeData(
     const generation = parsePracticeGeneration(data);
     await applyLocalPracticeReset(ownerId, generation);
     return generation;
+  });
+}
+
+export async function mergeAnonymousPracticeDataWithSupabase(
+  client: SupabaseClient,
+  ownerId: string,
+) {
+  return runPracticeOperation(ownerId, async () => {
+    const generation = await preparePracticeGeneration(client, ownerId);
+    const resume = await mergeAnonymousPracticeData(ownerId, generation);
+    const syncedResume = await syncPracticeResumeWithSupabase(
+      client,
+      ownerId,
+      generation,
+    );
+    const progress = await syncProgressWithSupabase(
+      client,
+      ownerId,
+      generation,
+    );
+    return { generation, resume: syncedResume ?? resume, progress };
   });
 }

@@ -36,6 +36,7 @@ function fromRemoteRow(row: RemoteProgressRow): QuestionProgress {
     noteUpdatedAt: row.note_updated_at ?? undefined,
     updatedAt: row.updated_at,
     syncedAt: row.synced_at ?? undefined,
+    resetGeneration: row.reset_generation,
   };
 }
 
@@ -67,7 +68,7 @@ export async function syncProgressWithSupabase(
   generationValue: number,
 ): Promise<ProgressSyncResult> {
   const generation = parsePracticeGeneration(generationValue);
-  const localProgress = await getAllProgress(userId);
+  const localProgress = await getAllProgress(userId, generation);
   const { data, error } = await supabaseClient
     .from(PROGRESS_TABLE)
     .select("*")
@@ -87,7 +88,11 @@ export async function syncProgressWithSupabase(
     remoteProgress,
     saveLocalProgress: async (progressList) => {
       for (const progress of progressList) {
-        await saveProgress(progress, userId);
+        await saveProgress(
+          { ...progress, resetGeneration: generation },
+          userId,
+          generation,
+        );
       }
     },
     saveRemoteProgress: async (progressList) => {

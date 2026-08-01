@@ -12,9 +12,13 @@ export type QuestionProgress = {
   noteUpdatedAt?: string;
   updatedAt: string;
   syncedAt?: string;
+  resetGeneration?: number;
 };
 
-export function createEmptyProgress(questionId: number): QuestionProgress {
+export function createEmptyProgress(
+  questionId: number,
+  resetGeneration = 0,
+): QuestionProgress {
   return {
     questionId,
     attempts: 0,
@@ -23,6 +27,7 @@ export function createEmptyProgress(questionId: number): QuestionProgress {
     bookmarked: false,
     note: "",
     updatedAt: new Date().toISOString(),
+    resetGeneration,
   };
 }
 

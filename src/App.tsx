@@ -8,7 +8,6 @@ import { questions } from "./data/questions";
 import {
   ANONYMOUS_OWNER_ID,
   createEmptyPracticeResume,
-  mergePracticeResume,
   updatePracticePosition,
 } from "./domain/practiceResume";
 import type {
@@ -23,13 +22,12 @@ import {
 } from "./db/practiceResumeRepository";
 import {
   clearAllProgress,
-  copyProgress,
   hasProgress,
 } from "./db/progressRepository";
 import { useAuth } from "./auth/authContext";
 import { supabaseClient } from "./auth/supabaseClient";
 import {
-  syncAllPracticeData,
+  mergeAnonymousPracticeDataWithSupabase,
   resetPracticeData,
   syncPracticeResumeData,
   syncQuestionProgress,
@@ -108,6 +106,14 @@ export default function App() {
   const [progressRefreshToken, setProgressRefreshToken] = useState(0);
   const ownerId = session?.user.id ?? ANONYMOUS_OWNER_ID;
 
+  const refreshPracticeResume = useCallback(async () => {
+    const savedResume =
+      (await getPracticeResume(ownerId)) ?? createEmptyPracticeResume(ownerId);
+    setPracticeResume(savedResume);
+    setProgressRefreshToken((token) => token + 1);
+    return savedResume;
+  }, [ownerId]);
+
   useEffect(() => {
     if (isAuthLoading) return;
 
@@ -145,6 +151,12 @@ export default function App() {
         }
       } catch {
         if (!isCurrent) return;
+        const currentResume =
+          (await getPracticeResume(ownerId)) ??
+          createEmptyPracticeResume(ownerId);
+        if (!isCurrent) return;
+        setPracticeResume(currentResume);
+        setProgressRefreshToken((token) => token + 1);
       }
     })();
 
@@ -164,11 +176,16 @@ export default function App() {
           mode,
           position,
         );
-        void savePracticeResume(nextResume);
+        void savePracticeResume(
+          nextResume,
+          nextResume.resetGeneration,
+        ).catch(() => {
+          void refreshPracticeResume();
+        });
         return nextResume;
       });
     },
-    [],
+    [refreshPracticeResume],
   );
 
   function keepAnonymousProgressSeparate() {
@@ -187,35 +204,25 @@ export default function App() {
 
   function mergeAnonymousProgress() {
     void (async () => {
-      const anonymousResume = await getPracticeResume(ANONYMOUS_OWNER_ID);
-      const mergedResume = anonymousResume
-        ? mergePracticeResume(practiceResume, {
-            ...anonymousResume,
-            ownerId,
-          })
-        : practiceResume;
-      await savePracticeResume(mergedResume);
-      await copyProgress(ANONYMOUS_OWNER_ID, ownerId);
-      await copyExamSessions(ANONYMOUS_OWNER_ID, ownerId);
-      await clearAllProgress(ANONYMOUS_OWNER_ID);
-      await clearAllExamSessions(ANONYMOUS_OWNER_ID);
-      await deletePracticeResume(ANONYMOUS_OWNER_ID);
-      localStorage.setItem(`anonymous-progress-decision:${ownerId}`, "merged");
-      setPracticeResume(mergedResume);
-      setShowAnonymousProgressPrompt(false);
+      if (!supabaseClient) return;
 
-      if (supabaseClient) {
-        try {
-          const { resume: syncedResume } = await syncAllPracticeData(
-            supabaseClient,
-            ownerId,
-          );
-          await syncExamSessionsWithSupabase(supabaseClient, ownerId);
-          setPracticeResume(syncedResume);
-          setProgressRefreshToken((token) => token + 1);
-        } catch {
-          // Local merged progress remains saved even if cloud sync is unavailable.
-        }
+      try {
+        const { resume } = await mergeAnonymousPracticeDataWithSupabase(
+          supabaseClient,
+          ownerId,
+        );
+        await copyExamSessions(ANONYMOUS_OWNER_ID, ownerId);
+        await clearAllExamSessions(ANONYMOUS_OWNER_ID);
+        await syncExamSessionsWithSupabase(supabaseClient, ownerId);
+        localStorage.setItem(
+          `anonymous-progress-decision:${ownerId}`,
+          "merged",
+        );
+        setPracticeResume(resume);
+        setShowAnonymousProgressPrompt(false);
+        setProgressRefreshToken((token) => token + 1);
+      } catch {
+        await refreshPracticeResume();
       }
     })();
   }
@@ -229,7 +236,12 @@ export default function App() {
           questionId: questions[initialIndex]?.id ?? 1,
           index: initialIndex,
         });
-        void savePracticeResume(nextResume);
+        void savePracticeResume(
+          nextResume,
+          nextResume.resetGeneration,
+        ).catch(() => {
+          void refreshPracticeResume();
+        });
         return nextResume;
       });
     }
@@ -257,11 +269,14 @@ export default function App() {
       return;
     }
 
-    const freshResume = createEmptyPracticeResume(ownerId);
+    let freshResume = createEmptyPracticeResume(ownerId);
 
     try {
       if (session && supabaseClient) {
         await resetPracticeData(supabaseClient, ownerId);
+        freshResume =
+          (await getPracticeResume(ownerId)) ??
+          createEmptyPracticeResume(ownerId);
       } else {
         await clearAllProgress(ownerId);
         await deletePracticeResume(ownerId);

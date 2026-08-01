@@ -9,3 +9,10 @@ export function parsePracticeGeneration(value: unknown): number {
 
   return value;
 }
+
+export class StalePracticeGenerationError extends Error {
+  constructor() {
+    super("Stale practice generation");
+    this.name = "StalePracticeGenerationError";
+  }
+}

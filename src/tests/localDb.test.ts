@@ -23,6 +23,7 @@ import {
 import {
   applyLocalPracticeReset,
   getAppliedPracticeGeneration,
+  mergeAnonymousPracticeData,
 } from "../db/practiceProgressStateRepository";
 import {
   getPracticeResume,
@@ -214,7 +215,10 @@ describe("practice progress reset state", () => {
     await expect(getAppliedPracticeGeneration("user-1")).resolves.toBe(2);
     await expect(getAllProgress("user-1")).resolves.toEqual([]);
     await expect(getPracticeResume("user-1")).resolves.toEqual(
-      createEmptyPracticeResume("user-1"),
+      {
+        ...createEmptyPracticeResume("user-1"),
+        resetGeneration: 2,
+      },
     );
     await expect(getAllExamSessions("user-1")).resolves.toHaveLength(1);
     await expect(getAllProgress("user-2")).resolves.toHaveLength(1);
@@ -222,12 +226,72 @@ describe("practice progress reset state", () => {
 
   it("does not reapply an equal or older generation", async () => {
     await applyLocalPracticeReset("user-1", 2);
-    await saveProgress(createEmptyProgress(3), "user-1");
+    await saveProgress(createEmptyProgress(3, 2), "user-1", 2);
 
     await applyLocalPracticeReset("user-1", 2);
     await applyLocalPracticeReset("user-1", 1);
 
     await expect(getAllProgress("user-1")).resolves.toHaveLength(1);
     await expect(getAppliedPracticeGeneration("user-1")).resolves.toBe(2);
+  });
+
+  it("rejects stale progress and resume writes after reset", async () => {
+    const staleProgress = {
+      ...createEmptyProgress(4),
+      resetGeneration: 0,
+    };
+    const staleResume = {
+      ...createEmptyPracticeResume("user-1"),
+      resetGeneration: 0,
+    };
+    await applyLocalPracticeReset("user-1", 1);
+
+    await expect(saveProgress(staleProgress, "user-1", 0)).rejects.toThrow(
+      "Stale practice generation",
+    );
+    await expect(savePracticeResume(staleResume, 0)).rejects.toThrow(
+      "Stale practice generation",
+    );
+    await expect(getAllProgress("user-1")).resolves.toEqual([]);
+    await expect(getPracticeResume("user-1")).resolves.toEqual(
+      expect.objectContaining({ resetGeneration: 1 }),
+    );
+  });
+
+  it("rejects a malformed stored generation", async () => {
+    await db.practiceProgressState.put({
+      ownerId: "user-1",
+      generation: "broken" as unknown as number,
+    });
+
+    await expect(getAppliedPracticeGeneration("user-1")).rejects.toThrow(
+      "Invalid practice generation",
+    );
+  });
+
+  it("atomically merges anonymous practice data into the current generation", async () => {
+    await applyLocalPracticeReset("user-1", 2);
+    await saveProgress(createEmptyProgress(9), "anonymous", 0);
+    await savePracticeResume(
+      updatePracticePosition(
+        createEmptyPracticeResume("anonymous"),
+        "sequential",
+        { questionId: 9, index: 8 },
+      ),
+      0,
+    );
+
+    const mergedResume = await mergeAnonymousPracticeData("user-1", 2);
+
+    await expect(getAllProgress("anonymous")).resolves.toEqual([]);
+    await expect(getPracticeResume("anonymous")).resolves.toBeUndefined();
+    await expect(getAllProgress("user-1", 2)).resolves.toEqual([
+      expect.objectContaining({ questionId: 9, resetGeneration: 2 }),
+    ]);
+    expect(mergedResume).toMatchObject({
+      ownerId: "user-1",
+      resetGeneration: 2,
+      positions: { sequential: { questionId: 9 } },
+    });
   });
 });

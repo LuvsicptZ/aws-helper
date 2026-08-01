@@ -12,6 +12,7 @@ export type PracticeResume = {
   ownerId: string;
   lastMode: PracticeMode;
   positions: Record<PracticeMode, PracticePosition>;
+  resetGeneration?: number;
 };
 
 const practiceModes: PracticeMode[] = ["sequential", "incorrect", "favorite"];
@@ -23,6 +24,7 @@ export function createEmptyPracticeResume(ownerId: string): PracticeResume {
     positions: Object.fromEntries(
       practiceModes.map((mode) => [mode, { index: 0 }]),
     ) as Record<PracticeMode, PracticePosition>,
+    resetGeneration: 0,
   };
 }
 
@@ -90,5 +92,6 @@ export function mergePracticeResume(
     ownerId: local.ownerId,
     lastMode,
     positions,
+    resetGeneration: local.resetGeneration,
   };
 }

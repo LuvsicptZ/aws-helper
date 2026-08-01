@@ -8,6 +8,7 @@ import {
 const mocks = vi.hoisted(() => ({
   applyLocalPracticeReset: vi.fn(),
   getAppliedPracticeGeneration: vi.fn(),
+  mergeAnonymousPracticeData: vi.fn(),
   syncPracticeResumeWithSupabase: vi.fn(),
   syncProgressWithSupabase: vi.fn(),
 }));
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../db/practiceProgressStateRepository", () => ({
   applyLocalPracticeReset: mocks.applyLocalPracticeReset,
   getAppliedPracticeGeneration: mocks.getAppliedPracticeGeneration,
+  mergeAnonymousPracticeData: mocks.mergeAnonymousPracticeData,
 }));
 
 vi.mock("../sync/supabasePracticeResumeSync", () => ({
@@ -45,6 +47,7 @@ describe("Supabase practice coordinator", () => {
     vi.clearAllMocks();
     mocks.getAppliedPracticeGeneration.mockResolvedValue(2);
     mocks.applyLocalPracticeReset.mockResolvedValue(undefined);
+    mocks.mergeAnonymousPracticeData.mockResolvedValue({ ownerId: "user-1" });
     mocks.syncPracticeResumeWithSupabase.mockResolvedValue({ ownerId: "user-1" });
     mocks.syncProgressWithSupabase.mockResolvedValue({ merged: 0 });
   });
@@ -96,5 +99,37 @@ describe("Supabase practice coordinator", () => {
       syncQuestionProgress(clientWithGeneration(1), "user-1"),
     ).rejects.toThrow("Remote practice generation is older than local state");
     expect(mocks.syncProgressWithSupabase).not.toHaveBeenCalled();
+  });
+
+  it("prepares the generation before deleting anonymous practice data", async () => {
+    const { mergeAnonymousPracticeDataWithSupabase } = await import(
+      "../sync/supabasePracticeCoordinator"
+    );
+
+    await mergeAnonymousPracticeDataWithSupabase(
+      clientWithGeneration(3),
+      "user-1",
+    );
+
+    expect(mocks.mergeAnonymousPracticeData).toHaveBeenCalledWith("user-1", 3);
+    expect(
+      mocks.getAppliedPracticeGeneration.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      mocks.mergeAnonymousPracticeData.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("keeps anonymous data when generation preparation fails", async () => {
+    const { mergeAnonymousPracticeDataWithSupabase } = await import(
+      "../sync/supabasePracticeCoordinator"
+    );
+
+    await expect(
+      mergeAnonymousPracticeDataWithSupabase(
+        clientWithGeneration("invalid"),
+        "user-1",
+      ),
+    ).rejects.toThrow("Invalid practice generation");
+    expect(mocks.mergeAnonymousPracticeData).not.toHaveBeenCalled();
   });
 });

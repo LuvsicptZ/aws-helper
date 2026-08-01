@@ -26,7 +26,10 @@ export async function syncPracticeResumeWithSupabase(
 ): Promise<PracticeResume> {
   const generation = parsePracticeGeneration(generationValue);
   const localResume =
-    (await getPracticeResume(userId)) ?? createEmptyPracticeResume(userId);
+    (await getPracticeResume(userId, generation)) ?? {
+      ...createEmptyPracticeResume(userId),
+      resetGeneration: generation,
+    };
   const { data, error } = await supabaseClient
     .from(PRACTICE_RESUME_TABLE)
     .select("*")
@@ -41,13 +44,18 @@ export async function syncPracticeResumeWithSupabase(
         ownerId: userId,
         lastMode: remoteRow.last_mode,
         positions: remoteRow.positions,
+        resetGeneration: generation,
       }
     : undefined;
 
   return syncPracticeResume({
     localResume,
     remoteResume,
-    saveLocalResume: savePracticeResume,
+    saveLocalResume: (resume) =>
+      savePracticeResume(
+        { ...resume, resetGeneration: generation },
+        generation,
+      ),
     saveRemoteResume: async (resume) => {
       const { error: saveError } = await supabaseClient
         .from(PRACTICE_RESUME_TABLE)

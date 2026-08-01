@@ -14,15 +14,15 @@ import type { PracticePosition } from "../domain/practiceResume";
 import { resolvePracticePosition } from "../domain/practiceResume";
 import type { QuestionProgress } from "../domain/progress";
 import {
-  createEmptyProgress,
   updateProgressAfterAnswer,
   updateProgressReviewMetadata,
 } from "../domain/progress";
 import {
   getAllProgress,
-  getProgressByQuestionId,
+  getProgressForUpdate,
   saveProgress,
 } from "../db/progressRepository";
+import { StalePracticeGenerationError } from "../domain/practiceGeneration";
 import { supabaseClient } from "../auth/supabaseClient";
 import { syncQuestionProgress } from "../sync/supabasePracticeCoordinator";
 import { useTheme } from "../theme/useTheme";
@@ -212,17 +212,18 @@ export function PracticePage({
     setIsSaving(true);
 
     try {
-      const existingProgress =
-        (await getProgressByQuestionId(question.id, ownerId)) ??
-        createEmptyProgress(question.id);
+      const existingProgress = await getProgressForUpdate(question.id, ownerId);
 
       await saveProgress(
         updateProgressAfterAnswer(existingProgress, selectedAnswer, nextResult),
         ownerId,
+        existingProgress.resetGeneration,
       );
 
       setAllProgress(await getAllProgress(ownerId));
       triggerBackgroundSync();
+    } catch (error) {
+      await handlePracticeWriteError(error);
     } finally {
       setIsSaving(false);
     }
@@ -230,17 +231,22 @@ export function PracticePage({
 
   async function toggleBookmark() {
     if (!question) return;
-    const existingProgress =
-      (await getProgressByQuestionId(question.id, ownerId)) ??
-      createEmptyProgress(question.id);
+    try {
+      const existingProgress = await getProgressForUpdate(question.id, ownerId);
+      const nextProgress = updateProgressReviewMetadata(existingProgress, {
+        bookmarked: !existingProgress.bookmarked,
+      });
 
-    const nextProgress = updateProgressReviewMetadata(existingProgress, {
-      bookmarked: !existingProgress.bookmarked,
-    });
-
-    await saveProgress(nextProgress, ownerId);
-    setAllProgress(await getAllProgress(ownerId));
-    triggerBackgroundSync();
+      await saveProgress(
+        nextProgress,
+        ownerId,
+        existingProgress.resetGeneration,
+      );
+      setAllProgress(await getAllProgress(ownerId));
+      triggerBackgroundSync();
+    } catch (error) {
+      await handlePracticeWriteError(error);
+    }
   }
 
   async function saveNote(text: string) {
@@ -248,23 +254,33 @@ export function PracticePage({
     setIsNoteSaving(true);
 
     try {
-      const existingProgress =
-        (await getProgressByQuestionId(question.id, ownerId)) ??
-        createEmptyProgress(question.id);
+      const existingProgress = await getProgressForUpdate(question.id, ownerId);
 
       const nextProgress = updateProgressReviewMetadata(existingProgress, {
         note: text,
       });
 
-      await saveProgress(nextProgress, ownerId);
+      await saveProgress(
+        nextProgress,
+        ownerId,
+        existingProgress.resetGeneration,
+      );
       setAllProgress(await getAllProgress(ownerId));
       triggerBackgroundSync();
       
       setNoteSavedMessage(true);
       setTimeout(() => setNoteSavedMessage(false), 2000);
+    } catch (error) {
+      await handlePracticeWriteError(error);
     } finally {
       setIsNoteSaving(false);
     }
+  }
+
+  async function handlePracticeWriteError(error: unknown) {
+    if (!(error instanceof StalePracticeGenerationError)) throw error;
+    resetAnswerState();
+    setAllProgress(await getAllProgress(ownerId));
   }
 
   function handleAnswerChange(choice: ChoiceKey) {

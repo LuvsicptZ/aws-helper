@@ -66,6 +66,21 @@ async function readGeneration(client, userId) {
   return parseGeneration(data.generation);
 }
 
+function progressRow(userId, generation) {
+  return {
+    user_id: userId,
+    question_id: verifierQuestionId,
+    attempts: 1,
+    correct_attempts: 0,
+    last_selected: ["A"],
+    last_result: "incorrect",
+    bookmarked: false,
+    note: "reset concurrency verifier",
+    updated_at: new Date().toISOString(),
+    reset_generation: generation,
+  };
+}
+
 async function main() {
   const firstClient = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -104,28 +119,38 @@ async function main() {
     "Stored generation does not equal the latest concurrent reset",
   );
 
+  const { error: baselineWriteError } = await firstClient
+    .from("question_progress")
+    .upsert(progressRow(firstUserId, afterConcurrentResets), {
+      onConflict: "user_id,question_id",
+    });
+  if (baselineWriteError) {
+    throw new Error(
+      `A current-generation baseline write failed: ${baselineWriteError.message}`,
+    );
+  }
+  await runReset(firstClient);
+
   for (let iteration = 0; iteration < 10; iteration += 1) {
     const staleGeneration = await readGeneration(firstClient, firstUserId);
     const staleWrite = secondClient.from("question_progress").upsert(
-      {
-        user_id: firstUserId,
-        question_id: verifierQuestionId,
-        attempts: 1,
-        correct_attempts: 0,
-        last_selected: ["A"],
-        last_result: "incorrect",
-        bookmarked: false,
-        note: "reset concurrency verifier",
-        updated_at: new Date().toISOString(),
-        reset_generation: staleGeneration,
-      },
+      progressRow(firstUserId, staleGeneration),
       { onConflict: "user_id,question_id" },
     );
 
-    const [, resetGeneration] = await Promise.all([
+    const [writeResult, resetGeneration] = await Promise.all([
       staleWrite,
       runReset(firstClient),
     ]);
+    if (
+      writeResult.error &&
+      writeResult.error.code !== "40001" &&
+      !writeResult.error.message.includes("stale practice generation")
+    ) {
+      throw new Error(
+        `Unexpected stale-write failure: ${writeResult.error.message}`,
+      );
+    }
     const finalGeneration = await readGeneration(firstClient, firstUserId);
     assert(
       finalGeneration === resetGeneration,
