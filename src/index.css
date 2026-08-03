@@ -4888,6 +4888,15 @@ html[data-theme="light"] .zen-secondary-button:not(:disabled):hover {
     background: var(--study-paper) !important;
   }
 
+  .app-shell-main:has(.zen-practice-page) {
+    overscroll-behavior-y: none;
+  }
+
+  .zen-practice-page {
+    min-height: 100%;
+    overflow: visible;
+  }
+
   .dashboard-prototype {
     padding: 1.15rem 1rem 2rem !important;
   }
@@ -4983,7 +4992,7 @@ html[data-theme="light"] .zen-secondary-button:not(:disabled):hover {
     padding:
       calc(5.45rem + env(safe-area-inset-top, 0px))
       clamp(1.1rem, 4.8vw, 1.45rem)
-      calc(2rem + env(safe-area-inset-bottom, 0px)) !important;
+      calc(7.25rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .zen-question-block {
@@ -5031,13 +5040,16 @@ html[data-theme="light"] .zen-secondary-button:not(:disabled):hover {
   .zen-practice-notes-textarea {
     min-height: 7.75rem;
     border-radius: 1rem;
+    resize: none;
   }
 
   .zen-practice-actions {
-    position: sticky;
+    position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
     z-index: 8;
-    margin-inline: calc(clamp(1.1rem, 4.8vw, 1.45rem) * -1);
+    margin-inline: 0;
     padding:
       0.85rem
       clamp(1.1rem, 4.8vw, 1.45rem)
@@ -5281,6 +5293,46 @@ html[data-theme="dark"]
     .zen-reader-page-dot.zen-practice-navigator-dot--answered {
     background: rgb(255 255 255 / 0.055);
     color: var(--dark-text);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-shell-main:has(.zen-practice-page) {
+    overscroll-behavior-y: none;
+  }
+
+  .zen-practice-page {
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  .zen-practice-main {
+    padding-bottom: calc(7.25rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .zen-practice-notes-textarea {
+    resize: none;
+  }
+
+  .zen-practice-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 8;
+    margin-inline: 0;
+    padding:
+      0.85rem
+      clamp(1.1rem, 4.8vw, 1.45rem)
+      calc(0.85rem + env(safe-area-inset-bottom, 0px)) !important;
+    background:
+      linear-gradient(180deg, rgb(248 243 235 / 0), var(--study-paper) 30%, var(--study-paper));
+    backdrop-filter: blur(10px);
+  }
+
+  html[data-theme="dark"] .zen-practice-actions {
+    background:
+      linear-gradient(180deg, rgb(13 17 23 / 0), var(--dark-canvas) 34%, var(--dark-canvas));
   }
 }
 
@@ -5989,4 +6041,3 @@ html[data-theme="dark"] .minimal-row-action:hover {
     width: 100%;
   }
 }
-

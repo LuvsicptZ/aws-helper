@@ -27,7 +27,7 @@ import { supabaseClient } from "../auth/supabaseClient";
 import { syncQuestionProgress } from "../sync/supabasePracticeCoordinator";
 import { useTheme } from "../theme/useTheme";
 
-const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D"];
+const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D", "E", "F"];
 
 type PracticePageProps = {
   ownerId?: string;
@@ -84,6 +84,8 @@ export function PracticePage({
   const [noteText, setNoteText] = useState("");
   const [isNoteSaving, setIsNoteSaving] = useState(false);
   const [noteSavedMessage, setNoteSavedMessage] = useState(false);
+  const [practiceError, setPracticeError] = useState<string>();
+  const noteSaveInFlight = useRef(false);
 
   // Background Sync Refs and Callback
   const isSyncing = useRef(false);
@@ -94,6 +96,7 @@ export function PracticePage({
     typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
   );
   const explanationRef = useRef<HTMLElement>(null);
+  const practicePageRef = useRef<HTMLDivElement>(null);
 
   // Mobile matchMedia listener
   useEffect(() => {
@@ -149,6 +152,12 @@ export function PracticePage({
     answerState.questionId === question?.id
       ? answerState.result
       : currentProgress?.lastResult;
+  const requiredSelectionCount = question
+    ? Array.isArray(question.answer)
+      ? question.answer.length
+      : 1
+    : 0;
+  const hasCompleteSelection = selected.length === requiredSelectionCount;
 
   // Auto-scroll to explanation on mobile after auto-submit grading
   useEffect(() => {
@@ -176,6 +185,14 @@ export function PracticePage({
   }, [mode, onPositionChange, question, safeCurrentIndex]);
 
   useEffect(() => {
+    const scrollContainer = practicePageRef.current?.closest(".app-shell-main");
+    if (scrollContainer instanceof HTMLElement) {
+      scrollContainer.scrollTop = 0;
+    }
+    setPracticeError(undefined);
+  }, [question?.id]);
+
+  useEffect(() => {
     const savedPosition = resumePositions?.[mode];
     if (
       !savedPosition ||
@@ -201,9 +218,14 @@ export function PracticePage({
 
   async function submitAnswer(selectedAnswer: ChoiceKey[]) {
     if (!question) return;
-    if (selectedAnswer.length === 0 || result || isSaving) return;
+    if (
+      selectedAnswer.length !== requiredSelectionCount ||
+      result ||
+      isSaving
+    ) return;
 
     const nextResult = gradeAnswer(question.answer, selectedAnswer);
+    setPracticeError(undefined);
     setAnswerState({
       questionId: question.id,
       selected: selectedAnswer,
@@ -223,7 +245,11 @@ export function PracticePage({
       setAllProgress(await getAllProgress(ownerId));
       triggerBackgroundSync();
     } catch (error) {
-      await handlePracticeWriteError(error);
+      resetAnswerState();
+      await handlePracticeWriteError(
+        error,
+        "We couldn't save your answer. Please try again.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -231,6 +257,7 @@ export function PracticePage({
 
   async function toggleBookmark() {
     if (!question) return;
+    setPracticeError(undefined);
     try {
       const existingProgress = await getProgressForUpdate(question.id, ownerId);
       const nextProgress = updateProgressReviewMetadata(existingProgress, {
@@ -245,13 +272,19 @@ export function PracticePage({
       setAllProgress(await getAllProgress(ownerId));
       triggerBackgroundSync();
     } catch (error) {
-      await handlePracticeWriteError(error);
+      await handlePracticeWriteError(
+        error,
+        "We couldn't update this bookmark. Please try again.",
+      );
     }
   }
 
   async function saveNote(text: string) {
-    if (!question || isSaving) return;
+    if (!question || isSaving || noteSaveInFlight.current) return;
+    noteSaveInFlight.current = true;
     setIsNoteSaving(true);
+    setNoteSavedMessage(false);
+    setPracticeError(undefined);
 
     try {
       const existingProgress = await getProgressForUpdate(question.id, ownerId);
@@ -271,16 +304,25 @@ export function PracticePage({
       setNoteSavedMessage(true);
       setTimeout(() => setNoteSavedMessage(false), 2000);
     } catch (error) {
-      await handlePracticeWriteError(error);
+      await handlePracticeWriteError(
+        error,
+        "We couldn't save your note. Please try again.",
+      );
     } finally {
+      noteSaveInFlight.current = false;
       setIsNoteSaving(false);
     }
   }
 
-  async function handlePracticeWriteError(error: unknown) {
-    if (!(error instanceof StalePracticeGenerationError)) throw error;
-    resetAnswerState();
-    setAllProgress(await getAllProgress(ownerId));
+  async function handlePracticeWriteError(error: unknown, message: string) {
+    if (error instanceof StalePracticeGenerationError) {
+      resetAnswerState();
+      setAllProgress(await getAllProgress(ownerId));
+      return;
+    }
+
+    console.error(message, error);
+    setPracticeError(message);
   }
 
   function handleAnswerChange(choice: ChoiceKey) {
@@ -359,7 +401,7 @@ export function PracticePage({
         return;
       }
 
-      if (shortcut === "enter" && !result && selected.length > 0) {
+      if (shortcut === "enter" && !result && hasCompleteSelection) {
         event.preventDefault();
         void submitAnswer(selected);
         return;
@@ -388,7 +430,12 @@ export function PracticePage({
     >
       {/* Mobile Top Header */}
       <header className="zen-mobile-header lg:hidden">
-        <button onClick={onDashboardClick} className="zen-mobile-header-back" type="button">
+        <button
+          aria-label="Back to dashboard"
+          onClick={onDashboardClick}
+          className="zen-mobile-header-back"
+          type="button"
+        >
           <ChevronLeft size={20} />
         </button>
         <span className="zen-mobile-header-title">
@@ -407,10 +454,20 @@ export function PracticePage({
             >
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <button onClick={toggleBookmark} className="zen-mobile-header-action" type="button">
+            <button
+              aria-label={currentProgress?.bookmarked ? "Remove bookmark" : "Bookmark question"}
+              onClick={toggleBookmark}
+              className="zen-mobile-header-action"
+              type="button"
+            >
               <Bookmark size={18} className={currentProgress?.bookmarked ? "fill-amber-500 text-amber-500" : ""} />
             </button>
-            <button onClick={() => setIsDrawerOpen(true)} className="zen-mobile-header-action" type="button">
+            <button
+              aria-label="Open question navigator"
+              onClick={() => setIsDrawerOpen(true)}
+              className="zen-mobile-header-action"
+              type="button"
+            >
               <LayoutGrid size={18} />
             </button>
           </div>
@@ -418,6 +475,7 @@ export function PracticePage({
       </header>
 
       <div
+        ref={practicePageRef}
         className="ui-product-surface zen-practice-page"
         data-focused-practice-layout
       >
@@ -688,6 +746,15 @@ export function PracticePage({
                 </section>
               )}
 
+              {practiceError && (
+                <p
+                  className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                  role="alert"
+                >
+                  {practiceError}
+                </p>
+              )}
+
               {/* Study Notes */}
               <div className="mt-8 border-t border-gray-200/80 pt-6">
                 <h3 className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
@@ -710,6 +777,7 @@ export function PracticePage({
                   <button
                     type="button"
                     onClick={() => saveNote(noteText)}
+                    disabled={isNoteSaving}
                     className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-white hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
                   >
                     Save Note
@@ -729,18 +797,17 @@ export function PracticePage({
                   </button>
                 )}
 
-                {/* On mobile with single-select: skip Submit (auto-graded on tap).
-                    On desktop or multi-select: show Submit / Next as usual. */}
+                {/* Single-select answers are auto-graded on mobile, so the action
+                    remains available for moving past an unanswered question. */}
                 {(() => {
                   const isSingleSelect = !Array.isArray(question.answer);
-                  const hideSubmit = isMobile && isSingleSelect && !result;
-                  if (hideSubmit) return null;
+                  const canNavigateWithoutSubmission = isMobile && isSingleSelect;
 
                   return (
                     <button
                       className="zen-next-button ml-auto flex items-center justify-center gap-2 flex-1 md:flex-none"
                       onClick={() => {
-                        if (result) {
+                        if (result || canNavigateWithoutSubmission) {
                           if (safeCurrentIndex === visibleTotal - 1) {
                             onDashboardClick?.();
                             return;
@@ -751,10 +818,14 @@ export function PracticePage({
                         void submitAnswer(selected);
                       }}
                       type="button"
-                      disabled={!result && selected.length === 0}
+                      disabled={
+                        !result &&
+                        !canNavigateWithoutSubmission &&
+                        !hasCompleteSelection
+                      }
                     >
                       <span>
-                        {result
+                        {result || canNavigateWithoutSubmission
                           ? safeCurrentIndex === visibleTotal - 1
                             ? "Back to Dashboard"
                             : "Next Question"
@@ -778,7 +849,11 @@ export function PracticePage({
           <div className="zen-navigator-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="zen-navigator-drawer-header">
               <h3>Question Navigator</h3>
-              <button onClick={() => setIsDrawerOpen(false)} type="button">
+              <button
+                aria-label="Close question navigator"
+                onClick={() => setIsDrawerOpen(false)}
+                type="button"
+              >
                 <X size={18} />
               </button>
             </div>

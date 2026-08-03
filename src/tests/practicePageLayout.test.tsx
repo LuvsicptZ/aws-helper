@@ -1,8 +1,36 @@
+// @vitest-environment jsdom
+
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PracticePage } from "../pages/PracticePage";
+import { createEmptyProgress } from "../domain/progress";
+
+const repositoryMocks = vi.hoisted(() => ({
+  getAllProgress: vi.fn(),
+  getProgressForUpdate: vi.fn(),
+  saveProgress: vi.fn(),
+}));
+
+vi.mock("../db/progressRepository", () => repositoryMocks);
 
 describe("practice page layout", () => {
+  beforeEach(() => {
+    repositoryMocks.getAllProgress.mockResolvedValue([]);
+    repositoryMocks.getProgressForUpdate.mockResolvedValue(createEmptyProgress(1));
+    repositoryMocks.saveProgress.mockResolvedValue(undefined);
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
   it("does not duplicate practice navigation above the question content", () => {
     const markup = renderToStaticMarkup(
       <PracticePage initialMode="sequential" />,
@@ -73,5 +101,90 @@ describe("practice page layout", () => {
     expect(markup).toContain("Study Notes");
     expect(markup).toContain("zen-practice-notes-textarea");
     expect(markup).toContain("Question Navigator");
+  });
+
+  it("keeps Next Question available and resets scroll for mobile navigation", async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === "(max-width: 1023px)",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    render(<PracticePage initialMode="sequential" />);
+
+    const scrollContainer = document.querySelector(".app-shell-main");
+    expect(scrollContainer).not.toBeNull();
+    if (!(scrollContainer instanceof HTMLElement)) return;
+    scrollContainer.scrollTop = 500;
+
+    fireEvent.click(screen.getByRole("button", { name: "Next Question" }));
+
+    expect(screen.getAllByText("Question 2 of 1019").length).toBeGreaterThan(0);
+    await waitFor(() => expect(scrollContainer.scrollTop).toBe(0));
+  });
+
+  it("labels every icon-only mobile header control", () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === "(max-width: 1023px)",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    render(<PracticePage initialMode="sequential" />);
+
+    expect(screen.getByRole("button", { name: "Back to dashboard" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Bookmark question" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Open question navigator" })).not.toBeNull();
+  });
+
+  it("renders E and F choices and requires every multi-select answer", () => {
+    render(
+      <PracticePage
+        initialMode="sequential"
+        resumePositions={{
+          sequential: { index: 895 },
+          incorrect: { index: 0 },
+          favorite: { index: 0 },
+        }}
+      />,
+    );
+
+    const choices = Array.from(document.querySelectorAll(".zen-option-marker"))
+      .map((choice) => choice.textContent);
+    expect(choices).toEqual(["A", "B", "C", "D", "E"]);
+
+    const submit = screen.getByRole("button", { name: "Submit Answer" });
+    fireEvent.click(document.querySelectorAll(".zen-option")[1]);
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(document.querySelectorAll(".zen-option")[4]);
+    expect((submit as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("saves a focused note only once when Save Note is clicked", async () => {
+    render(<PracticePage initialMode="sequential" />);
+    const notes = screen.getByPlaceholderText(/Write your study notes here/);
+
+    fireEvent.focus(notes);
+    fireEvent.change(notes, { target: { value: "One save" } });
+    fireEvent.blur(notes);
+    fireEvent.click(screen.getByRole("button", { name: "Save Note" }));
+
+    await waitFor(() => expect(repositoryMocks.saveProgress).toHaveBeenCalledTimes(1));
+  });
+
+  it("removes optimistic grading and reports an answer save failure", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    repositoryMocks.saveProgress.mockRejectedValueOnce(new Error("disk full"));
+    render(<PracticePage initialMode="sequential" />);
+
+    fireEvent.click(document.querySelectorAll(".zen-option")[0]);
+
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "We couldn't save your answer. Please try again.",
+    );
+    await waitFor(() => {
+      expect(screen.queryByText(/Correct answer:/)).toBeNull();
+    });
+    consoleError.mockRestore();
   });
 });

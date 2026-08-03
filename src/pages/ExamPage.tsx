@@ -41,7 +41,7 @@ function createExamId(): string {
   return `exam-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D"];
+const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D", "E", "F"];
 
 function isCorrectChoice(answer: ChoiceKey | ChoiceKey[], choice: ChoiceKey) {
   return Array.isArray(answer) ? answer.includes(choice) : answer === choice;
