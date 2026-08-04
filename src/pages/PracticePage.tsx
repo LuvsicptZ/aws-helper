@@ -31,6 +31,7 @@ const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D", "E", "F"];
 
 type PracticePageProps = {
   ownerId?: string;
+  progressRefreshToken?: number;
   initialMode?: PracticeMode;
   resumePositions?: Record<PracticeMode, PracticePosition>;
   onPositionChange?: (
@@ -59,6 +60,7 @@ function getModeLabel(mode: PracticeMode) {
 
 export function PracticePage({
   ownerId = "anonymous",
+  progressRefreshToken,
   initialMode = "sequential",
   resumePositions,
   onPositionChange,
@@ -173,7 +175,8 @@ export function PracticePage({
 
   useEffect(() => {
     void getAllProgress(ownerId).then(setAllProgress);
-  }, [ownerId]);
+    setAnswerState({ selected: [] });
+  }, [ownerId, progressRefreshToken]);
 
   useEffect(() => {
     if (!question) return;

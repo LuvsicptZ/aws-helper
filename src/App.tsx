@@ -282,11 +282,19 @@ export default function App() {
         await deletePracticeResume(ownerId);
         await savePracticeResume(freshResume);
       }
-    } catch {
-      window.alert(
-        "Reset failed. Your progress was not changed. Please try again.",
-      );
-      return;
+    } catch (error) {
+      console.error("Reset progress failed on remote server:", error);
+      try {
+        await clearAllProgress(ownerId);
+        await deletePracticeResume(ownerId);
+        await savePracticeResume(freshResume);
+      } catch (fallbackError) {
+        console.error("Local fallback reset failed:", fallbackError);
+        window.alert(
+          "Reset failed. Your progress was not changed. Please try again.",
+        );
+        return;
+      }
     }
 
     setPracticeResume(freshResume);
@@ -314,6 +322,7 @@ export default function App() {
       <PracticePage
         key={practiceMode}
         ownerId={ownerId}
+        progressRefreshToken={progressRefreshToken}
         initialMode={practiceMode}
         resumePositions={practiceResume.positions}
         onPositionChange={savePosition}

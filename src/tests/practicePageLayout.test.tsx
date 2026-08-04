@@ -187,4 +187,12 @@ describe("practice page layout", () => {
     });
     consoleError.mockRestore();
   });
+
+  it("reloads allProgress when progressRefreshToken changes", async () => {
+    const { rerender } = render(<PracticePage initialMode="sequential" progressRefreshToken={0} />);
+    expect(repositoryMocks.getAllProgress).toHaveBeenCalledTimes(1);
+
+    rerender(<PracticePage initialMode="sequential" progressRefreshToken={1} />);
+    expect(repositoryMocks.getAllProgress).toHaveBeenCalledTimes(2);
+  });
 });
