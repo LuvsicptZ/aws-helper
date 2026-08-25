@@ -30,11 +30,11 @@ type DashboardPageProps = {
 };
 
 function getDashboardDisplayName(email?: string): string {
-  if (!email) return "Ryan";
+  if (!email) return "Guest";
 
   const localPart = email.split("@")[0] ?? "";
   const match = localPart.match(/[a-zA-Z]+/);
-  const name = match?.[0] ?? "Ryan";
+  const name = match?.[0] ?? "Guest";
 
   return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 }

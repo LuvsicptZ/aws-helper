@@ -313,7 +313,7 @@ export default function App() {
     return <ResetPasswordPage />;
   }
 
-  if (!session) {
+  if (!session && supabaseClient) {
     return <LoginPage />;
   }
 

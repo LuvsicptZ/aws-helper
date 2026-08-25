@@ -1,0 +1,337 @@
+/*
+ * Notion-inspired dashboard override for AWS Mastery.
+ * Imported AFTER index.css + design-system.css so it wins the cascade.
+ * Scoped to the studio dashboard; leaves login/practice untouched.
+ */
+
+/* ---- Tokens (light) on the shell ancestor, inherited by everything below ---- */
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface) {
+  --n-ink: #37352f;
+  --n-muted: #787774;
+  --n-faint: #9b9a97;
+  --n-page: #ffffff;
+  --n-side: #f7f6f3;
+  --n-hover: #f1f0ed;
+  --n-line: #eceae5;
+  --n-line-2: #dad7d1;
+  --n-accent: #2383e2;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    Arial, "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+/* ---- Tokens (dark) ---- */
+html[data-theme="dark"]
+  .app-shell-root--studio:has(.minimal-dashboard.ui-product-surface) {
+  --n-ink: #e6e6e6;
+  --n-muted: #9b9a97;
+  --n-faint: #6f6e6b;
+  --n-page: #191919;
+  --n-side: #202020;
+  --n-hover: #2a2a2a;
+  --n-line: #2f2f2f;
+  --n-line-2: #3a3a3a;
+  --n-accent: #529cca;
+}
+
+/* ---- Shell surfaces ---- */
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface),
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-content,
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-main {
+  background: var(--n-page) !important;
+  color: var(--n-ink) !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-sidebar {
+  background: var(--n-side) !important;
+  border-color: var(--n-line) !important;
+  box-shadow: none !important;
+}
+
+/* ---- Sidebar nav ---- */
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-button--studio {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  color: var(--n-muted) !important;
+  min-height: 2.25rem !important;
+  padding: 0.4rem 0.6rem !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-button--studio:hover {
+  background: var(--n-hover) !important;
+  color: var(--n-ink) !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-button--active {
+  background: var(--n-hover) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--n-ink) !important;
+  font-weight: 500 !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-button--active
+  .app-shell-nav-icon {
+  color: var(--n-ink) !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-icon {
+  color: var(--n-faint) !important;
+  margin-right: 0.55rem !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-sidebar
+  h3 {
+  text-transform: none !important;
+  letter-spacing: 0.01em !important;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  color: var(--n-faint) !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-badge {
+  background: var(--n-hover) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--n-muted) !important;
+}
+
+.app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-badge--danger {
+  background: color-mix(in srgb, #e06c5f 16%, transparent) !important;
+  color: #b1463f !important;
+}
+
+html[data-theme="dark"]
+  .app-shell-root--studio:has(.minimal-dashboard.ui-product-surface)
+  .app-shell-nav-badge--danger {
+  color: #e8a39c !important;
+}
+
+/* ---- Dashboard container ---- */
+.minimal-dashboard.ui-product-surface {
+  color: var(--n-ink);
+  max-width: 880px;
+  padding-top: 3.5rem;
+  padding-bottom: 6rem;
+}
+
+/* Top header row */
+.minimal-dashboard .minimal-header {
+  margin-bottom: 3.5rem;
+}
+
+/* ---- Hero ---- */
+.minimal-dashboard .minimal-hero-eyebrow {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 500 !important;
+  font-size: 0.82rem !important;
+  color: var(--n-muted) !important;
+}
+
+.minimal-dashboard .minimal-hero-eyebrow::before {
+  content: "•";
+  margin-right: 0.45rem;
+  color: var(--n-accent);
+}
+
+.minimal-dashboard .minimal-hero-title {
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  font-size: clamp(2.4rem, 5vw, 3rem) !important;
+  line-height: 1.1 !important;
+  color: var(--n-ink) !important;
+  margin-top: 0.55rem !important;
+}
+
+.minimal-dashboard .minimal-hero-subtitle {
+  color: var(--n-muted) !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 2rem !important;
+}
+
+/* ---- Progress ---- */
+.minimal-dashboard .minimal-progress-wrapper {
+  max-width: 440px !important;
+  margin-bottom: 2.5rem !important;
+}
+
+.minimal-dashboard .minimal-progress-bar-container {
+  height: 6px !important;
+  background: var(--n-line) !important;
+  border-radius: 999px !important;
+}
+
+.minimal-dashboard .minimal-progress-fill {
+  background: var(--n-accent) !important;
+  border-radius: 999px !important;
+}
+
+.minimal-dashboard .minimal-progress-thumb {
+  display: none !important;
+}
+
+.minimal-dashboard .minimal-progress-percentage {
+  color: var(--n-faint) !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  margin-top: 0.6rem !important;
+}
+
+/* ---- Buttons ---- */
+.minimal-dashboard .minimal-btn-stack {
+  gap: 0.6rem !important;
+  flex-wrap: wrap !important;
+}
+
+.minimal-dashboard .minimal-btn-primary {
+  background: var(--n-ink) !important;
+  color: var(--n-page) !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  padding: 0.65rem 1.15rem !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.minimal-dashboard .minimal-btn-primary:hover {
+  background: color-mix(in srgb, var(--n-ink) 85%, var(--n-page)) !important;
+}
+
+.minimal-dashboard .minimal-btn-secondary {
+  background: transparent !important;
+  border: 1px solid var(--n-line) !important;
+  border-radius: 6px !important;
+  color: var(--n-ink) !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  font-size: 0.85rem !important;
+  padding: 0.65rem 1.15rem !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.minimal-dashboard .minimal-btn-secondary:hover {
+  background: var(--n-hover) !important;
+  border-color: var(--n-line-2) !important;
+  color: var(--n-ink) !important;
+}
+
+/* ---- List rows ---- */
+.minimal-dashboard .minimal-list-section {
+  border-top: 1px solid var(--n-line) !important;
+}
+
+.minimal-dashboard .minimal-list-row {
+  border-bottom: 1px solid var(--n-line) !important;
+  padding-block: 1.35rem !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.minimal-dashboard .minimal-list-row:hover {
+  background: var(--n-hover) !important;
+  transform: none !important;
+}
+
+.minimal-dashboard .minimal-row-title {
+  color: var(--n-ink) !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+}
+
+.minimal-dashboard .minimal-row-meta {
+  color: var(--n-muted) !important;
+  font-size: 0.85rem !important;
+}
+
+.minimal-dashboard .minimal-row-action {
+  background: transparent !important;
+  border: 1px solid var(--n-line) !important;
+  color: var(--n-ink) !important;
+  border-radius: 6px !important;
+  padding: 0.38rem 0.85rem !important;
+  font-weight: 500 !important;
+  font-size: 0.78rem !important;
+  box-shadow: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.minimal-dashboard .minimal-row-action:hover {
+  background: var(--n-hover) !important;
+  border-color: var(--n-line-2) !important;
+  color: var(--n-ink) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ---- Recent attempts ---- */
+.minimal-dashboard .minimal-attempt-row {
+  border-bottom: 1px solid var(--n-line) !important;
+  padding-block: 1.35rem !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.minimal-dashboard .minimal-attempt-row:hover {
+  background: var(--n-hover) !important;
+}
+
+/* Soft score chip colors that read as calm + semantic, not loud */
+.minimal-dashboard .text-emerald-600 {
+  color: #4f7a56 !important;
+}
+
+html[data-theme="dark"] .minimal-dashboard .text-emerald-600,
+html[data-theme="dark"] .minimal-dashboard .dark\:text-emerald-400 {
+  color: #7fb38f !important;
+}
+
+.minimal-dashboard .text-amber-500 {
+  color: #946a12 !important;
+}
+
+html[data-theme="dark"] .minimal-dashboard .text-amber-600,
+html[data-theme="dark"] .minimal-dashboard .text-amber-500 {
+  color: #d8a94e !important;
+}
+
+/* ---- Empty state: replace dashed box with a quiet surface card ---- */
+.minimal-dashboard .border-dashed {
+  border: 1px solid var(--n-line) !important;
+  border-radius: 8px !important;
+  background: var(--n-side) !important;
+}
+
+html[data-theme="dark"] .minimal-dashboard .border-dashed {
+  background: var(--n-hover) !important;
+}
+
+/* ---- Theme / reset text buttons in the top bar stay muted ---- */
+.minimal-dashboard .minimal-header button {
+  letter-spacing: 0;
+}
+
+/* ---- Mobile tweaks ---- */
+@media (max-width: 768px) {
+  .minimal-dashboard.ui-product-surface {
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+  }
+
+  .minimal-dashboard .minimal-header {
+    margin-bottom: 2.25rem;
+  }
+}
