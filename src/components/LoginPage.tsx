@@ -215,7 +215,7 @@ export function LoginPage() {
   return (
     <div className="ui-product-surface auth-page" data-practice-gateway>
       <a href="#login-form" className="skip-link">Skip to sign in</a>
-      <header className="auth-topbar"><BrandLogo className="shell-logo" /><span className="auth-topbar-label">AWS Solutions Architect Associate</span><button className="ui-button ui-button--tertiary" type="button" aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>{isDark ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}<span>{isDark ? "Light mode" : "Dark mode"}</span></button></header>
+      <header className="auth-topbar"><BrandLogo className="shell-logo" /><button className="ui-button ui-button--tertiary" type="button" aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>{isDark ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}<span>{isDark ? "Light mode" : "Dark mode"}</span></button></header>
       <main className="auth-layout" data-login-shell>
         <section className="auth-story" data-login-visual>
           <div data-login-promise><span className="ui-eyebrow">Your path to SAA-C03</span><h1>Build knowledge.<br />Find your confidence.</h1><p>Make room for your next step. Practice AWS architecture, learn from your answers, and test your understanding.</p></div>
@@ -236,7 +236,7 @@ export function LoginPage() {
           <p className="auth-footnote">Your progress, bookmarks, and notes follow your account.</p>
         </section>
       </main>
-      <footer className="auth-footer"><span>AWS Mastery</span><span>Focused practice for SAA-C03.</span></footer>
+      <footer className="auth-footer"><span>AWS Mastery</span></footer>
     </div>
   );
 }
