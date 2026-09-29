@@ -28,10 +28,11 @@ type ExamPageProps = {
 };
 
 function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = seconds % 60;
 
-  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(
     2,
     "0",
   )}`;
@@ -218,10 +219,11 @@ export function ExamPage({
       {/* Mobile Top Header */}
       {examQuestions.length > 0 && (
         <header className="zen-mobile-header">
-          <span className="zen-mobile-header-title">{submittedAt ? "Exam review" : "Time remaining"}</span>
+          {submittedAt && <span className="zen-mobile-header-title">Exam review</span>}
           <div className="zen-mobile-header-actions">
             <div className="exam-timer" role="timer" aria-label="Time remaining">
-              {formatTime(remainingSeconds)}
+              <span className="exam-timer-label">Time remaining</span>
+              <span className="exam-timer-value">{formatTime(remainingSeconds)}</span>
             </div>
             {!submittedAt && <button className="ui-button ui-button--secondary exam-submit-button" type="button" aria-label="Submit Exam" title="Submit Exam" onClick={submitExamWithConfirmation} disabled={isSaving}><Send size={18} aria-hidden="true" />Submit exam</button>}
             <button aria-label="Open question navigator" aria-haspopup="dialog" aria-expanded={isDrawerOpen} onClick={() => setIsDrawerOpen(true)} className="zen-mobile-header-action" type="button">

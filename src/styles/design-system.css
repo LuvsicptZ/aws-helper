@@ -376,6 +376,9 @@ html[data-theme="dark"] .auth-page .ui-input-wrap input:autofill { box-shadow:in
 @media (forced-colors:active) { .mode-card,.auth-feature { border:1px solid CanvasText; } .zen-option--selected { outline:2px solid Highlight; } .ui-button { border:1px solid ButtonText; } }
 .exam-submit-button { padding-inline:16px; }
 .exam-timer { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; white-space:nowrap; color:var(--ui-ink); }
+.exam-timer-label { color:var(--ui-muted); font-weight:400; }
+.exam-timer-value { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-variant-numeric:tabular-nums; }
+@media (max-width:767px) { .exam-timer { flex-direction:column; align-items:flex-start; gap:2px; } .exam-timer-label { font-size:11px; } }
 .zen-mobile-header-action[aria-pressed="true"] { background:var(--ui-primary); color:var(--ui-on-primary); }
 @media (max-width:479px) { .zen-mobile-header:has(.exam-timer) { flex-wrap:wrap; } .zen-mobile-header:has(.exam-timer) .zen-mobile-header-actions { flex-basis:100%; padding-top:4px; } .exam-timer { margin-right:auto; } }
 @media (min-width:768px) { .zen-mobile-header-action[aria-label="Bookmark question"], .zen-mobile-header-action[aria-label="Remove bookmark"] { display:none; } }
