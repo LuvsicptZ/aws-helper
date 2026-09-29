@@ -375,6 +375,12 @@ html[data-theme="dark"] .auth-page .ui-input-wrap input:autofill { box-shadow:in
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } button:active:not(:disabled) { transform:none; } }
 @media (forced-colors:active) { .mode-card,.auth-feature { border:1px solid CanvasText; } .zen-option--selected { outline:2px solid Highlight; } .ui-button { border:1px solid ButtonText; } }
 .exam-submit-button { padding-inline:16px; }
+.zen-practice-page--exam .zen-option { border-color:color-mix(in srgb,var(--ui-ink) 40%,var(--ui-line)); }
+.zen-practice-page--exam .zen-option:hover:not(:disabled) { border-color:var(--ui-ink); }
+.zen-practice-page--exam .zen-option--selected { border-color:var(--ui-ink); background:var(--ui-soft-2); }
+.zen-practice-page--exam .zen-option--correct { border-color:var(--ui-success); }
+.zen-practice-page--exam .zen-option--incorrect { border-color:var(--ui-error); }
+.exam-selected-check { flex-shrink:0; margin-left:auto; color:var(--ui-ink); }
 .exam-toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-bottom:24px; margin-bottom:32px; border-bottom:1px solid var(--ui-line); }
 .exam-toolbar .exam-timer { flex:1; margin-right:0; gap:12px; }
 .exam-navigator-button { padding-inline:16px; }

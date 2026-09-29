@@ -304,6 +304,7 @@ export function ExamPage({
                           {shouldShowCorrect && <span className="option-state">Correct answer</span>}
                           {isIncorrectSelected && <span className="option-state">Your answer · Incorrect</span>}
                       </span>
+                      {isSelected && !submittedAt && <Check className="exam-selected-check" size={20} strokeWidth={2.4} aria-hidden="true" />}
                     </button>
                   );
                 })}
