@@ -375,7 +375,7 @@ export function ExamPage({
       {isDrawerOpen && (
         <dialog ref={navigatorDialogRef} className="ui-dialog zen-navigator-drawer" aria-labelledby="navigator-title" onClose={() => setIsDrawerOpen(false)} onClick={event => { if (event.target === event.currentTarget) setIsDrawerOpen(false); }}>
             <div className="zen-navigator-drawer-header">
-              <h2 id="navigator-title">Question Navigator</h2>
+              <div><h2 id="navigator-title">Question Navigator</h2><p className="navigator-position">Current question {currentIndex + 1} of {examQuestions.length}</p></div>
               <button className="ui-icon-button" aria-label="Close question navigator" onClick={() => setIsDrawerOpen(false)} type="button">
                 <X size={18} />
               </button>
@@ -417,6 +417,7 @@ export function ExamPage({
                 );
               })}
             </div>
+            <div className="navigator-drawer-legend" aria-hidden="true"><span><i className="legend-current" />Current</span>{submittedAt ? <><span><i className="legend-correct" />Correct</span><span><i className="legend-incorrect" />Incorrect</span></> : <><span><i className="legend-answered" />Answered</span><span><i />Unanswered</span></>}</div>
         </dialog>
       )}
     </AppShell>

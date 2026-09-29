@@ -101,19 +101,9 @@ export function PracticePage({
     }
     return () => { dialog?.close(); previousFocus?.focus(); };
   }, [isDrawerOpen]);
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
-  );
   const explanationRef = useRef<HTMLElement>(null);
+  const pendingFeedbackScroll = useRef(false);
   const practicePageRef = useRef<HTMLDivElement>(null);
-
-  // Mobile matchMedia listener
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1023px)");
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
 
   function triggerBackgroundSync() {
     if (ownerId === "anonymous" || !supabaseClient) return;
@@ -168,15 +158,16 @@ export function PracticePage({
     : 0;
   const hasCompleteSelection = selected.length === requiredSelectionCount;
 
-  // Scroll to feedback after submission on mobile
+  // Reveal feedback only after a deliberate, successfully saved submission.
   useEffect(() => {
-    if (result && isMobile && explanationRef.current) {
+    if (result && !isSaving && pendingFeedbackScroll.current && explanationRef.current) {
       const timeout = window.setTimeout(() => {
+        pendingFeedbackScroll.current = false;
         explanationRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "nearest" });
       }, 80);
       return () => window.clearTimeout(timeout);
     }
-  }, [result, isMobile]);
+  }, [result, isSaving]);
 
   const progressPercent =
     visibleTotal === 0 ? 0 : ((safeCurrentIndex + 1) / visibleTotal) * 100;
@@ -241,6 +232,7 @@ export function PracticePage({
       isSaving
     ) return;
 
+    pendingFeedbackScroll.current = true;
     const nextResult = gradeAnswer(question.answer, selectedAnswer);
     setPracticeError(undefined);
     setAnswerState({
@@ -373,6 +365,7 @@ export function PracticePage({
   }
 
   function resetAnswerState() {
+    pendingFeedbackScroll.current = false;
     setAnswerState({ selected: [] });
     setPracticeError(undefined);
   }
@@ -617,7 +610,7 @@ export function PracticePage({
       {isDrawerOpen && (
         <dialog ref={navigatorDialogRef} className="ui-dialog zen-navigator-drawer" aria-labelledby="navigator-title" onClose={() => setIsDrawerOpen(false)} onClick={event => { if (event.target === event.currentTarget) setIsDrawerOpen(false); }}>
             <div className="zen-navigator-drawer-header">
-              <h2 id="navigator-title">Question Navigator</h2>
+              <div><h2 id="navigator-title">Question Navigator</h2><p className="navigator-position">Current question {safeCurrentIndex + 1} of {visibleTotal}</p></div>
               <button
                 className="ui-icon-button" aria-label="Close question navigator"
                 onClick={() => setIsDrawerOpen(false)}
@@ -669,6 +662,7 @@ export function PracticePage({
                 );
               })}
             </div>
+            <div className="navigator-drawer-legend" aria-hidden="true"><span><i className="legend-current" />Current</span><span><i className="legend-correct" />Correct</span><span><i className="legend-incorrect" />Incorrect</span><span><i />Unanswered</span></div>
         </dialog>
       )}
     </AppShell>
