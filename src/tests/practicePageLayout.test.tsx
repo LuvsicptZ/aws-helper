@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PracticePage } from "../pages/PracticePage";
@@ -56,16 +56,17 @@ describe("practice page layout", () => {
     expect(markup).toContain("data-focused-practice-layout");
   });
 
-  it("renders a Figma-style ZenFocus shell without the app sidebar", () => {
+  it("keeps both sidebars out of the focused question canvas", () => {
     const markup = renderToStaticMarkup(
       <PracticePage initialMode="sequential" />,
     );
 
     expect(markup).toContain("zen-practice-page");
     expect(markup).toContain("ui-product-surface");
-    expect(markup).toContain("zen-practice-sidebar");
+    expect(markup).not.toContain("zen-practice-sidebar");
+    expect(markup).not.toContain("reader-index");
     expect(markup).toContain("zen-practice-main");
-    expect(markup).toContain("zen-practice-progress");
+    expect(markup).toContain("focus-progress");
     expect(markup).toContain("Dashboard");
     expect(markup).not.toContain("Current flow");
     expect(markup).not.toContain("app-shell-sidebar");
@@ -79,7 +80,7 @@ describe("practice page layout", () => {
 
     expect(markup).toContain("data-focused-practice-layout");
     expect(markup).toContain("zen-question-block");
-    expect(markup).toContain("zen-practice-breadcrumb");
+    expect(markup).not.toContain("zen-practice-breadcrumb");
     expect(markup).toContain("Question 1 of 1019");
     expect(markup).toContain("zen-options-list");
     expect(markup).toContain("zen-option-marker");
@@ -92,7 +93,7 @@ describe("practice page layout", () => {
     expect(markup).not.toContain("xl:grid-cols-[minmax(0,1fr)_280px]");
   });
 
-  it("renders the bookmark button, study notes textarea, and sidebar navigator", () => {
+  it("keeps bookmark and collapsed notes available without rendering the navigator grid", () => {
     const markup = renderToStaticMarkup(
       <PracticePage initialMode="sequential" />,
     );
@@ -100,24 +101,34 @@ describe("practice page layout", () => {
     expect(markup).toContain("Bookmark");
     expect(markup).toContain("Study Notes");
     expect(markup).toContain("zen-practice-notes-textarea");
-    expect(markup).toContain("Question Navigator");
+    expect(markup).toContain('aria-label="Open question navigator"');
+    expect(markup).not.toContain("zen-navigator-drawer-grid");
+    expect(markup).toContain("Add study note");
   });
 
-  it("keeps Next Question available and resets scroll for mobile navigation", async () => {
+  it("requires submission on mobile and resets scroll when advancing", async () => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({
       matches: query === "(max-width: 1023px)",
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     }));
 
-    render(<PracticePage initialMode="sequential" />);
+    await act(async () => { render(<PracticePage initialMode="sequential" />); });
 
     const scrollContainer = document.querySelector(".app-shell-main");
     expect(scrollContainer).not.toBeNull();
     if (!(scrollContainer instanceof HTMLElement)) return;
     scrollContainer.scrollTop = 500;
 
-    fireEvent.click(screen.getByRole("button", { name: "Next Question" }));
+    const submit = screen.getByRole("button", { name: "Submit Answer" }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+    fireEvent.click(document.querySelectorAll(".zen-option")[0]);
+    expect(submit.disabled).toBe(false);
+    expect(repositoryMocks.saveProgress).not.toHaveBeenCalled();
+    fireEvent.click(submit);
+    const next = await screen.findByRole("button", { name: "Next Question" });
+    await waitFor(() => expect((next as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(next);
 
     expect(screen.getAllByText("Question 2 of 1019").length).toBeGreaterThan(0);
     await waitFor(() => expect(scrollContainer.scrollTop).toBe(0));
@@ -132,7 +143,7 @@ describe("practice page layout", () => {
 
     render(<PracticePage initialMode="sequential" />);
 
-    expect(screen.getByRole("button", { name: "Back to dashboard" })).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Go to homepage" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Bookmark question" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Open question navigator" })).not.toBeNull();
   });
@@ -162,6 +173,7 @@ describe("practice page layout", () => {
 
   it("saves a focused note only once when Save Note is clicked", async () => {
     render(<PracticePage initialMode="sequential" />);
+    fireEvent.click(screen.getByText("Add study note"));
     const notes = screen.getByPlaceholderText(/Write your study notes here/);
 
     fireEvent.focus(notes);
@@ -179,6 +191,8 @@ describe("practice page layout", () => {
 
     fireEvent.click(document.querySelectorAll(".zen-option")[0]);
 
+    fireEvent.click(screen.getByRole("button", { name: "Submit Answer" }));
+
     expect((await screen.findByRole("alert")).textContent).toContain(
       "We couldn't save your answer. Please try again.",
     );
@@ -186,6 +200,24 @@ describe("practice page layout", () => {
       expect(screen.queryByText(/Correct answer:/)).toBeNull();
     });
     consoleError.mockRestore();
+  });
+
+  it("opens the navigator at the current question and restores focus on close", async () => {
+    const prototype = HTMLDialogElement.prototype;
+    Object.defineProperty(prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.open = true; } });
+    Object.defineProperty(prototype, "close", { configurable: true, value: function (this: HTMLDialogElement) { this.open = false; } });
+    render(<PracticePage resumePositions={{ sequential: { index: 160 }, incorrect: { index: 0 }, favorite: { index: 0 } }} />);
+    await screen.findByRole("heading", { name: "Question 161 of 1019" });
+    const trigger = screen.getByRole("button", { name: "Open question navigator" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const current = screen.getByRole("button", { name: "Question 161, unanswered" });
+    expect(current.getAttribute("aria-current")).toBe("step");
+    expect(document.activeElement).toBe(current);
+    fireEvent.click(screen.getByRole("button", { name: "Close question navigator" }));
+    expect(document.activeElement).toBe(trigger);
+    Reflect.deleteProperty(prototype, "showModal");
+    Reflect.deleteProperty(prototype, "close");
   });
 
   it("reloads allProgress when progressRefreshToken changes", async () => {

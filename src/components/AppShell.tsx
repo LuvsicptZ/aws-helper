@@ -41,9 +41,9 @@ export function AppShell({ active, children, headerActions, immersiveHeader, imm
       <header className="app-shell-header min-h-16 items-center justify-between border-b border-gray-200">
         <div className="shell-header-inner">
         <BrandLogo className="shell-logo" onClick={onDashboardClick ?? (() => onNavigate?.("dashboard"))} />
-        <nav className="shell-desktop-nav" aria-label="Primary navigation">
+        {immersive ? <span className="shell-reader-context">{links.find(link => link.selected)?.label}</span> : <nav className="shell-desktop-nav" aria-label="Primary navigation">
           {links.slice(0, 3).map(({ label, selected, action }) => <button key={label} type="button" aria-current={selected ? "page" : undefined} className={`shell-nav-link ${selected ? "is-current" : ""}`} onClick={action}>{label}</button>)}
-        </nav>
+        </nav>}
         <div className={`shell-account ml-auto min-w-0 items-center gap-2 ${mobileHeader ? "hidden md:flex" : ""}`}>
           {headerActions}
           <button type="button" className="ui-icon-button inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-xl" aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>
