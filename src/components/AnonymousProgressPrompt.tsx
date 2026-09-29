@@ -9,11 +9,13 @@ export function AnonymousProgressPrompt({
 }: AnonymousProgressPromptProps) {
   return (
     <section className="progress-prompt ui-product-surface">
+      <div className="progress-prompt-copy">
       <h3>Keep your signed-out practice progress?</h3>
       <p>
         This browser has practice progress created before you signed in. Choose
         whether it belongs to this account.
       </p>
+      </div>
       <div className="dialog-actions">
         <button
           type="button"
