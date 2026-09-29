@@ -158,7 +158,9 @@ html[data-theme="dark"] .auth-status-pill:has(.lucide-circle-alert) { color:var(
 .auth-topbar { min-height:80px; padding:20px 40px; display:flex; align-items:center; gap:24px; border-bottom:1px solid var(--ui-line); }
 .auth-topbar > button { margin-left:auto; }
 .auth-topbar-label { font-size:13px; color:var(--ui-muted); }
-.auth-layout { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(360px,.8fr); gap:80px; padding:80px 64px; align-items:center; }
+.auth-layout { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(360px,.8fr); gap:80px; padding:80px 64px; align-items:start; }
+@media (min-width:1280px) { .auth-story { padding-top:41px; } }
+@media (min-width:1024px) and (max-width:1279px) { .auth-story { padding-top:33px; } }
 @media (min-width:1600px) {
  .auth-layout { max-width:1680px; gap:88px; }
  .auth-layout .auth-story h1 { font-size:92px; }
