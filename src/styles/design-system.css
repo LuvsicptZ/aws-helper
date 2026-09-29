@@ -202,7 +202,11 @@ html[data-theme="dark"] .auth-orbit span { border-color:currentColor; }
 .auth-form-panel > .ui-muted { font-size:14px; }
 .auth-form-panel form { display:grid; gap:24px; margin-top:32px; }
 .auth-forgot { margin-top:-16px; text-align:right; }
-.auth-submit,.auth-google { width:100%; }
+.auth-page .auth-submit,.auth-page .auth-google { width:100%; min-height:50px; border-radius:12px; }
+.auth-page .auth-submit { gap:16px; }
+.auth-page .auth-submit > svg { flex-shrink:0; transition:transform 160ms ease-out; }
+.auth-page .auth-submit:hover:not(:disabled) > svg { transform:translateX(4px); }
+@media (prefers-reduced-motion:reduce) { .auth-page .auth-submit > svg { transition:none; transform:none!important; } }
 .auth-page .ui-input-wrap { overflow:hidden; }
 .auth-page .input-visibility:focus-visible { outline-offset:-4px; }
 html[data-theme="dark"] .auth-page .ui-input-wrap { background:#161d26; border-color:#303a48; transition:border-color 160ms,box-shadow 160ms; }
