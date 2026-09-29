@@ -207,13 +207,16 @@ html[data-theme="dark"] .auth-orbit span { border-color:currentColor; }
 .auth-page .auth-submit > svg { flex-shrink:0; transition:transform 160ms ease-out; }
 .auth-page .auth-submit:hover:not(:disabled) > svg { transform:translateX(4px); }
 @media (prefers-reduced-motion:reduce) { .auth-page .auth-submit > svg { transition:none; transform:none!important; } }
-.auth-page .ui-input-wrap { overflow:hidden; }
+.auth-page .ui-input-wrap { overflow:hidden; background:var(--ui-surface); transition:border-color 160ms; }
+.auth-page .ui-input-wrap:focus-within { border-color:#315ed5; outline:none; }
+.auth-page .ui-input-wrap input:autofill { box-shadow:inset 0 0 0 1000px var(--ui-surface); -webkit-text-fill-color:var(--ui-ink); caret-color:var(--ui-ink); }
 .auth-page .input-visibility:focus-visible { outline-offset:-4px; }
 html[data-theme="dark"] .auth-page .ui-input-wrap { background:#161d26; border-color:#303a48; transition:border-color 160ms,box-shadow 160ms; }
 html[data-theme="dark"] .auth-page .ui-input-wrap:hover { border-color:#465366; }
 html[data-theme="dark"] .auth-page .ui-input-wrap:focus-within { border-color:#5b8cff; box-shadow:0 0 0 3px rgb(91 140 255 / 16%); outline:none; }
 html[data-theme="dark"] .auth-page .ui-input-wrap input:autofill { box-shadow:inset 0 0 0 1000px #161d26; -webkit-text-fill-color:var(--ui-ink); caret-color:var(--ui-ink); }
 @media (forced-colors:active) {
+ .auth-page .ui-input-wrap:focus-within { outline:2px solid Highlight; outline-offset:2px; }
  html[data-theme="dark"] .auth-page .ui-input-wrap { border-color:ButtonText; }
  html[data-theme="dark"] .auth-page .ui-input-wrap:focus-within { outline:2px solid Highlight; outline-offset:2px; }
 }
