@@ -154,11 +154,11 @@ html[data-theme="dark"] .auth-status-pill:has(.lucide-circle-alert) { color:var(
 .progress-prompt h2 { font-size:20px; margin-bottom:8px; }
 .progress-prompt p { font-size:14px; color:var(--ui-muted); max-width:75ch; }
 .progress-prompt .dialog-actions { margin-top:16px; justify-content:flex-start; }
-.auth-page { min-height:100dvh; background:var(--ui-bg); }
+.auth-page { min-height:100dvh; display:flex; flex-direction:column; background:var(--ui-bg); }
 .auth-topbar { min-height:80px; padding:20px 40px; display:flex; align-items:center; gap:24px; border-bottom:1px solid var(--ui-line); }
 .auth-topbar > button { margin-left:auto; }
 .auth-topbar-label { font-size:13px; color:var(--ui-muted); }
-.auth-layout { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(360px,.8fr); gap:80px; padding:80px 64px; align-items:start; }
+.auth-layout { flex:1; width:100%; max-width:1440px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(360px,.8fr); gap:80px; padding:80px 64px; align-items:start; align-content:center; }
 @media (min-width:1280px) { .auth-story { padding-top:41px; } }
 @media (min-width:1024px) and (max-width:1279px) { .auth-story { padding-top:33px; } }
 @media (min-width:1600px) {
