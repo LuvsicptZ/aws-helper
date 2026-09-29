@@ -387,6 +387,14 @@ html[data-theme="dark"] .auth-page .ui-input-wrap input:autofill { box-shadow:in
 .exam-timer { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; white-space:nowrap; color:var(--ui-ink); }
 .exam-timer-label { color:var(--ui-muted); font-weight:400; }
 .exam-timer-value { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-variant-numeric:tabular-nums; }
+@media (min-width:1600px) {
+ .zen-practice-page--exam .zen-practice-main { max-width:1020px; }
+ .zen-practice-page--exam .question-stem { font-size:20px; line-height:1.7; max-width:76ch; }
+ .zen-practice-page--exam .zen-option-copy { font-size:18px; line-height:1.65; max-width:76ch; }
+ .zen-practice-page--exam .zen-option-marker { min-width:40px; width:40px; height:40px; font-size:16px; }
+ .zen-practice-page--exam .zen-next-button,.zen-practice-page--exam .zen-secondary-button,.zen-practice-page--exam .exam-toolbar .ui-button { min-height:48px; font-size:16px; }
+ .zen-practice-page--exam .exam-timer { font-size:15px; }
+}
 @media (max-width:767px) { .exam-timer { flex-direction:column; align-items:flex-start; gap:2px; } .exam-timer-label { font-size:11px; } }
 .zen-mobile-header-action[aria-pressed="true"] { background:var(--ui-primary); color:var(--ui-on-primary); }
 @media (max-width:479px) { .zen-mobile-header:has(.exam-timer) { flex-wrap:wrap; } .zen-mobile-header:has(.exam-timer) .zen-mobile-header-actions { flex-basis:100%; padding-top:4px; } .exam-timer { margin-right:auto; } }
