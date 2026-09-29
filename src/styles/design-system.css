@@ -150,6 +150,22 @@ html[data-theme="dark"] .auth-status-pill:has(.lucide-circle-alert) { color:var(
 .minimal-attempt-action-label { display:flex; gap:8px; align-items:center; font-size:13px; }
 .dashboard-footer { margin-top:64px; padding:32px 0; border-top:1px solid var(--ui-line); display:flex; justify-content:space-between; gap:24px; font-size:13px; color:var(--ui-muted); }
 .dashboard-footer span:first-child { color:var(--ui-ink); font-weight:600; }
+html[data-theme="dark"] .minimal-dashboard { --ui-soft:#161b22; --ui-surface:#1a2028; --ui-soft-2:#252e39; --ui-line:#35404b; }
+html[data-theme="dark"] .minimal-dashboard .dashboard-resume { background:var(--ui-surface); }
+html[data-theme="dark"] .minimal-dashboard .mode-card { background:var(--ui-surface); border:1px solid var(--ui-line); color:var(--ui-ink); box-shadow:none; }
+html[data-theme="dark"] .minimal-dashboard .mode-card--coral { background:radial-gradient(ellipse at 100% 0,rgb(245 161 141 / 12%),transparent 70%),var(--ui-surface); }
+html[data-theme="dark"] .minimal-dashboard .mode-card--blue { background:radial-gradient(ellipse at 100% 0,rgb(100 145 255 / 14%),transparent 70%),var(--ui-surface); }
+html[data-theme="dark"] .minimal-dashboard .mode-card--magenta { background:radial-gradient(ellipse at 100% 0,rgb(241 168 220 / 12%),transparent 70%),var(--ui-surface); }
+html[data-theme="dark"] .minimal-dashboard .mode-card--purple { background:radial-gradient(ellipse at 100% 0,rgb(178 131 255 / 14%),transparent 70%),var(--ui-surface); }
+html[data-theme="dark"] .minimal-dashboard .mode-card p { color:var(--ui-muted); }
+html[data-theme="dark"] .minimal-dashboard .mode-card--coral .mode-card-top { color:#f5a18d; }
+html[data-theme="dark"] .minimal-dashboard .mode-card--blue .mode-card-top { color:#a8bfff; }
+html[data-theme="dark"] .minimal-dashboard .mode-card--magenta .mode-card-top { color:#f1a8dc; }
+html[data-theme="dark"] .minimal-dashboard .mode-card--purple .mode-card-top { color:#d2b2ff; }
+html[data-theme="dark"] .minimal-dashboard .mode-card-action { background:transparent; border-color:var(--ui-control-line); color:var(--ui-ink); }
+html[data-theme="dark"] .minimal-dashboard .mode-card-action:hover { background:var(--ui-soft-2); }
+html[data-theme="dark"] .minimal-dashboard .history-list { background:var(--ui-surface); }
+html[data-theme="dark"] .minimal-dashboard .history-row:hover { background:var(--ui-soft-2); }
 .progress-prompt { margin-top:24px; padding:24px; border-radius:16px; border:1px solid var(--ui-line); background:var(--ui-soft); }
 .progress-prompt :is(h2,h3) { font-size:20px; margin-bottom:8px; }
 .progress-prompt p { font-size:14px; color:var(--ui-muted); max-width:75ch; }
