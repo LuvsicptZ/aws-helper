@@ -216,25 +216,22 @@ export function ExamPage({
       onPracticeClick={onPracticeClick}
       onExamClick={onExamClick}
     >
-      {/* Mobile Top Header */}
-      {examQuestions.length > 0 && (
-        <header className="zen-mobile-header">
-          {submittedAt && <span className="zen-mobile-header-title">Exam review</span>}
-          <div className="zen-mobile-header-actions">
-            <div className="exam-timer" role="timer" aria-label="Time remaining">
-              <span className="exam-timer-label">Time remaining</span>
-              <span className="exam-timer-value">{formatTime(remainingSeconds)}</span>
-            </div>
-            {!submittedAt && <button className="ui-button ui-button--secondary exam-submit-button" type="button" aria-label="Submit Exam" title="Submit Exam" onClick={submitExamWithConfirmation} disabled={isSaving}><Send size={18} aria-hidden="true" />Submit exam</button>}
-            <button aria-label="Open question navigator" aria-haspopup="dialog" aria-expanded={isDrawerOpen} onClick={() => setIsDrawerOpen(true)} className="zen-mobile-header-action" type="button">
-              <LayoutGrid size={18} />
-            </button>
-          </div>
-        </header>
-      )}
-
       <div className="ui-product-surface zen-practice-page zen-practice-page--exam" data-focused-practice-layout>
         <article ref={examPageRef} className="zen-practice-main" aria-label="Question content">
+          {examQuestions.length > 0 && (
+            <header className="exam-toolbar">
+              {submittedAt && <span className="zen-mobile-header-title">Exam review</span>}
+              <div className="exam-timer" role="timer" aria-label="Time remaining">
+                <span className="exam-timer-label">Time remaining</span>
+                <span className="exam-timer-value">{formatTime(remainingSeconds)}</span>
+              </div>
+              <button aria-label="Open question navigator" aria-haspopup="dialog" aria-expanded={isDrawerOpen} onClick={() => setIsDrawerOpen(true)} className="ui-button ui-button--secondary exam-navigator-button" type="button">
+                <LayoutGrid size={18} aria-hidden="true" /><span>Questions</span>
+              </button>
+              {!submittedAt && <button className="ui-button ui-button--secondary exam-submit-button" type="button" aria-label="Submit Exam" title="Submit Exam" onClick={submitExamWithConfirmation} disabled={isSaving}><Send size={18} aria-hidden="true" />Submit exam</button>}
+            </header>
+          )}
+
           {question ? (
             <>
               {submittedAt && score && (
