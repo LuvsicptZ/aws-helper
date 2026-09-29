@@ -5,6 +5,18 @@ import { AuthContext } from "../auth/authContext";
 import { AppShell } from "../components/AppShell";
 
 describe("app shell header", () => {
+  it("keeps sign out in the navigation menu during an immersive exam", () => {
+    const session = { user: { id: "user-1", email: "learner@example.com" } } as Session;
+    const markup = renderToStaticMarkup(
+      <AuthContext.Provider value={{ session, isLoading: false, isPasswordRecovery: false, completePasswordRecovery: () => {} }}>
+        <AppShell active="exam" immersive><p>Exam</p></AppShell>
+      </AuthContext.Provider>,
+    );
+    const header = markup.slice(markup.indexOf("<header"), markup.indexOf("</header>"));
+    const menu = markup.slice(markup.indexOf("<dialog"), markup.indexOf("</dialog>"));
+    expect(header).not.toContain('aria-label="Sign out"');
+    expect(menu).toContain('aria-label="Sign out"');
+  });
   it("keeps the signed-in account controls on every app page", () => {
     const session = {
       user: {

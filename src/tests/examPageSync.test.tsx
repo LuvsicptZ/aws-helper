@@ -72,4 +72,18 @@ describe("exam page cloud sync", () => {
     });
     expect(mocks.syncExamSessionsWithSupabase).not.toHaveBeenCalled();
   });
+
+  it("shows the unanswered count and keeps the exam active when submission is cancelled", () => {
+    window.confirm = vi.fn(() => false);
+    const { container } = render(<ExamPage ownerId="anonymous" onDashboardClick={vi.fn()} />);
+    fireEvent.click(container.querySelector(".zen-option")!);
+    fireEvent.click(screen.getByRole("button", { name: /submit exam/i }));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      "You have 64 unanswered questions (1 of 65 answered). Submit exam and finish?",
+    );
+    expect(mocks.saveExamSession).not.toHaveBeenCalled();
+    expect(mocks.syncExamSessionsWithSupabase).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /next question/i }).className).toContain("zen-next-button");
+  });
 });

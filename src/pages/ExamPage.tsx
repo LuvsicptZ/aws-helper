@@ -192,12 +192,12 @@ export function ExamPage({
   }
 
   function submitExamWithConfirmation() {
-    const answeredCount = Object.keys(answers).length;
+    const answeredCount = Object.values(answers).filter(answer => answer.length > 0).length;
+    const unansweredCount = examQuestions.length - answeredCount;
 
     if (
-      answeredCount < examQuestions.length &&
       !window.confirm(
-        `You answered ${answeredCount} / ${examQuestions.length} questions. Submit anyway?`,
+        `You have ${unansweredCount} unanswered questions (${answeredCount} of ${examQuestions.length} answered). Submit exam and finish?`,
       )
     ) {
       return;
@@ -342,7 +342,8 @@ export function ExamPage({
                 </button>
 
                 <button
-                  className="zen-next-button flex items-center justify-center gap-2 flex-1 md:flex-none ml-auto"
+                  className={`${currentIndex === examQuestions.length - 1 && !submittedAt ? "zen-secondary-button" : "zen-next-button"} flex items-center justify-center gap-2 flex-1 md:flex-none ml-auto`}
+                  disabled={isSaving && !submittedAt && currentIndex === examQuestions.length - 1}
                   onClick={() => {
                     if (currentIndex === examQuestions.length - 1) {
                       if (submittedAt) {

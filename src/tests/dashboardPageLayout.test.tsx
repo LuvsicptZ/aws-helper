@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardPage } from "../pages/DashboardPage";
 import type { PracticeResume } from "../domain/practiceResume";
+import { createEmptyProgress } from "../domain/progress";
 
 const repositoryMocks = vi.hoisted(() => ({
   getAllExamSessions: vi.fn(),
@@ -98,6 +99,27 @@ describe("dashboard page layout", () => {
     expect(markup).not.toContain("Switch practice mode");
   });
 
+  it("hides reset when there is no saved progress and directs the empty state to a mock exam", () => {
+    const onExamClick = vi.fn();
+    render(<DashboardPage onNavigate={vi.fn()} onPracticeClick={vi.fn()} onExamClick={onExamClick} practiceResume={practiceResume} onResetProgress={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Reset All Progress" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Recent mock exams" })).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "No mock exams yet" })).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Take your first mock exam" }));
+    expect(onExamClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the history reset action when there are bookmarks but no mock exams", async () => {
+    repositoryMocks.getAllProgress.mockResolvedValue([{ ...createEmptyProgress(1), bookmarked: true }]);
+    const onResetProgress = vi.fn().mockResolvedValue(undefined);
+    render(<DashboardPage onNavigate={vi.fn()} onPracticeClick={vi.fn()} onExamClick={vi.fn()} practiceResume={practiceResume} onResetProgress={onResetProgress} />);
+    await waitFor(() => {
+      expect(screen.getByText("1 bookmarked questions")).not.toBeNull();
+    });
+    expect(screen.queryByRole("button", { name: "Reset All Progress" })).toBeNull();
+    expect(onResetProgress).not.toHaveBeenCalled();
+  });
+
   it("opens a simulator attempt from one accessible row action", async () => {
     repositoryMocks.getAllExamSessions.mockResolvedValue([
       {
@@ -119,6 +141,7 @@ describe("dashboard page layout", () => {
         onPracticeClick={vi.fn()}
         onExamClick={onExamClick}
         practiceResume={practiceResume}
+        onResetProgress={vi.fn().mockResolvedValue(undefined)}
       />,
     );
 
@@ -129,6 +152,7 @@ describe("dashboard page layout", () => {
     expect(
       row.querySelector(".minimal-attempt-action-label"),
     ).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Reset All Progress" })).not.toBeNull();
 
     fireEvent.click(row);
     expect(onExamClick).toHaveBeenCalledTimes(1);

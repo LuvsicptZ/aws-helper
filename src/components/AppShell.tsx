@@ -49,7 +49,7 @@ export function AppShell({ active, children, headerActions, immersiveHeader, imm
           <button type="button" className="ui-icon-button inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-xl" aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>
             {isDark ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
           </button>
-          <div className="shell-auth"><AuthPanel /></div>
+          {!(immersive && active === "exam") && <div className="shell-auth"><AuthPanel /></div>}
         </div>
         <button className="ui-icon-button shell-menu-button" type="button" aria-label="Open navigation" aria-expanded={menuOpen} aria-controls="navigation-menu" onClick={() => { menuRef.current?.showModal(); setMenuOpen(true); }}><Menu size={20} aria-hidden="true" /></button>
         </div>
