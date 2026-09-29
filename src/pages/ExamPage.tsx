@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Send, ArrowLeft, ArrowRight, Check, X, LayoutGrid } from "lucide-react";
+import { CheckCircle2, BookOpen, Send, ArrowLeft, ArrowRight, Check, X, LayoutGrid } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { MarkdownText } from "../components/MarkdownText";
 
@@ -236,11 +236,13 @@ export function ExamPage({
             <>
               {submittedAt && score && (
                 <section aria-label="Exam score summary" className="exam-score" role="status">
-                  <div className="exam-score-top"><CheckCircle2 size={32} strokeWidth={1.5} aria-hidden="true" /><div><p className="ui-eyebrow">Exam complete</p><h2>Score {score.scorePercent}%</h2></div></div>
-                  <p>{score.correctQuestions} correct / {score.totalQuestions} total. {isSaving ? "Saving..." : examSaveError ? "Your result is shown below." : "Saved locally."}</p>
+                  <div className="exam-score-top">
+                    <div className="exam-score-value" style={{ background: `radial-gradient(closest-side,var(--ui-surface) 78%,transparent 79%),conic-gradient(var(--ui-primary) ${score.scorePercent}%,var(--ui-line) 0)` }}><h2><span>Score</span>{score.scorePercent}%</h2></div>
+                    <div className="exam-score-summary"><p className="ui-eyebrow"><CheckCircle2 size={18} aria-hidden="true" />Exam complete</p><h3>Your results are ready.</h3><p>{score.correctQuestions} correct / {score.totalQuestions} total. {isSaving ? "Saving..." : examSaveError ? "Your result is shown below." : "Saved locally."}</p></div>
+                  </div>
                   <dl className="exam-score-stats"><div><dt>Correct answers</dt><dd>{score.correctQuestions}</dd></div><div><dt>Incorrect / unanswered</dt><dd>{score.incorrectQuestions}</dd></div><div><dt>Time used</dt><dd>{formatTime(EXAM_DURATION_SECONDS - remainingSeconds)}</dd></div></dl>
                   {examSaveError && <p className="ui-message ui-message--error" role="alert">{examSaveError}</p>}
-                  <p className="mt-6">Review each question below to understand your answers.</p>
+                  <div className="exam-score-footer"><BookOpen size={18} aria-hidden="true" /><p>Review each question below to understand your answers.</p></div>
                 </section>
               )}
               <section className="zen-question-block" aria-labelledby="question-title">

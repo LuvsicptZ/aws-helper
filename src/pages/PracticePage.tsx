@@ -525,8 +525,10 @@ export function PracticePage({
                   aria-live="polite"
                 >
                   <p className="zen-explanation-kicker">
+                    {result === "correct" ? <Check size={16} aria-hidden="true" /> : <X size={16} aria-hidden="true" />}
                     {result === "correct" ? "Correct" : "Incorrect"}
                   </p>
+                  <h2 className="zen-explanation-title">Explanation</h2>
                   <p className="zen-explanation-answer">
                     Correct answer: {formatAnswer(question.answer)}
                   </p>
