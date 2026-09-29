@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Bookmark, Check, ChevronLeft, LayoutDashboard, X, FileText, Star, ChevronDown, ChevronUp, LayoutGrid, ListChecks, ClipboardList, CalendarX, Moon, Sun } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bookmark, Check, ChevronLeft, LayoutDashboard, X, FileText, Star, ChevronDown, ChevronUp, LayoutGrid, ListChecks, ClipboardList, CalendarX } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { MarkdownText } from "../components/MarkdownText";
-import { BrandLogo } from "../components/BrandLogo";
+
 import type { ShellRoute } from "../components/AppShell";
 import { EmptyModeState } from "../components/EmptyModeState";
 import { questions } from "../data/questions";
@@ -25,7 +25,7 @@ import {
 import { StalePracticeGenerationError } from "../domain/practiceGeneration";
 import { supabaseClient } from "../auth/supabaseClient";
 import { syncQuestionProgress } from "../sync/supabasePracticeCoordinator";
-import { useTheme } from "../theme/useTheme";
+
 
 const CHOICE_KEYS: ChoiceKey[] = ["A", "B", "C", "D", "E", "F"];
 
@@ -69,7 +69,7 @@ export function PracticePage({
   onExamClick,
   onNavigate,
 }: PracticePageProps) {
-  const { isDark, toggleTheme } = useTheme();
+
   const initialPosition = resumePositions?.[initialMode];
   const mode = initialMode;
   const [currentIndex, setCurrentIndex] = useState(initialPosition?.index ?? 0);
@@ -94,6 +94,14 @@ export function PracticePage({
   const syncPending = useRef(false);
   const [isNavigatorExpanded, setIsNavigatorExpanded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const navigatorDialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const dialog = navigatorDialogRef.current;
+    dialog?.showModal();
+    return () => { dialog?.close(); previousFocus?.focus(); };
+  }, [isDrawerOpen]);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
   );
@@ -164,9 +172,10 @@ export function PracticePage({
   // Auto-scroll to explanation on mobile after auto-submit grading
   useEffect(() => {
     if (result && isMobile && explanationRef.current) {
-      setTimeout(() => {
-        explanationRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      const timeout = window.setTimeout(() => {
+        explanationRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "nearest" });
       }, 80);
+      return () => window.clearTimeout(timeout);
     }
   }, [result, isMobile]);
 
@@ -174,10 +183,13 @@ export function PracticePage({
     visibleTotal === 0 ? 0 : ((safeCurrentIndex + 1) / visibleTotal) * 100;
 
   useEffect(() => {
-    void getAllProgress(ownerId).then(setAllProgress);
-    setAnswerState({ selected: [] });
+    void getAllProgress(ownerId).then(progress => {
+      setAllProgress(progress);
+      setAnswerState({ selected: [] });
+    });
   }, [ownerId, progressRefreshToken]);
 
+  const previousQuestionId = useRef(question?.id);
   useEffect(() => {
     if (!question) return;
 
@@ -192,7 +204,10 @@ export function PracticePage({
     if (scrollContainer instanceof HTMLElement) {
       scrollContainer.scrollTop = 0;
     }
-    setPracticeError(undefined);
+    if (previousQuestionId.current !== question?.id) {
+      practicePageRef.current?.querySelector<HTMLElement>("#question-title")?.focus({ preventScroll: true });
+      previousQuestionId.current = question?.id;
+    }
   }, [question?.id]);
 
   useEffect(() => {
@@ -303,7 +318,7 @@ export function PracticePage({
       );
       setAllProgress(await getAllProgress(ownerId));
       triggerBackgroundSync();
-      
+
       setNoteSavedMessage(true);
       setTimeout(() => setNoteSavedMessage(false), 2000);
     } catch (error) {
@@ -361,6 +376,7 @@ export function PracticePage({
 
   function resetAnswerState() {
     setAnswerState({ selected: [] });
+    setPracticeError(undefined);
   }
 
   function goToNext() {
@@ -376,6 +392,7 @@ export function PracticePage({
   useEffect(() => {
     function handleShortcut(event: KeyboardEvent) {
       if (!question) return;
+      if (document.querySelector("dialog[open]") || event.ctrlKey || event.metaKey || event.altKey) return;
 
       const target = event.target;
       if (
@@ -388,11 +405,14 @@ export function PracticePage({
       }
 
       const shortcut = event.key.toLowerCase();
+      if (shortcut === "enter" && target instanceof HTMLElement && target.closest("button, a, summary")) return;
       const shortcutChoices: Record<string, ChoiceKey> = {
         "1": "A",
         "2": "B",
         "3": "C",
         "4": "D",
+        "5": "E",
+        "6": "F",
       };
 
       if (shortcut in shortcutChoices) {
@@ -432,7 +452,7 @@ export function PracticePage({
       onExamClick={onExamClick}
     >
       {/* Mobile Top Header */}
-      <header className="zen-mobile-header lg:hidden">
+      <header className="zen-mobile-header">
         <button
           aria-label="Back to dashboard"
           onClick={onDashboardClick}
@@ -449,24 +469,15 @@ export function PracticePage({
         {hasQuestions && (
           <div className="zen-mobile-header-actions">
             <button
-              aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              className="zen-mobile-header-action"
-              onClick={toggleTheme}
-              title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              type="button"
-            >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <button
               aria-label={currentProgress?.bookmarked ? "Remove bookmark" : "Bookmark question"}
-              onClick={toggleBookmark}
+              aria-pressed={Boolean(currentProgress?.bookmarked)} onClick={toggleBookmark}
               className="zen-mobile-header-action"
               type="button"
             >
-              <Bookmark size={18} className={currentProgress?.bookmarked ? "fill-amber-500 text-amber-500" : ""} />
+              <Bookmark size={18} className={currentProgress?.bookmarked ? "fill-current" : ""} />
             </button>
             <button
-              aria-label="Open question navigator"
+              aria-label="Open question navigator" aria-haspopup="dialog" aria-expanded={isDrawerOpen}
               onClick={() => setIsDrawerOpen(true)}
               className="zen-mobile-header-action"
               type="button"
@@ -479,7 +490,7 @@ export function PracticePage({
 
       <div
         ref={practicePageRef}
-        className="ui-product-surface zen-practice-page"
+        className="ui-product-surface zen-practice-page zen-practice-page--study"
         data-focused-practice-layout
       >
         <div className="zen-practice-progress" aria-hidden="true">
@@ -487,19 +498,6 @@ export function PracticePage({
         </div>
 
         <aside className="zen-practice-sidebar flex flex-col" aria-label="Practice session">
-          <div className="flex h-16 items-center justify-between gap-3 px-6 shrink-0">
-            <BrandLogo className="h-11 w-auto" onClick={onDashboardClick} />
-            <button
-              aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              className="zen-practice-theme-button"
-              onClick={toggleTheme}
-              title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              type="button"
-            >
-              {isDark ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-          </div>
-
           <div className="flex-1 overflow-y-auto px-3 py-4">
             <div className="space-y-6">
               <div>
@@ -524,6 +522,7 @@ export function PracticePage({
                     className={`zen-reader-nav-item ${
                       mode === "sequential" ? "zen-reader-nav-item--active" : ""
                     }`}
+                    aria-current={mode === "sequential" ? "page" : undefined}
                     onClick={() => onPracticeClick?.("sequential")}
                     type="button"
                   >
@@ -548,6 +547,7 @@ export function PracticePage({
                     className={`zen-reader-nav-item ${
                       mode === "incorrect" ? "zen-reader-nav-item--active" : ""
                     }`}
+                    aria-current={mode === "incorrect" ? "page" : undefined}
                     onClick={() => onPracticeClick?.("incorrect")}
                     type="button"
                   >
@@ -561,6 +561,7 @@ export function PracticePage({
                     className={`zen-reader-nav-item ${
                       mode === "favorite" ? "zen-reader-nav-item--active" : ""
                     }`}
+                    aria-current={mode === "favorite" ? "page" : undefined}
                     onClick={() => onPracticeClick?.("favorite")}
                     type="button"
                   >
@@ -572,77 +573,11 @@ export function PracticePage({
                 </nav>
               </div>
 
-              {/* Sidebar Question Navigator */}
-              {hasQuestions && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setIsNavigatorExpanded(!isNavigatorExpanded)}
-                    className="zen-reader-nav-toggle"
-                  >
-                    <span className="zen-reader-nav-heading">
-                      <span className="zen-reader-nav-section !mb-0 !px-0">
-                        Question Navigator
-                      </span>
-                      <span className="zen-reader-nav-count">
-                        {safeCurrentIndex + 1} / {visibleTotal}
-                      </span>
-                    </span>
-                    <span className="zen-reader-nav-toggle-icon">
-                      {isNavigatorExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </span>
-                  </button>
-                  <div 
-                    className={`zen-practice-navigator-grid zen-reader-page-grid ${
-                      isNavigatorExpanded ? "zen-practice-navigator-grid--expanded" : ""
-                    }`}
-                  >
-                    {filteredQuestions.map((q, idx) => {
-                      const qProgress = allProgress.find((p) => p.questionId === q.id);
-                      const isCorrect = qProgress?.lastResult === "correct";
-                      const isIncorrect = qProgress?.lastResult === "incorrect";
-                      const isBookmarked = qProgress?.bookmarked;
-                      const isActive = idx === safeCurrentIndex;
-
-                      let dotClass = "zen-practice-navigator-dot";
-                      if (isCorrect) {
-                        dotClass = "zen-practice-navigator-dot--correct";
-                      } else if (isIncorrect) {
-                        dotClass = "zen-practice-navigator-dot--incorrect";
-                      }
-
-                      if (isActive) {
-                        dotClass += " zen-practice-navigator-dot--active";
-                      }
-
-                      return (
-                        <button
-                          key={q.id}
-                          type="button"
-                          onClick={() => {
-                            resetAnswerState();
-                            setCurrentIndex(idx);
-                          }}
-                          title={`Question ${idx + 1}`}
-                          className={`zen-reader-page-dot ${dotClass}`}
-                        >
-                          {idx + 1}
-                          {isBookmarked && (
-                            <span className="zen-reader-page-dot-bookmark">
-                              <Star size={6} />
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </aside>
 
-        <main className="zen-practice-main">
+        <article className="zen-practice-main" aria-label="Question content">
           {question ? (
             <>
               <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
@@ -662,16 +597,11 @@ export function PracticePage({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={toggleBookmark}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-colors duration-150 ${
-                      currentProgress?.bookmarked
-                        ? "bg-amber-500/10 border-amber-300 text-amber-600 dark:border-amber-500/30 dark:text-amber-400"
-                        : "bg-white dark:bg-slate-900/50 border-gray-200 dark:border-slate-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800/80 hover:text-gray-900 dark:hover:text-gray-200"
-                    }`}
-                  >
+                    aria-pressed={Boolean(currentProgress?.bookmarked)} onClick={toggleBookmark}
+                    className="ui-button ui-button--tertiary reader-bookmark"                  >
                     <Bookmark
                       size={14}
-                      className={currentProgress?.bookmarked ? "fill-amber-500 text-amber-500" : ""}
+                      className={currentProgress?.bookmarked ? "fill-current" : ""}
                     />
                     <span>{currentProgress?.bookmarked ? "Bookmarked" : "Bookmark"}</span>
                   </button>
@@ -679,7 +609,7 @@ export function PracticePage({
               </div>
 
               <section className="zen-question-block" aria-labelledby="question-title">
-                <h1 id="question-title">"{question.stem}"</h1>
+                <h1 id="question-title" tabIndex={-1}>Question {safeCurrentIndex + 1}</h1><p className="question-stem">{question.stem}</p><p className="answer-hint">Choose {Array.isArray(question.answer) ? `${question.answer.length} answers` : "one answer"}.</p>
               </section>
 
               <section className="zen-options-list" aria-label="Answer options">
@@ -721,6 +651,8 @@ export function PracticePage({
                         </span>
                         <span className="zen-option-copy">
                           {stripChoicePrefix(choice, question.options[choice] ?? "")}
+                          {shouldShowCorrect && <span className="option-state">Correct answer</span>}
+                          {isIncorrectSelected && <span className="option-state">Your answer · Incorrect</span>}
                         </span>
                       </button>
                     );
@@ -751,7 +683,7 @@ export function PracticePage({
 
               {practiceError && (
                 <p
-                  className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                  className="ui-message ui-message--error mt-6"
                   role="alert"
                 >
                   {practiceError}
@@ -759,36 +691,37 @@ export function PracticePage({
               )}
 
               {/* Study Notes */}
-              <div className="mt-8 border-t border-gray-200/80 pt-6">
-                <h3 className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  <FileText size={14} />
+              <section className="notes-panel" aria-labelledby="notes-label">
+                <label id="notes-label" htmlFor="study-notes">
+                  <FileText size={16} aria-hidden="true" />
                   Study Notes
-                </h3>
-                
+                </label>
+                <p id="notes-help" className="notes-caption">Capture what you learned. Notes save when you leave the field.</p>
+
                 <textarea
-                  className="zen-practice-notes-textarea focus:ring-2 focus:ring-blue-500/20"
+                  id="study-notes" aria-describedby="notes-help" className="zen-practice-notes-textarea"
                   placeholder="Write your study notes here. They will auto-save when you click away..."
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   onBlur={() => saveNote(noteText)}
                 />
-                
-                <div className="flex justify-between items-center mt-2.5">
-                  <span className="text-[11px] text-gray-400 min-h-[16px]">
-                    {isNoteSaving ? "Saving..." : noteSavedMessage ? "Saved!" : ""}
+
+                <div className="notes-toolbar">
+                  <span role="status" aria-live="polite">
+                    {isNoteSaving ? "Saving..." : noteSavedMessage ? "Saved" : ""}
                   </span>
                   <button
                     type="button"
                     onClick={() => saveNote(noteText)}
                     disabled={isNoteSaving}
-                    className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-white hover:bg-slate-700 active:scale-95 transition-all cursor-pointer"
+                    className="ui-button ui-button--secondary"
                   >
                     Save Note
                   </button>
                 </div>
-              </div>
+              </section>
 
-              <div className="zen-practice-actions flex justify-between items-center pt-16">
+              <div className="zen-practice-actions">
                 {safeCurrentIndex > 0 && (
                   <button
                     className="zen-secondary-button flex items-center justify-center gap-2 flex-1 md:flex-none"
@@ -843,17 +776,89 @@ export function PracticePage({
           ) : (
             <EmptyModeState mode={mode} />
           )}
-        </main>
+        </article>
+        <aside className="reader-index" aria-label="Question navigation">
+              {/* Sidebar Question Navigator */}
+              {hasQuestions && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsNavigatorExpanded(!isNavigatorExpanded)}
+                    aria-expanded={isNavigatorExpanded}
+                    aria-controls="question-index"
+                    className="zen-reader-nav-toggle"
+                  >
+                    <span className="zen-reader-nav-heading">
+                      <span className="zen-reader-nav-section !mb-0 !px-0">
+                        Question Navigator
+                      </span>
+                      <span className="zen-reader-nav-count">
+                        {safeCurrentIndex + 1} / {visibleTotal}
+                      </span>
+                    </span>
+                    <span className="zen-reader-nav-toggle-icon">
+                      {isNavigatorExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </span>
+                  </button>
+                  <div
+                    id="question-index" className={`zen-practice-navigator-grid zen-reader-page-grid ${
+                      isNavigatorExpanded ? "zen-practice-navigator-grid--expanded" : ""
+                    }`}
+                  >
+                    {filteredQuestions.map((q, idx) => {
+                      const qProgress = allProgress.find((p) => p.questionId === q.id);
+                      const isCorrect = qProgress?.lastResult === "correct";
+                      const isIncorrect = qProgress?.lastResult === "incorrect";
+                      const isBookmarked = qProgress?.bookmarked;
+                      const isActive = idx === safeCurrentIndex;
+
+                      let dotClass = "zen-practice-navigator-dot";
+                      if (isCorrect) {
+                        dotClass = "zen-practice-navigator-dot--correct";
+                      } else if (isIncorrect) {
+                        dotClass = "zen-practice-navigator-dot--incorrect";
+                      }
+
+                      if (isActive) {
+                        dotClass += " zen-practice-navigator-dot--active";
+                      }
+
+                      return (
+                        <button
+                          key={q.id}
+                          type="button"
+                          onClick={() => {
+                            resetAnswerState();
+                            setCurrentIndex(idx);
+                          }}
+                          title={`Question ${idx + 1}`}
+                          aria-current={isActive ? "step" : undefined}
+                          aria-label={"Question " + (idx + 1) + ", " + (isCorrect ? "correct" : isIncorrect ? "incorrect" : "unanswered") + (isBookmarked ? ", bookmarked" : "")}
+                          className={`zen-reader-page-dot ${dotClass}`}
+                        >
+                          {idx + 1}
+                          {isBookmarked && (
+                            <span className="zen-reader-page-dot-bookmark">
+                              <Star size={6} />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+<div className="navigator-legend" aria-hidden="true"><span><i className="legend-correct" />Correct</span><span><i className="legend-incorrect" />Incorrect</span><span><i />Unanswered</span></div>
+        </aside>
       </div>
 
       {/* Mobile Drawer (Bottom Sheet) */}
       {isDrawerOpen && (
-        <div className="zen-navigator-overlay" onClick={() => setIsDrawerOpen(false)}>
-          <div className="zen-navigator-drawer" onClick={(e) => e.stopPropagation()}>
+        <dialog ref={navigatorDialogRef} className="ui-dialog zen-navigator-drawer" aria-labelledby="navigator-title" onClose={() => setIsDrawerOpen(false)} onClick={event => { if (event.target === event.currentTarget) setIsDrawerOpen(false); }}>
             <div className="zen-navigator-drawer-header">
-              <h3>Question Navigator</h3>
+              <h2 id="navigator-title">Question Navigator</h2>
               <button
-                aria-label="Close question navigator"
+                className="ui-icon-button" aria-label="Close question navigator"
                 onClick={() => setIsDrawerOpen(false)}
                 type="button"
               >
@@ -889,6 +894,8 @@ export function PracticePage({
                       setIsDrawerOpen(false);
                     }}
                     title={`Question ${idx + 1}`}
+                          aria-current={isActive ? "step" : undefined}
+                          aria-label={"Question " + (idx + 1) + ", " + (isCorrect ? "correct" : isIncorrect ? "incorrect" : "unanswered") + (isBookmarked ? ", bookmarked" : "")}
                     className={`zen-reader-page-dot ${dotClass}`}
                   >
                     {idx + 1}
@@ -901,8 +908,7 @@ export function PracticePage({
                 );
               })}
             </div>
-          </div>
-        </div>
+        </dialog>
       )}
     </AppShell>
   );

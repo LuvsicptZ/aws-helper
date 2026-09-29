@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Send, ArrowLeft, ArrowRight, ChevronLeft, LayoutDashboard, Check, X, ChevronDown, ChevronUp, Bookmark, LayoutGrid, ListChecks, ClipboardList, CalendarX, Moon, Sun } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, Send, ArrowLeft, ArrowRight, ChevronLeft, LayoutDashboard, Check, X, ChevronDown, ChevronUp, Bookmark, LayoutGrid, ListChecks, ClipboardList, CalendarX } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { MarkdownText } from "../components/MarkdownText";
-import { BrandLogo } from "../components/BrandLogo";
+
 import type { ShellRoute } from "../components/AppShell";
 import { questions } from "../data/questions";
 import {
@@ -15,7 +15,7 @@ import { normalizeAnswer, stripChoicePrefix } from "../domain/question";
 import { saveExamSession } from "../db/examRepository";
 import type { PracticeMode } from "../domain/practiceMode";
 import { ANONYMOUS_OWNER_ID } from "../domain/practiceResume";
-import { useTheme } from "../theme/useTheme";
+
 import { supabaseClient } from "../auth/supabaseClient";
 import { syncExamSessionsWithSupabase } from "../sync/supabaseExamSync";
 
@@ -64,7 +64,7 @@ export function ExamPage({
   onExamClick,
   onNavigate,
 }: ExamPageProps) {
-  const { isDark, toggleTheme } = useTheme();
+
   const [examId] = useState(createExamId);
   const [startedAt] = useState(() => new Date().toISOString());
   const [remainingSeconds, setRemainingSeconds] = useState(EXAM_DURATION_SECONDS);
@@ -72,8 +72,17 @@ export function ExamPage({
   const [answers, setAnswers] = useState<Record<number, ChoiceKey[]>>({});
   const [submittedAt, setSubmittedAt] = useState<string>();
   const [isSaving, setIsSaving] = useState(false);
+  const [examSaveError, setExamSaveError] = useState<string>();
   const [isNavigatorExpanded, setIsNavigatorExpanded] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const navigatorDialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const dialog = navigatorDialogRef.current;
+    dialog?.showModal();
+    return () => { dialog?.close(); previousFocus?.focus(); };
+  }, [isDrawerOpen]);
   const [examQuestionIds] = useState(() =>
     createExamQuestionIds(questions.map((question) => question.id)),
   );
@@ -85,6 +94,15 @@ export function ExamPage({
     [examQuestionIds],
   );
   const question = examQuestions[currentIndex];
+  const examPageRef = useRef<HTMLElement>(null);
+  const previousQuestionId = useRef(question?.id);
+  useEffect(() => {
+    if (previousQuestionId.current === question?.id) return;
+    const container = examPageRef.current?.closest(".app-shell-main");
+    if (container instanceof HTMLElement) container.scrollTop = 0;
+    examPageRef.current?.querySelector<HTMLElement>("#question-title")?.focus({ preventScroll: true });
+    previousQuestionId.current = question?.id;
+  }, [question?.id]);
   const selected = question ? answers[question.id] ?? [] : [];
   const score = submittedAt ? scoreExam(examQuestions, answers) : undefined;
 
@@ -116,6 +134,8 @@ export function ExamPage({
           },
         );
       }
+    } catch {
+      setExamSaveError("We could not save your exam result. Keep this page open to review your answers.");
     } finally {
       setIsSaving(false);
     }
@@ -192,52 +212,31 @@ export function ExamPage({
     >
       {/* Mobile Top Header */}
       {examQuestions.length > 0 && (
-        <header className="zen-mobile-header lg:hidden">
-          <button onClick={onDashboardClick} className="zen-mobile-header-back" type="button">
+        <header className="zen-mobile-header">
+          <button aria-label="Back to dashboard" onClick={onDashboardClick} className="zen-mobile-header-back" type="button">
             <ChevronLeft size={20} />
           </button>
           <span className="zen-mobile-header-title">
             Question {currentIndex + 1} of {examQuestions.length}
           </span>
           <div className="zen-mobile-header-actions">
-            <div className="flex items-center text-xs font-semibold mr-2 tabular-nums opacity-80">
+            <div className="exam-timer" role="timer" aria-label="Time remaining">
               {formatTime(remainingSeconds)}
             </div>
-            <button
-              aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              className="zen-mobile-header-action"
-              onClick={toggleTheme}
-              title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              type="button"
-            >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <button onClick={() => setIsDrawerOpen(true)} className="zen-mobile-header-action" type="button">
+            {!submittedAt && <button className="ui-button ui-button--secondary exam-submit-button" type="button" aria-label="Submit Exam" title="Submit Exam" onClick={submitExamWithConfirmation} disabled={isSaving}><Send size={18} aria-hidden="true" />Submit exam</button>}
+            <button aria-label="Open question navigator" aria-haspopup="dialog" aria-expanded={isDrawerOpen} onClick={() => setIsDrawerOpen(true)} className="zen-mobile-header-action" type="button">
               <LayoutGrid size={18} />
             </button>
           </div>
         </header>
       )}
 
-      <div className="zen-practice-page" data-focused-practice-layout>
+      <div className="ui-product-surface zen-practice-page zen-practice-page--exam" data-focused-practice-layout>
         <div className="zen-practice-progress" aria-hidden="true">
           <span style={{ width: `${progressPercent}%` }} />
         </div>
 
         <aside className="zen-practice-sidebar flex flex-col" aria-label="Exam session">
-          <div className="flex h-16 items-center justify-between gap-3 px-6 shrink-0">
-            <BrandLogo className="h-11 w-auto" onClick={onDashboardClick} />
-            <button
-              aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              className="zen-practice-theme-button"
-              onClick={toggleTheme}
-              title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-              type="button"
-            >
-              {isDark ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-          </div>
-
           <div className="flex-1 overflow-y-auto px-3 py-4">
             <div className="space-y-6">
               <div>
@@ -305,7 +304,7 @@ export function ExamPage({
               </div>
 
               <div>
-                <h3 className="mb-2 px-3 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-gray-400">
+                <h3 className="zen-reader-nav-section">
                   Session Stats
                 </h3>
                 <dl className="zen-practice-stats px-3">
@@ -321,85 +320,14 @@ export function ExamPage({
                   </div>
                 </dl>
 
-                {!submittedAt && (
-                  <button
-                    type="button"
-                    onClick={submitExamWithConfirmation}
-                    disabled={isSaving}
-                    className="mt-6 flex w-full min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors disabled:opacity-50"
-                  >
-                    <Send size={15} />
-                    <span>Submit Exam</span>
-                  </button>
-                )}
+
               </div>
 
-              {/* Sidebar Question Navigator */}
-              {examQuestions.length > 0 && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setIsNavigatorExpanded(!isNavigatorExpanded)}
-                    className="zen-reader-nav-toggle"
-                  >
-                    <span className="zen-reader-nav-heading">
-                      <span className="zen-reader-nav-section !mb-0 !px-0">
-                        Question Navigator
-                      </span>
-                      <span className="zen-reader-nav-count">
-                        {currentIndex + 1} / {examQuestions.length}
-                      </span>
-                    </span>
-                    <span className="zen-reader-nav-toggle-icon">
-                      {isNavigatorExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </span>
-                  </button>
-                  <div
-                    className={`zen-practice-navigator-grid zen-reader-page-grid ${
-                      isNavigatorExpanded ? "zen-practice-navigator-grid--expanded" : ""
-                    }`}
-                  >
-                    {examQuestions.map((q, idx) => {
-                      const isAnswered = (answers[q.id]?.length ?? 0) > 0;
-                      const isActive = idx === currentIndex;
-                      
-                      let dotClass = "zen-practice-navigator-dot";
-                      
-                      if (submittedAt) {
-                        const isCorrect = isCorrectAnswerSelected(q.answer, answers[q.id] ?? []);
-                        dotClass = isCorrect
-                          ? "zen-practice-navigator-dot--correct"
-                          : "zen-practice-navigator-dot--incorrect";
-                      } else if (isAnswered) {
-                        dotClass = "zen-practice-navigator-dot--answered";
-                      }
-                      
-                      if (isActive) {
-                        dotClass += " zen-practice-navigator-dot--active";
-                      }
-
-                      return (
-                        <button
-                          key={q.id}
-                          type="button"
-                          onClick={() => {
-                            setCurrentIndex(idx);
-                          }}
-                          title={`Question ${idx + 1}`}
-                          className={`zen-reader-page-dot ${dotClass}`}
-                        >
-                          {idx + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </aside>
 
-        <main className="zen-practice-main">
+        <article ref={examPageRef} className="zen-practice-main" aria-label="Question content">
           {question ? (
             <>
               <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
@@ -418,29 +346,16 @@ export function ExamPage({
               </div>
 
               {submittedAt && score && (
-                <section
-                  aria-label="Exam score summary"
-                  className="rounded-2xl border border-emerald-200 dark:border-emerald-900/30 bg-emerald-50/80 dark:bg-emerald-950/20 p-5 shadow-sm sm:p-6 mb-8 text-slate-800 dark:text-emerald-200"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white">
-                      <CheckCircle2 size={20} />
-                    </span>
-                    <div>
-                      <p className="text-base font-semibold text-emerald-950 dark:text-emerald-300">
-                        Score {score.scorePercent}%
-                      </p>
-                      <p className="mt-1 text-sm text-gray-700 dark:text-emerald-400/80">
-                        {score.correctQuestions} correct / {score.totalQuestions} total.
-                        {isSaving ? " Saving..." : " Saved locally."}
-                      </p>
-                    </div>
-                  </div>
+                <section aria-label="Exam score summary" className="exam-score" role="status">
+                  <div className="exam-score-top"><CheckCircle2 size={32} strokeWidth={1.5} aria-hidden="true" /><div><p className="ui-eyebrow">Exam complete</p><h2>Score {score.scorePercent}%</h2></div></div>
+                  <p>{score.correctQuestions} correct / {score.totalQuestions} total. {isSaving ? "Saving..." : examSaveError ? "Your result is shown below." : "Saved locally."}</p>
+                  <dl className="exam-score-stats"><div><dt>Correct answers</dt><dd>{score.correctQuestions}</dd></div><div><dt>Incorrect / unanswered</dt><dd>{score.incorrectQuestions}</dd></div><div><dt>Time used</dt><dd>{formatTime(EXAM_DURATION_SECONDS - remainingSeconds)}</dd></div></dl>
+                  {examSaveError && <p className="ui-message ui-message--error" role="alert">{examSaveError}</p>}
+                  <p className="mt-6">Review each question below to understand your answers.</p>
                 </section>
               )}
-
               <section className="zen-question-block" aria-labelledby="question-title">
-                <h1 id="question-title">"{question.stem}"</h1>
+                <h1 id="question-title" tabIndex={-1}>Question {currentIndex + 1}</h1><p className="question-stem">{question.stem}</p><p className="answer-hint">Choose {Array.isArray(question.answer) ? `${question.answer.length} answers` : "one answer"}.</p>
               </section>
 
               <section className="zen-options-list" aria-label="Answer options">
@@ -463,7 +378,7 @@ export function ExamPage({
                       disabled={Boolean(submittedAt)}
                       onClick={() => {
                         if (submittedAt) return;
-                        
+
                         const required = normalizeAnswer(question.answer).length;
                         let nextSelected: ChoiceKey[];
                         if (required === 1) {
@@ -475,7 +390,7 @@ export function ExamPage({
                             nextSelected = [...selected, choice].slice(-required);
                           }
                         }
-                        
+
                         handleAnswerChange(nextSelected);
                       }}
                       className={[
@@ -497,6 +412,8 @@ export function ExamPage({
                       </span>
                       <span className="zen-option-copy">
                         {stripChoicePrefix(choice, question.options[choice] ?? "")}
+                          {shouldShowCorrect && <span className="option-state">Correct answer</span>}
+                          {isIncorrectSelected && <span className="option-state">Your answer · Incorrect</span>}
                       </span>
                     </button>
                   );
@@ -523,7 +440,7 @@ export function ExamPage({
                 </section>
               )}
 
-              <div className="zen-practice-actions flex justify-between items-center mt-8">
+              <div className="zen-practice-actions">
                 <button
                   type="button"
                   onClick={goToPrevious}
@@ -561,16 +478,83 @@ export function ExamPage({
               </div>
             </>
           ) : null}
-        </main>
+        </article>
+        <aside className="reader-index" aria-label="Question navigation">
+              {/* Sidebar Question Navigator */}
+              {examQuestions.length > 0 && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsNavigatorExpanded(!isNavigatorExpanded)}
+                    aria-expanded={isNavigatorExpanded}
+                    aria-controls="question-index"
+                    className="zen-reader-nav-toggle"
+                  >
+                    <span className="zen-reader-nav-heading">
+                      <span className="zen-reader-nav-section !mb-0 !px-0">
+                        Question Navigator
+                      </span>
+                      <span className="zen-reader-nav-count">
+                        {currentIndex + 1} / {examQuestions.length}
+                      </span>
+                    </span>
+                    <span className="zen-reader-nav-toggle-icon">
+                      {isNavigatorExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </span>
+                  </button>
+                  <div
+                    id="question-index" className={`zen-practice-navigator-grid zen-reader-page-grid ${
+                      isNavigatorExpanded ? "zen-practice-navigator-grid--expanded" : ""
+                    }`}
+                  >
+                    {examQuestions.map((q, idx) => {
+                      const isAnswered = (answers[q.id]?.length ?? 0) > 0;
+                      const isActive = idx === currentIndex;
+
+                      let dotClass = "zen-practice-navigator-dot";
+
+                      if (submittedAt) {
+                        const isCorrect = isCorrectAnswerSelected(q.answer, answers[q.id] ?? []);
+                        dotClass = isCorrect
+                          ? "zen-practice-navigator-dot--correct"
+                          : "zen-practice-navigator-dot--incorrect";
+                      } else if (isAnswered) {
+                        dotClass = "zen-practice-navigator-dot--answered";
+                      }
+
+                      if (isActive) {
+                        dotClass += " zen-practice-navigator-dot--active";
+                      }
+
+                      return (
+                        <button
+                          key={q.id}
+                          type="button"
+                          onClick={() => {
+                            setCurrentIndex(idx);
+                          }}
+                          title={`Question ${idx + 1}`}
+                          aria-current={isActive ? "step" : undefined}
+                          aria-label={"Question " + (idx + 1) + ", " + (dotClass.includes("--correct") ? "correct" : dotClass.includes("--incorrect") ? "incorrect" : isAnswered ? "answered" : "unanswered")}
+                          className={`zen-reader-page-dot ${dotClass}`}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+<div className="navigator-legend" aria-hidden="true"><span><i className="legend-correct" />Correct</span><span><i className="legend-incorrect" />Incorrect</span><span><i />Unanswered</span></div>
+        </aside>
       </div>
 
       {/* Mobile Drawer (Bottom Sheet) */}
       {isDrawerOpen && (
-        <div className="zen-navigator-overlay" onClick={() => setIsDrawerOpen(false)}>
-          <div className="zen-navigator-drawer" onClick={(e) => e.stopPropagation()}>
+        <dialog ref={navigatorDialogRef} className="ui-dialog zen-navigator-drawer" aria-labelledby="navigator-title" onClose={() => setIsDrawerOpen(false)} onClick={event => { if (event.target === event.currentTarget) setIsDrawerOpen(false); }}>
             <div className="zen-navigator-drawer-header">
-              <h3>Question Navigator</h3>
-              <button onClick={() => setIsDrawerOpen(false)} type="button">
+              <h2 id="navigator-title">Question Navigator</h2>
+              <button className="ui-icon-button" aria-label="Close question navigator" onClick={() => setIsDrawerOpen(false)} type="button">
                 <X size={18} />
               </button>
             </div>
@@ -602,6 +586,8 @@ export function ExamPage({
                       setIsDrawerOpen(false);
                     }}
                     title={`Question ${idx + 1}`}
+                          aria-current={isActive ? "step" : undefined}
+                          aria-label={"Question " + (idx + 1) + ", " + (dotClass.includes("--correct") ? "correct" : dotClass.includes("--incorrect") ? "incorrect" : isAnswered ? "answered" : "unanswered")}
                     className={`zen-reader-page-dot ${dotClass}`}
                   >
                     {idx + 1}
@@ -609,8 +595,7 @@ export function ExamPage({
                 );
               })}
             </div>
-          </div>
-        </div>
+        </dialog>
       )}
     </AppShell>
   );

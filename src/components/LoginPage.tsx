@@ -213,242 +213,30 @@ export function LoginPage() {
   }
 
   return (
-    <main
-      data-practice-gateway
-      className="ui-product-surface login-calm-page login-auth-page min-h-screen flex flex-col relative"
-    >
-      {/* Floating Theme Switcher top bar */}
-      <div className="login-auth-theme absolute top-6 right-6 z-50 flex items-center gap-3">
-        <button
-          type="button"
-          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-          className="dashboard-prototype__theme bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 shadow-sm"
-          onClick={toggleTheme}
-          title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-        >
-          {isDark ? (
-            <Sun aria-hidden="true" size={13} />
-          ) : (
-            <Moon aria-hidden="true" size={13} />
-          )}
-          <span>{isDark ? "Light mode" : "Dark mode"}</span>
-        </button>
-      </div>
-
-      {/* Main split grid */}
-      <div
-        data-login-shell
-        className="login-auth-grid flex-1 grid grid-cols-1 lg:grid-cols-[1.18fr_0.92fr]"
-      >
-        
-        {/* Left Side: Visual Backdrop */}
-        <section
-          data-login-visual
-          className="login-auth-visual relative flex flex-col justify-between p-8 sm:p-12 lg:p-20 bg-cover bg-center min-h-[260px] sm:min-h-[320px] lg:min-h-screen"
-          style={{ backgroundImage: 'url("/login_backdrop.jpg")' }}
-        >
-          {/* Dark scrim overlay for visual contrast */}
-          <div className="login-auth-scrim absolute inset-0 bg-slate-950/20 pointer-events-none" />
-
-
-
-          {/* Slogan Content (Top-left aligned) */}
-          <div data-login-promise className="relative z-10 max-w-2xl">
-            <span className="text-[10px] lg:text-xs font-black tracking-[0.2em] lg:tracking-[0.25em] text-orange-500 uppercase block mb-3 lg:mb-4">
-              Master AWS.
-            </span>
-            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-white leading-tight lg:leading-[1.08] tracking-tight lg:tracking-[-0.03em]">
-              Build confidence.
-              <br />
-              Ace <span className="text-orange-500">the cloud.</span>
-            </h1>
-            <p className="mt-4 lg:mt-6 text-sm sm:text-base lg:text-lg font-medium text-slate-200/90 leading-relaxed">
-              Focused practice. Smarter revision. Better results.
-            </p>
-          </div>
-
+    <div className="ui-product-surface auth-page" data-practice-gateway>
+      <a href="#login-form" className="skip-link">Skip to sign in</a>
+      <header className="auth-topbar"><BrandLogo className="shell-logo" /><span className="auth-topbar-label">AWS Solutions Architect Associate</span><button className="ui-button ui-button--tertiary" type="button" aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>{isDark ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}<span>{isDark ? "Light mode" : "Dark mode"}</span></button></header>
+      <main className="auth-layout" data-login-shell>
+        <section className="auth-story" data-login-visual>
+          <div data-login-promise><span className="ui-eyebrow">Your path to SAA-C03</span><h1>Build knowledge.<br />Find your confidence.</h1><p>Make room for your next step. Practice AWS architecture, learn from your answers, and test your understanding.</p></div>
+          <div className="auth-feature-cards"><article className="auth-feature auth-feature--coral"><span className="ui-eyebrow">Practice</span><h2>One question.<br />More understanding.</h2><p>Explanations, bookmarks, and notes keep your learning together.</p><div className="auth-orbit" aria-hidden="true"><span /><span /><span /><b>AWS</b></div></article><article className="auth-feature auth-feature--blue"><span className="ui-eyebrow">Put it to the test</span><h2>65 questions.<br />130 minutes.</h2><p>A timed mock exam to understand where you stand.</p><span className="auth-exam-mark" aria-hidden="true">SAA<br /><b>C03</b></span></article></div>
         </section>
-
-        {/* Right Side: Form Panel */}
-        <section 
-          id="access"
-          className="login-auth-panel relative flex flex-col justify-center items-center px-6 py-12 sm:px-16 lg:px-20 bg-[#fdfcfb] dark:bg-[#0d121a] lg:max-h-screen lg:overflow-y-auto min-h-0 lg:min-h-screen w-full"
-        >
-          {/* Form wrapper */}
-          <div
-            data-login-form
-            className="login-auth-form-stack w-full max-w-[430px] relative z-10"
-          >
-            
-            {/* Official Brand Logo header */}
-            <div className="mb-8">
-              <BrandLogo className="-ml-1.5 h-[52px] w-auto shrink-0 dark:brightness-110" />
-            </div>
-
-            {/* Headers */}
-            <header className="mb-8">
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                {isSignUp ? "Create account" : "Ready for the next question?"}
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-normal">
-                {isSignUp
-                  ? "Create an account to save your practice."
-                  : "Sign in and continue where you left off."}
-              </p>
-            </header>
-
-            {/* Auth Form */}
-            <form
-              className="space-y-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void submitAuthForm();
-              }}
-            >
-              {/* Email field */}
-              <div>
-                <label
-                  htmlFor="login-email"
-                  className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block"
-                >
-                  Email
-                </label>
-                <div className="login-calm-field bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center px-3 min-h-[44px]">
-                  <span className="text-slate-400 mr-2.5">
-                    <FieldIcon type="email" />
-                  </span>
-                  <input
-                    id="login-email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="you@example.com"
-                    className="login-calm-field-control flex-1 bg-transparent border-0 text-sm text-slate-800 dark:text-white placeholder-slate-400 outline-none w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Password field */}
-              <div>
-                <label
-                  htmlFor="login-password"
-                  className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block"
-                >
-                  Password
-                </label>
-                <div className="login-calm-field bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center px-3 min-h-[44px]">
-                  <span className="text-slate-400 mr-2.5">
-                    <FieldIcon type="password" />
-                  </span>
-                  <input
-                    id="login-password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    autoComplete={isSignUp ? "new-password" : "current-password"}
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder=""
-                    className="login-calm-field-control flex-1 bg-transparent border-0 text-sm text-slate-800 dark:text-white placeholder-slate-400 outline-none w-full"
-                  />
-                  <button
-                    type="button"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    onClick={() => setShowPassword((current) => !current)}
-                    className="ml-1 inline-flex min-h-11 min-w-11 items-center justify-center text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:hover:text-slate-200"
-                  >
-                    <EyeIcon hidden={showPassword} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Forgot password */}
-              <div className="flex justify-end">
-                {!isSignUp ? (
-                  <button
-                    type="button"
-                    onClick={() => void sendPasswordReset()}
-                    disabled={isSubmitting || !supabaseClient || !email.trim()}
-                    className="text-[11px] font-semibold text-slate-500 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:text-slate-500 dark:hover:text-slate-300"
-                  >
-                    Forgot password?
-                  </button>
-                ) : null}
-              </div>
-
-              {/* Error or success messages */}
-              {status && (
-                <div
-                  aria-live={statusKind === "success" ? "polite" : undefined}
-                  role={statusKind === "error" ? "alert" : "status"}
-                  className={`p-3 rounded-xl text-xs font-semibold border ${
-                    statusKind === "error" 
-                      ? "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400" 
-                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                  }`}
-                >
-                  {status}
-                </div>
-              )}
-
-              {/* Primary action button */}
-              <button
-                type="submit"
-                disabled={!isEmailActionReady}
-                className="relative mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-slate-950 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 dark:disabled:hover:bg-white"
-              >
-                <span>
-                  {isSubmitting
-                    ? "Please wait..."
-                    : isSignUp
-                      ? "Create account"
-                      : "Sign in"}
-                </span>
-                <ArrowIcon />
-              </button>
-            </form>
-
-            {/* Divider */}
-            <div className="login-calm-divider my-6 flex items-center gap-3">
-              <span className="h-[1px] bg-slate-200 dark:bg-slate-800/80 flex-1" />
-              <em className="text-[10px] not-italic font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">or</em>
-              <span className="h-[1px] bg-slate-200 dark:bg-slate-800/80 flex-1" />
-            </div>
-
-            {/* Google oauth button */}
-            <button
-              type="button"
-              onClick={() => void signInWithGoogle()}
-              disabled={isSubmitting || !supabaseClient}
-              className="w-full min-h-[44px] bg-transparent border border-slate-200 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-900/40 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2.5 transition-all cursor-pointer"
-            >
-              <GoogleIcon />
-              Continue with Google
-            </button>
-
-            {/* Switch sign up / sign in */}
-            <p className="text-center text-xs font-semibold text-slate-500 dark:text-slate-500 mt-8">
-              {isSignUp ? "Already have an account? " : "Don't have an account? "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode(isSignUp ? "sign-in" : "sign-up");
-                  setPassword("");
-                  setShowPassword(false);
-                  setStatus(undefined);
-                  setStatusKind("success");
-                }}
-                className="text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 font-bold hover:underline transition-colors ml-1 cursor-pointer"
-              >
-                {isSignUp ? "Sign in" : "Sign up"}
-              </button>
-            </p>
-
-          </div>
+        <section className="auth-form-panel" aria-labelledby="login-heading" id="login-form" tabIndex={-1} data-login-form>
+          <span className="ui-eyebrow">{isSignUp ? "Start your learning journey" : "Pick up where you left off"}</span><h2 id="login-heading">{isSignUp ? "Create account" : "Ready for the next question?"}</h2><p className="ui-muted">{isSignUp ? "Create an account to save your practice." : "Sign in and continue where you left off."}</p>
+          <form onSubmit={event => { event.preventDefault(); void submitAuthForm(); }} aria-busy={isSubmitting}>
+            <div className="ui-field"><label htmlFor="login-email">Email</label><div className="ui-input-wrap"><span aria-hidden="true"><FieldIcon type="email" /></span><input className="login-calm-field-control" id="login-email" type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} aria-invalid={statusKind === "error" && Boolean(status)} aria-describedby={status ? "login-status" : undefined} /></div></div>
+            <div className="ui-field"><label htmlFor="login-password">Password</label><div className="ui-input-wrap"><span aria-hidden="true"><FieldIcon type="password" /></span><input className="login-calm-field-control" id="login-password" type={showPassword ? "text" : "password"} required autoComplete={isSignUp ? "new-password" : "current-password"} value={password} onChange={e => setPassword(e.target.value)} aria-invalid={statusKind === "error" && Boolean(status)} aria-describedby={status ? "login-status" : undefined} /><button type="button" className="input-visibility min-h-11 min-w-11" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}><EyeIcon hidden={showPassword} /></button></div></div>
+            {!isSignUp && <div className="auth-forgot"><button className="ui-text-button" type="button" disabled={isSubmitting || !supabaseClient || !email.trim()} onClick={() => void sendPasswordReset()}>Forgot password?</button></div>}
+            {status && <div id="login-status" className={`ui-message ui-message--${statusKind}`} role={statusKind === "error" ? "alert" : "status"} aria-live="polite">{status}</div>}
+            <button className="ui-button ui-button--primary auth-submit" type="submit" disabled={!isEmailActionReady}>{isSubmitting ? "Please wait..." : isSignUp ? "Create account" : "Sign in"}<ArrowIcon /></button>
+          </form>
+          <div className="auth-divider"><span />or<span /></div>
+          <button className="ui-button ui-button--secondary auth-google" type="button" disabled={isSubmitting || !supabaseClient} onClick={() => void signInWithGoogle()}><GoogleIcon />Continue with Google</button>
+          <p className="auth-switch">{isSignUp ? "Already have an account? " : "Don't have an account? "}<button type="button" className="ui-text-button" disabled={isSubmitting} onClick={() => { setMode(isSignUp ? "sign-in" : "sign-up"); setPassword(""); setShowPassword(false); setStatus(undefined); setStatusKind("success"); }}>{isSignUp ? "Sign in" : "Sign up"}</button></p>
+          <p className="auth-footnote">Your progress, bookmarks, and notes follow your account.</p>
         </section>
-      </div>
-
-    </main>
+      </main>
+      <footer className="auth-footer"><span>AWS Mastery</span><span>Focused practice for SAA-C03.</span></footer>
+    </div>
   );
 }

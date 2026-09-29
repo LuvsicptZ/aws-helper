@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowRight, Moon, Sun, RotateCcw, ClipboardList, LogOut } from "lucide-react";
+import { ArrowRight, RotateCcw, ClipboardList, BookOpen, Bookmark, CalendarX } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import type { ShellRoute } from "../components/AppShell";
 import { AnonymousProgressPrompt } from "../components/AnonymousProgressPrompt";
-import { AuthPanel } from "../components/AuthPanel";
+
 import { totalQuestions } from "../data/questions";
 import { calculateDashboardStats } from "../domain/dashboard";
 import type { PracticeMode } from "../domain/practiceMode";
@@ -13,8 +13,8 @@ import { getAllProgress } from "../db/progressRepository";
 import { getAllExamSessions } from "../db/examRepository";
 import type { ExamSession } from "../domain/exam";
 import { useAuth } from "../auth/authContext";
-import { useTheme } from "../theme/useTheme";
-import { supabaseClient } from "../auth/supabaseClient";
+
+
 
 type DashboardPageProps = {
   onNavigate: (route: ShellRoute) => void;
@@ -52,7 +52,7 @@ export function DashboardPage({
   onResetProgress,
 }: DashboardPageProps) {
   const { session } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+
   const [progressList, setProgressList] = useState<QuestionProgress[]>([]);
   const [examSessions, setExamSessions] = useState<ExamSession[]>([]);
 
@@ -83,268 +83,30 @@ export function DashboardPage({
 
 
 
+  const modes = [
+    { title: "Question bank", eyebrow: "01 / Practice", description: `${stats.totalQuestions.toLocaleString()} questions. One step at a time.`, icon: BookOpen, tone: "coral", action: () => onPracticeClick("sequential"), label: "Browse questions" },
+    { title: "Mock exam", eyebrow: "02 / Test yourself", description: "65 questions · 130 minutes", icon: ClipboardList, tone: "blue", action: onExamClick, label: "Start exam" },
+    { title: "Review incorrect", eyebrow: "03 / Learn again", description: `${stats.incorrectQuestions} incorrect questions`, icon: CalendarX, tone: "magenta", action: () => onPracticeClick("incorrect"), label: "Review incorrect questions" },
+    { title: "Review bookmarked", eyebrow: "04 / Your collection", description: `${stats.bookmarkedQuestions} bookmarked questions`, icon: Bookmark, tone: "purple", action: () => onPracticeClick("favorite"), label: "Review bookmarks" },
+  ];
   return (
-    <AppShell
-      active="dashboard"
-      hideHeader
-      onNavigate={onNavigate}
-      onDashboardClick={() => onNavigate("dashboard")}
-      onPracticeClick={onPracticeClick}
-      onExamClick={onExamClick}
-      sidebarBadges={{
-        incorrect: stats.incorrectQuestions,
-        favorite: stats.bookmarkedQuestions,
-      }}
-      variant="studio"
-    >
+    <AppShell active="dashboard" onNavigate={onNavigate} onDashboardClick={() => onNavigate("dashboard")} onPracticeClick={onPracticeClick} onExamClick={onExamClick} sidebarBadges={{ incorrect: stats.incorrectQuestions, favorite: stats.bookmarkedQuestions }} variant="studio">
       <div className="ui-product-surface minimal-dashboard">
-        {showAnonymousProgressPrompt &&
-        onMergeAnonymousProgress &&
-        onKeepAnonymousProgressSeparate ? (
-          <AnonymousProgressPrompt
-            onMerge={onMergeAnonymousProgress}
-            onKeepSeparate={onKeepAnonymousProgressSeparate}
-          />
-        ) : null}
-
-        {/* Minimal Header */}
-        <div className="minimal-header">
-          <div className="minimal-title">
-            <span className="md:hidden">AWS Mastery</span>
+        {showAnonymousProgressPrompt && onMergeAnonymousProgress && onKeepAnonymousProgressSeparate && <AnonymousProgressPrompt onMerge={onMergeAnonymousProgress} onKeepSeparate={onKeepAnonymousProgressSeparate} />}
+        <section className="minimal-hero-container" aria-labelledby="dashboard-title">
+          <div className="dashboard-intro"><span className="ui-eyebrow">AWS SAA-C03 / Your learning space</span><h1 id="dashboard-title">Build knowledge.<br />Find your confidence.</h1><p>Welcome back, {displayName}. Your next question is ready.</p></div>
+          <div className="dashboard-resume">
+            <div><p className="ui-eyebrow">Continue where you left off</p><h2>{resumeQuestionLabel}</h2><p>AWS Solutions Architect Associate</p></div>
+            <div className="dashboard-resume-actions"><button className="ui-button ui-button--primary" type="button" onClick={() => onPracticeClick(resumeMode)}>Continue practice <ArrowRight size={16} aria-hidden="true" /></button><button className="ui-button ui-button--secondary" type="button" onClick={() => onPracticeClick("sequential")}>Browse questions</button></div>
           </div>
-          <div className="flex items-center gap-4">
-            {onResetProgress && (
-              <button
-                type="button"
-                className="text-xs font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-                onClick={onResetProgress}
-                title="Reset All Progress"
-              >
-                <RotateCcw size={12} />
-                <span className="hidden sm:inline">Reset</span>
-              </button>
-            )}
-            <button
-              type="button"
-              className="text-xs font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-              onClick={toggleTheme}
-              title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-            >
-              {isDark ? <Sun size={13} /> : <Moon size={13} />}
-              <span className="hidden sm:inline">Theme</span>
-            </button>
-            <div className="h-4 w-px bg-gray-200 dark:bg-gray-800" />
-            {session ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                  {displayName}
-                </span>
-                <button
-                  onClick={() => void supabaseClient?.auth.signOut()}
-                  className="text-xs font-semibold text-red-500 hover:text-red-700 cursor-pointer bg-transparent border-0 flex items-center gap-1"
-                  title="Sign out"
-                >
-                  <LogOut size={12} />
-                  <span className="hidden sm:inline">Sign out</span>
-                </button>
-              </div>
-            ) : (
-              <AuthPanel />
-            )}
-          </div>
-        </div>
-
-        {/* Main "Continue where you left off" Hero Area */}
-        <div className="minimal-hero-container">
-          <div className="minimal-hero-content">
-            <span className="minimal-hero-eyebrow">Continue where you left off</span>
-            <h1 className="minimal-hero-title">{resumeQuestionLabel}</h1>
-            <p className="minimal-hero-subtitle">
-              AWS Solutions Architect Associate · {stats.answeredQuestions} of {stats.totalQuestions}
-            </p>
-
-            {/* Custom Premium Progress Slider */}
-            <div className="minimal-progress-wrapper">
-              <div className="minimal-progress-bar-container">
-                <div
-                  className="minimal-progress-fill"
-                  style={{ width: `${progressPercent}%` }}
-                />
-                <div
-                  className="minimal-progress-thumb"
-                  style={{ left: `${progressPercent}%` }}
-                />
-              </div>
-              <div className="minimal-progress-percentage">
-                {progressPercent}%
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="minimal-btn-stack">
-              <button
-                type="button"
-                onClick={() => onPracticeClick(resumeMode)}
-                className="minimal-btn-primary"
-              >
-                <span>Continue practice</span>
-                <ArrowRight size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onPracticeClick("sequential")}
-                className="minimal-btn-secondary"
-              >
-                Browse questions
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Mock Exam & Review List */}
-        <div className="minimal-list-section">
-          <div className="minimal-list-row">
-            <div className="minimal-row-info">
-              <span className="minimal-row-title">Mock exam</span>
-              <span className="minimal-row-meta">65 questions · 130 minutes</span>
-            </div>
-            <button
-              onClick={onExamClick}
-              className="minimal-row-action"
-              type="button"
-            >
-              <span>Start</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-
-          <div className="minimal-list-row">
-            <div className="minimal-row-info">
-              <span className="minimal-row-title">Review incorrect</span>
-              <span className="minimal-row-meta">
-                {stats.incorrectQuestions} incorrect questions
-              </span>
-            </div>
-            <button
-              onClick={() => onPracticeClick("incorrect")}
-              className="minimal-row-action"
-              type="button"
-            >
-              <span>Open</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-
-          <div className="minimal-list-row">
-            <div className="minimal-row-info">
-              <span className="minimal-row-title">Review bookmarked</span>
-              <span className="minimal-row-meta">
-                {stats.bookmarkedQuestions} bookmarked questions
-              </span>
-            </div>
-            <button
-              onClick={() => onPracticeClick("favorite")}
-              className="minimal-row-action"
-              type="button"
-            >
-              <span>Open</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* Recent Simulator Attempts */}
-        <div className="mt-16">
-          <div className="minimal-hero-eyebrow mb-6">
-            Recent Simulator Attempts
-          </div>
-          
-          {examSessions.length > 0 ? (
-            <div className="minimal-list-section">
-              {examSessions.slice(0, 4).map((sess) => {
-                const dateStr = new Date(sess.startedAt).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                });
-                const totalQ = sess.questionIds.length;
-                const answeredCount = Object.keys(sess.answers).length;
-                
-                let status = "In Progress";
-                let scoreText: string;
-                let isPassed = false;
-                
-                if (sess.submittedAt && sess.score !== undefined) {
-                  const pct = Math.round(sess.score);
-                  status = "Submitted";
-                  scoreText = `${pct}%`;
-                  isPassed = pct >= 72;
-                } else {
-                  scoreText = `${answeredCount} / ${totalQ} answered`;
-                }
-
-                const scoreColorClass = sess.submittedAt 
-                  ? (isPassed ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-amber-600 dark:text-amber-500 font-bold") 
-                  : "text-blue-500 font-bold";
-
-                return (
-                  <button
-                    key={sess.id}
-                    type="button"
-                    aria-label="Open mock exam attempt"
-                    onClick={onExamClick}
-                    className="minimal-list-row minimal-attempt-row"
-                  >
-                    <div className="minimal-row-info minimal-attempt-summary flex-1">
-                      <span className="minimal-row-title text-sm font-semibold">
-                        Mock Exam Simulator
-                      </span>
-                      <span className="text-[10px] text-gray-400 dark:text-slate-500">
-                        {dateStr}
-                      </span>
-                    </div>
-
-                    <div className="minimal-attempt-result text-right">
-                      <span className={`text-sm block ${scoreColorClass}`}>
-                        {scoreText}
-                      </span>
-                      <span
-                        className="minimal-attempt-result-separator"
-                        aria-hidden="true"
-                      >
-                        ·
-                      </span>
-                      <span className="text-[10px] text-gray-400 dark:text-slate-500 block">
-                        {status}
-                      </span>
-                    </div>
-
-                    <span
-                      className="minimal-row-action minimal-attempt-action"
-                    >
-                      <span className="minimal-attempt-action-label">Open</span>
-                      <ArrowRight size={14} />
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 px-4 border border-dashed border-gray-200 dark:border-slate-800/60 rounded-2xl bg-white/10 dark:bg-slate-950/20 text-center max-w-lg mx-auto">
-              <div className="p-3 rounded-2xl bg-gray-100/80 dark:bg-amber-500/5 text-gray-400 dark:text-amber-500/50 mb-4">
-                <ClipboardList size={22} />
-              </div>
-              <span className="text-sm font-bold text-gray-900 dark:text-slate-200 block">
-                No simulator attempts yet
-              </span>
-              <p className="text-xs text-gray-400 dark:text-slate-400 mt-1 max-w-sm leading-relaxed">
-                Complete a timed Mock Exam to test your readiness and track your scores here.
-              </p>
-            </div>
-          )}
-        </div>
+          <div className="dashboard-progress"><div className="progress-caption"><span>Question bank completion</span><span>{stats.answeredQuestions} of {stats.totalQuestions} · {progressPercent}%</span></div><div className="minimal-progress-bar-container" role="progressbar" aria-label="Question bank completion" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progressPercent}%` }} /><span className="minimal-progress-thumb" aria-hidden="true" /></div></div>
+        </section>
+        <dl className="dashboard-stats" aria-label="Practice statistics">{[[stats.answeredQuestions, "Questions answered"], [stats.remainingQuestions, "Questions remaining"], [stats.answeredQuestions ? `${stats.accuracyPercent}%` : "—", "Answer accuracy"], [examSessions.filter(s => s.submittedAt).length, "Exams completed"]].map(([value, label]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+        <section className="dashboard-modes" aria-labelledby="modes-title"><div className="section-heading"><div><span className="ui-eyebrow">A way forward</span><h2 id="modes-title">Choose your practice.</h2></div><p>Build understanding, then put it to the test.</p></div><div className="mode-matrix">{modes.map(({ title, eyebrow, description, icon: Icon, tone, action, label }) => <article key={title} className={`mode-card mode-card--${tone}`}><div className="mode-card-top"><span>{eyebrow}</span><Icon size={24} strokeWidth={1.5} aria-hidden="true" /></div><h3>{title}</h3><p>{description}</p><button type="button" onClick={action} className="ui-button mode-card-action" aria-label={label}>{title === "Mock exam" ? "Start" : "Open"}<ArrowRight size={16} aria-hidden="true" /></button></article>)}</div></section>
+        <section className="dashboard-history" aria-labelledby="history-title"><div className="section-heading"><div><span className="ui-eyebrow">Keep track</span><h2 id="history-title">Recent Simulator Attempts</h2></div>{onResetProgress && <button className="ui-button ui-button--tertiary" type="button" onClick={() => void onResetProgress()} aria-label="Reset All Progress"><RotateCcw size={16} aria-hidden="true" />Reset progress</button>}</div>
+          {examSessions.length ? <div className="history-list">{examSessions.slice(0, 4).map(sess => <button key={sess.id} type="button" onClick={onExamClick} aria-label="Open mock exam attempt" className="history-row"><span className="history-icon"><ClipboardList size={20} aria-hidden="true" /></span><span className="history-summary"><strong>Mock Exam Simulator</strong><time dateTime={sess.startedAt}>{new Date(sess.startedAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</time></span><span className="history-score"><strong>{sess.submittedAt && sess.score !== undefined ? `${Math.round(sess.score)}%` : `${Object.keys(sess.answers).length} / ${sess.questionIds.length} answered`}</strong><span>{sess.submittedAt ? "Submitted" : "In Progress"}</span></span><span className="minimal-attempt-action-label">Open <ArrowRight size={16} aria-hidden="true" /></span></button>)}</div> : <div className="ui-empty history-empty"><ClipboardList size={32} strokeWidth={1.5} aria-hidden="true" /><h3>No simulator attempts yet</h3><p>Complete a timed Mock Exam to test your readiness and track your scores here.</p><button className="ui-button ui-button--secondary" onClick={onExamClick} type="button">Take your first exam <ArrowRight size={16} aria-hidden="true" /></button></div>}
+        </section>
+        <footer className="dashboard-footer"><span>AWS Mastery</span><p>Practice with purpose. Learn at your own pace.</p><span>SAA-C03</span></footer>
       </div>
     </AppShell>
   );
